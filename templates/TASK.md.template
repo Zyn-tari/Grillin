@@ -1,0 +1,63 @@
+# <ID> — <Short title>
+
+**Type:** BUILD | REFACTOR | RECONSIDER | ASK | VERIFY | LOOP
+**Agent:** `<persona>` · **Model:** <cheap | mid | top> · **Effort:** <default | high>
+**Blocked by:** <ids> · **Blocks:** <ids>
+**Mandatory downstream:** <adversarial pass? integrator?>
+
+Rules: [`../_RULES.md`](../_RULES.md)
+
+**Skills — invoke ALL of these before your first tool call, in this order:** `<skill>` · `<skill>`
+They are your starting context. Reading them after you begin is worth a fraction of reading them
+before.
+
+**Wave:** <W#> · see [`../_WORKTREES.md`](../_WORKTREES.md)
+**Branch:** `<prefix>/<ID>-<slug>` · **Worktree:** `<path>`
+
+**Containment.** You may READ anywhere. You may WRITE only inside your worktree and this task
+folder. `<live path>` is the **deployed checkout** — never write to it. If you notice a defect in
+a file you do not own, record it in `FINDINGS.md`; do not fix it.
+
+**Files you must NOT edit — a single integrator owns them:** `<contended file>` · `<contended file>`.
+Emit fragments into this folder instead: `<FRAGMENT>.ext`.
+
+**Commit** to your branch before reporting: code + `FINDINGS.md` + `CHANGES.md` + any fragments.
+First line `<ID>: <what>`, body = three lines of why. Do NOT merge, do NOT run `git worktree`,
+do NOT touch the main branch.
+
+## Why this exists
+
+<Two to five sentences. State the problem in terms of consequence, not activity. If this task
+exists because something already went wrong, say what went wrong — it is the most useful
+sentence in the file.>
+
+## What you own
+
+<Exact paths. One owner per file. Name explicitly what you do NOT own and who does.>
+
+## Steps
+
+1. <Read the inventory section that briefs you — cite it. Do not re-derive.>
+2. <Ordered, specific, referencing real paths.>
+3. <...>
+
+## Loop
+
+**Converge, cap <N>.** <Cycle: do → verify → feed failures back.> Exit when <condition someone
+else can check>. Hitting the cap is a **stop-and-report**, never a silent partial.
+
+## Done means
+
+<Evidence another person or agent can check. Captured output, a diff, a status code, a count —
+never "it works".>
+
+## Do NOT
+
+- Do NOT <the specific trap for this task>.
+- Do NOT <the pattern that looks helpful and is not>.
+- Do NOT spawn sub-agents. *(or: sub-agents must run at `<tier>`)*
+- Everything in `../_RULES.md` §<universal do-NOT list>.
+
+## Outputs
+
+`FINDINGS.md` · `CHANGES.md` (if code changed) · `QUESTIONS.md` (if blocked) · `<fragments>`

@@ -1,0 +1,92 @@
+# Deployment rules — read before spawning any agent
+
+One copy. Every `TASK.md` references this file rather than restating it; if a task's rules and
+this file disagree, **this file wins and one of them needs fixing.**
+
+## 0 · Precedence
+
+1. `<operating invariants file>` — how work is run
+2. **The running system** — live code, config, data. Beats every document.
+3. `<durable project memory>` — closed decisions
+4. This plan
+5. `<handoff / spec documents>` — written against a snapshot; assume drift
+
+Say out loud when two sources disagree.
+
+## 1 · What every agent gets
+
+Every agent inherits `<inventory folder>` — the frozen map of what already exists. **No agent
+re-derives it.** If an agent starts searching for something already in there, the prompt failed.
+
+Every prompt carries: a **persona** · the **exact files it owns** · the **evidence already
+gathered** (cited) · what **"done"** means in checkable evidence · an explicit **do-NOT list** ·
+its **output contract**.
+
+## 1a · Skills are starting context — invoke them FIRST
+
+| Skill | Carries |
+|---|---|
+| `<skill>` | `<the scar tissue it holds>` |
+
+An agent that reads its skills after it starts has already made the decisions the skill existed
+to inform.
+
+## 2 · Model tiers
+
+- **Cheap** — recon, inventory, sweeps, drift checks.
+- **Mid** — bounded, fully-specified implementation where the decisions are already made.
+- **Top** (high effort) — safety-critical paths, authz, schema, architecture, and **every
+  adversarial pass**.
+
+**Declare the tier out loud** when you fan out — publish an agent→model table. The requester
+cannot see a subagent's tier and must not have to ask.
+
+**State onward-delegation policy explicitly**: either "do NOT spawn sub-agents" or the tier
+sub-agents must use. An agent that spawns its own picks their models itself.
+
+## 2a · Containment
+
+- Agents work in an isolated copy, **never in the deployed checkout**.
+- **Read anywhere. Write only in your worktree and your task folder.**
+- A defect in a file you do not own gets **recorded, not fixed**.
+- **Contended files have one owner and it is never a task agent.** Others emit fragments; the
+  integrator applies them.
+
+## 3 · The universal do-NOT list — verbatim in every prompt
+
+- Do NOT deploy, restart services, run a gate, run a build, or promote a build. The
+  orchestrator does all of it.
+- Do NOT touch production data. Use a disposable copy.
+- Do NOT certify your own work.
+- Do NOT print, quote or reproduce any secret. Report only set/empty.
+- Do NOT <project-specific irreversible action>.
+- Do NOT <project-specific wrong-source-of-truth trap>.
+
+## 4 · Output contract
+
+| File | When | Contents |
+|---|---|---|
+| `FINDINGS.md` | always | cite `file:line`; **CONFIRMED** vs **SUSPECTED**; ends with "what I did not test" |
+| `CHANGES.md` | if code changed | one row per file: **Did / Why / Risk**, three lines, not a diff |
+| `QUESTIONS.md` | if blocked | one question per heading, each with a recommendation |
+
+## 5 · Every task has a loop
+
+**Converge loop** — do → verify → feed back, with a stated cap. Hitting the cap is a
+stop-and-report. **Watch loop** — only for genuinely slow external state.
+
+## 6 · Verification order — non-negotiable
+
+`<build → promote → restart → run ALL gates → only then call it verified>`
+
+State the ordering trap for your project explicitly. Every project has one.
+
+**Never ship on green gates alone.** Record your own track record here — it is more persuasive
+than any principle.
+
+## 7 · Escalation
+
+Stop and ask only when: a semantic is genuinely ambiguous · a closed decision would reopen · a
+fix is itself a product decision · a loop hit its cap.
+
+A pass that returns findings is the process **working**. Do not invent stop-gates.
