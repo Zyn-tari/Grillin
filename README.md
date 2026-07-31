@@ -139,6 +139,9 @@ done.
 
 ## License
 
-Not yet chosen. Add one before sharing this outside your own work.
+[MIT](LICENSE) — © 2026 A-Pex97.
+
+Copy the templates into your own projects, private or otherwise. Keep the
+copyright notice; that is the whole obligation.
 
 <sub>Derived from one planning session, 2026-07-31.</sub>
