@@ -68,7 +68,10 @@ sub-agents must use. An agent that spawns its own picks their models itself.
 |---|---|---|
 | `FINDINGS.md` | always | cite `file:line`; **CONFIRMED** vs **SUSPECTED**; ends with "what I did not test" |
 | `CHANGES.md` | if code changed | one row per file: **Did / Why / Risk**, three lines, not a diff |
-| `QUESTIONS.md` | if blocked | one question per heading, each with a recommendation |
+| `QUESTIONS.md` | if blocked **or diverged** | one question per heading, each with a recommendation |
+
+Task **status** is not an output file — it is a line inside each `TASK.md`, updated in place. See
+§8 and §9.
 
 ## 5 · Every task has a loop
 
@@ -90,3 +93,39 @@ Stop and ask only when: a semantic is genuinely ambiguous · a closed decision w
 fix is itself a product decision · a loop hit its cap.
 
 A pass that returns findings is the process **working**. Do not invent stop-gates.
+
+## 8 · The plan is the artefact of record
+
+The plan is the definition of done. When execution diverges from it — a task splits, a decision
+closes, an assumption proves false — **the plan itself is amended**, and a dated entry in
+`<CHANGELOG file>` records what changed and why, referenced from the clause it changed.
+
+- The status artefact reports **progress**. It never carries a correction the plan lacks.
+- A plan that no longer describes the work is worse than none: it is confidently wrong, and it is
+  the first thing a restarted worker trusts.
+- **The changelog is a receipt, not a substitute.** Recording *"the path was wrong"* while the
+  plan still holds the wrong path is the failure, not the fix.
+- **The integrator amends the plan.** Task agents *report* divergence in `QUESTIONS.md`; they do
+  not edit the plan, for the same reason they do not edit contended files.
+
+## 9 · Resuming after a context loss
+
+Assume every worker forgets. A cleared or compacted agent keeps its tools and loses its place, and
+the dangerous case is the compacted one — it *feels* oriented while reasoning from a lossy copy.
+
+**Orientation precedes action.** Before touching anything, a worker resuming mid-plan establishes
+where it is:
+
+1. Read the entry point and the plan — current, because §8 keeps it current.
+2. Read task statuses. `NOT STARTED / IN PROGRESS / BLOCKED / DONE` lives in each `TASK.md`.
+3. Read the changelog for what moved since the plan was written.
+4. Check the tree: `git log`, `git status`, open worktrees, uncommitted diffs. **An agent that
+   appeared to fail usually landed its edits — verify before assuming nothing happened.**
+5. Re-derive completion from evidence, not memory. This is why every "done" must be a *checkable*
+   command: twenty tasks re-verify in seconds, and no one has to remember anything.
+
+Never resume by starting at task 1, and never resume by trusting a summary about what is finished.
+
+**The test:** if every conversation ended now and a new worker cloned the repository, could it say
+what was done, what was in flight, and what changed since the plan was written? If that needs a
+person, the plan is not resumable yet.

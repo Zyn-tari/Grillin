@@ -39,7 +39,7 @@ framework: no install, no dependencies, no lock-in.
 | File | What it is |
 |---|---|
 | **[`index.html`](index.html)** | **The visual map.** Open in any browser. Interactive — pick a project size and watch which phases turn on. |
-| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The method. Eleven phases, twelve principles, the scaling model, anti-patterns. |
+| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The method. Eleven phases, fourteen principles, the scaling model, anti-patterns. |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | Where it came from — the arc in order, including the steps that went wrong. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Feed it to tooling, or hand it to an agent as a planning brief. |
 | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) | **Print this.** Tick it against any plan before handing it over. |
@@ -103,6 +103,14 @@ precisely that.
 session a challenge was factually wrong — and checking revealed a real defect
 underneath it, in a different place entirely. Defending would have missed it;
 conceding would have fixed the wrong thing.
+
+**Keeping the plan true while it runs.** A plan is written once and then reality
+moves — a task splits, a decision closes, an assumption proves false. The
+tempting place to record that is the status file, because that is the file you
+are already updating. It is the wrong file: the status file is read by whoever is
+*watching*, and the plan is read by whoever is *working* — including a worker that
+just lost its context. Deviations amend the plan itself; the changelog is a
+receipt for that fix, never a substitute for it.
 
 ---
 

@@ -250,12 +250,15 @@ author who had spent the session warning about exactly this.
 - **Persistent memory updated** so a cold start lands on this plan, not on last month's work.
 - **A status surface** the requester can read without asking — published, not narrated.
 - **Hand-off items you cannot do yourself**, stated explicitly rather than silently skipped.
+- **A warm restart, not just a cold one.** The entry point tells a fresh worker what the plan
+  *is*; it must also let one that is halfway through establish *where it got to*. See
+  [Keeping the plan true while it runs](#keeping-the-plan-true-while-it-runs).
 
 **Output:** an executable plan.
 
 ---
 
-## Twelve principles, portable
+## Fourteen principles, portable
 
 1. **Declare precedence before you start.** Say out loud when sources disagree.
 2. **Count before you plan.** Numbers size work; impressions don't.
@@ -272,6 +275,10 @@ author who had spent the session warning about exactly this.
 12. **Escalate on decisions, not on findings.** A review returning findings is the process
     working. Fix them and continue. Stop only for genuine semantic ambiguity, a closed decision
     reopening, a fix that is itself a product decision, or a loop hitting its cap.
+13. **The plan is the artefact of record.** Execution amends it. A status file reports progress;
+    it never holds a correction the plan lacks.
+14. **Assume amnesia.** Anything that lives only in a conversation is already gone. Progress,
+    decisions and corrections must be reconstructable from the repository alone.
 
 ---
 
@@ -290,6 +297,42 @@ the wrong thing.
 document that was wrong. Capture the *pattern*, not the event: "I cited a limit scoped to the
 wrong thing" is a pattern; "the number was 4 not 2" is an incident. Then search for the same
 wrong claim everywhere else, because a bad fact is usually written down more than once.
+
+---
+
+## Keeping the plan true while it runs
+
+The three rules above are about the plan you write. This one is about the plan you are *inside*,
+and it is the phase-3 problem pointed at your own artefact: **documents drift, and the one most
+likely to drift is the plan, because the work is what moves it.**
+
+Every project discovers things mid-execution. A task splits in two. A decision that was open
+closes. A path was wrong. The tempting place to put those is the status artefact — the file
+tracking progress — because that is the file you are already updating.
+
+That is the wrong file. The status artefact is read by whoever is *watching*. The plan is read by
+whoever is *working* — including an agent that just lost its context and is deciding what to do
+next. A plan that no longer describes the work is worse than no plan: it is confidently wrong,
+and it is the first thing a restarted worker trusts.
+
+**So: amend the plan in place. Then leave a dated entry saying what changed and why, referenced
+both ways** — the plan points at the reason, the record points at the clause.
+
+> **This is not the incident log the anti-patterns warn about.** The difference is substitution
+> versus receipt. A lessons file recording *"the path was wrong"* while the plan still contains
+> the wrong path is a **substitute** — the document that was wrong stayed wrong. A record saying
+> *"Wave 3 grid amended: task added, decision closed — see §Wave 3"* is a **receipt** for a fix
+> that already happened. Keep the receipt. Never let it stand in for the fix.
+
+**Orientation precedes action.** A worker resuming mid-plan does not start at task 1; it starts by
+establishing where it is — task statuses, the gates, the commit log, the working tree. This costs
+a minute and is the difference between resuming and re-doing. It is also the only defence against
+the quieter failure: a *summarised* context, where the worker feels oriented and is reasoning from
+a lossy copy, so a correction discovered at task 4 silently stops being true by task 12.
+
+The test for all of it is one question: **if every conversation ended right now and a new worker
+cloned the repository, could it tell what was done, what was in flight, and what had changed since
+the plan was written?** If the answer needs a person, the plan is not resumable yet.
 
 ---
 
@@ -328,5 +371,7 @@ They are the cheapest phases and they catch the most expensive errors.
 | Quote a documented limit | it may govern something else |
 | Treat a failed read as proof of absence | check permissions first |
 | Log lessons in a growing incident file | fix the document that was wrong |
+| Record a deviation only in the status file | the plan becomes confidently wrong, and a restarted worker trusts it first |
+| Keep progress in the conversation | a clear or a compaction erases it, and the work gets re-done or skipped |
 | Turn a review finding into a stop-gate | fixing specified defects is execution |
 | Ship a plan with no entry point | nobody can start it |

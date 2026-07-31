@@ -4,39 +4,69 @@
   "version": "1.0.0",
   "description": "A method for turning a vague ask into an executable plan that survives contact with reality, by attacking every claim in it — including your own — before anyone builds.",
   "coreRule": "Adversarial effort spent before building is worth many times the same effort spent after. Three phases produce no plan text at all. They are the highest-value phases.",
-
   "precedenceLadder": [
-    { "rank": 1, "source": "Operating invariants", "note": "your rules file — how work is run" },
-    { "rank": 2, "source": "THE RUNNING SYSTEM", "note": "live code, config, data — beats every document" },
-    { "rank": 3, "source": "Durable project memory", "note": "decisions already closed" },
-    { "rank": 4, "source": "The current plan", "note": "" },
-    { "rank": 5, "source": "Handoff / spec documents", "note": "written against a snapshot; assume drift" }
+    {
+      "rank": 1,
+      "source": "Operating invariants",
+      "note": "your rules file — how work is run"
+    },
+    {
+      "rank": 2,
+      "source": "THE RUNNING SYSTEM",
+      "note": "live code, config, data — beats every document"
+    },
+    {
+      "rank": 3,
+      "source": "Durable project memory",
+      "note": "decisions already closed"
+    },
+    {
+      "rank": 4,
+      "source": "The current plan",
+      "note": ""
+    },
+    {
+      "rank": 5,
+      "source": "Handoff / spec documents",
+      "note": "written against a snapshot; assume drift"
+    }
   ],
-
   "phases": [
     {
-      "id": 0, "name": "Acknowledge, flag, stop", "type": "ASK", "highValue": false,
+      "id": 0,
+      "name": "Acknowledge, flag, stop",
+      "type": "ASK",
+      "highValue": false,
       "producesPlanText": false,
       "summary": "Restate the ask in your own words. Name what is missing. Flag what would change the plan's shape. Then stop.",
       "output": "A paragraph and two or three flags.",
       "minSize": "XS"
     },
     {
-      "id": 1, "name": "Inventory — count before you plan", "type": "RECON", "highValue": false,
+      "id": 1,
+      "name": "Inventory — count before you plan",
+      "type": "RECON",
+      "highValue": false,
       "producesPlanText": false,
       "summary": "Read-only workers enumerate what exists, partitioned by file ownership so none overlap. Cite file:line. Give counts. Freeze the result.",
       "output": "An inventory folder, with counts.",
       "minSize": "S"
     },
     {
-      "id": 2, "name": "Triage what recon dug up", "type": "RECONSIDER", "highValue": false,
+      "id": 2,
+      "name": "Triage what recon dug up",
+      "type": "RECONSIDER",
+      "highValue": false,
       "producesPlanText": false,
       "summary": "Sort discovered defects into fix-during-work / needs-a-human-decision / out-of-scope. Never absorb a discovery silently.",
       "output": "A triaged defect register.",
       "minSize": "S"
     },
     {
-      "id": 3, "name": "Grill the documents against the running system", "type": "VERIFY", "highValue": true,
+      "id": 3,
+      "name": "Grill the documents against the running system",
+      "type": "VERIFY",
+      "highValue": true,
       "producesPlanText": false,
       "summary": "Check every load-bearing claim against the top of the precedence ladder. Hunt for things asserted to exist that do not, staleness, cross-document contradiction, and unflagged assertions.",
       "output": "A contradictions register. Expect it to resize the work.",
@@ -44,42 +74,60 @@
       "neverSkip": true
     },
     {
-      "id": 4, "name": "Shape first — diagram before prose", "type": "ASK", "highValue": false,
+      "id": 4,
+      "name": "Shape first — diagram before prose",
+      "type": "ASK",
+      "highValue": false,
       "producesPlanText": false,
       "summary": "A one-screen typed dependency graph, approved before any task text. A wrong diagram costs a minute; the prose it authorises costs hours.",
       "output": "An approved graph.",
       "minSize": "S"
     },
     {
-      "id": 5, "name": "Decompose into owned tasks", "type": "BUILD", "highValue": false,
+      "id": 5,
+      "name": "Decompose into owned tasks",
+      "type": "BUILD",
+      "highValue": false,
       "producesPlanText": true,
       "summary": "One folder per task, each a contract: persona, owned files, evidence already gathered, steps, a loop with a cap, evidence-based done, do-NOT list, output contract. Own by file, not by task.",
       "output": "N task contracts.",
       "minSize": "M"
     },
     {
-      "id": 6, "name": "Extract recurring context into skills", "type": "REFACTOR", "highValue": false,
+      "id": 6,
+      "name": "Extract recurring context into skills",
+      "type": "REFACTOR",
+      "highValue": false,
       "producesPlanText": true,
       "summary": "When the same warning appears in five task files it belongs in a skill. Group by category of work. Carry scar tissue, not generic advice. Load before the first tool call.",
       "output": "A small set of skills.",
       "minSize": "M"
     },
     {
-      "id": 7, "name": "Design isolation, then find the collision", "type": "BUILD", "highValue": false,
+      "id": 7,
+      "name": "Design isolation, then find the collision",
+      "type": "BUILD",
+      "highValue": false,
       "producesPlanText": true,
       "summary": "Separate workspaces are the easy half. List files many tasks want, give each one owner, have everyone else emit a fragment, add an integrator.",
       "output": "Isolation model, contended-file table, integrator role.",
       "minSize": "M"
     },
     {
-      "id": 8, "name": "Choose the substrate by measurement", "type": "VERIFY", "highValue": true,
+      "id": 8,
+      "name": "Choose the substrate by measurement",
+      "type": "VERIFY",
+      "highValue": true,
       "producesPlanText": false,
       "summary": "Time a real fan-out on each candidate. Record effective parallelism, not the advertised cap. Find what actually binds. Name what a limit governs before it shapes the plan.",
       "output": "Tool per phase, with measurements.",
       "minSize": "M"
     },
     {
-      "id": 9, "name": "Verify the environment the plan assumes", "type": "VERIFY", "highValue": true,
+      "id": 9,
+      "name": "Verify the environment the plan assumes",
+      "type": "VERIFY",
+      "highValue": true,
       "producesPlanText": false,
       "summary": "Check that the world the plan describes exists: paths, repos, scripts, permissions, topology, credentials. A failed read is not proof of absence.",
       "output": "Corrections to the plan, applied at source.",
@@ -87,103 +135,335 @@
       "neverSkip": true
     },
     {
-      "id": 10, "name": "Ship the door with the building", "type": "BUILD", "highValue": false,
+      "id": 10,
+      "name": "Ship the door with the building",
+      "type": "BUILD",
+      "highValue": false,
       "producesPlanText": true,
-      "summary": "One entry point with a read order, a paste-ready kickoff prompt, persistent memory updated, a published status surface, and hand-off items you cannot do yourself.",
+      "summary": "One entry point with a read order, a paste-ready kickoff prompt, persistent memory updated, a published status surface, and hand-off items you cannot do yourself, and a warm restart: a worker halfway through can establish where it got to, not only what the plan is.",
       "output": "An executable plan.",
       "minSize": "XS"
     }
   ],
-
   "scaling": [
     {
-      "size": "XS", "tasks": "1-3", "planningEffort": "~1 hour",
-      "phasesOn": [0, 3, 9, 10],
-      "turnOn": ["precedence ladder", "document grill", "environment check", "entry point"],
-      "leaveOff": ["recon fan-out", "skills", "worktrees", "integrator", "waves", "status surface"],
+      "size": "XS",
+      "tasks": "1-3",
+      "planningEffort": "~1 hour",
+      "phasesOn": [
+        0,
+        3,
+        9,
+        10
+      ],
+      "turnOn": [
+        "precedence ladder",
+        "document grill",
+        "environment check",
+        "entry point"
+      ],
+      "leaveOff": [
+        "recon fan-out",
+        "skills",
+        "worktrees",
+        "integrator",
+        "waves",
+        "status surface"
+      ],
       "isolation": "none — work in place",
       "verification": "self-check against the running system"
     },
     {
-      "size": "S", "tasks": "4-10", "planningEffort": "half a day",
-      "phasesOn": [0, 1, 2, 3, 4, 9, 10],
-      "turnOn": ["2-3 recon workers", "triage register", "approved diagram", "1 skill", "branches"],
-      "leaveOff": ["worktrees", "integrator", "waves", "long-clock loops"],
+      "size": "S",
+      "tasks": "4-10",
+      "planningEffort": "half a day",
+      "phasesOn": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        9,
+        10
+      ],
+      "turnOn": [
+        "2-3 recon workers",
+        "triage register",
+        "approved diagram",
+        "1 skill",
+        "branches"
+      ],
+      "leaveOff": [
+        "worktrees",
+        "integrator",
+        "waves",
+        "long-clock loops"
+      ],
       "isolation": "branches, no worktrees",
       "verification": "one adversarial pass on the risky task"
     },
     {
-      "size": "M", "tasks": "10-25", "planningEffort": "1-2 days",
-      "phasesOn": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      "turnOn": ["full recon fan-out", "task contracts", "3-5 skills", "worktrees", "integrator", "substrate measurement"],
-      "leaveOff": ["sub-orchestrators", "plan-of-plans"],
+      "size": "M",
+      "tasks": "10-25",
+      "planningEffort": "1-2 days",
+      "phasesOn": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "turnOn": [
+        "full recon fan-out",
+        "task contracts",
+        "3-5 skills",
+        "worktrees",
+        "integrator",
+        "substrate measurement"
+      ],
+      "leaveOff": [
+        "sub-orchestrators",
+        "plan-of-plans"
+      ],
       "isolation": "worktrees + single-owner contended files",
       "verification": "adversarial pass after every build task"
     },
     {
-      "size": "L", "tasks": "25-60", "planningEffort": "2-4 days",
-      "phasesOn": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      "turnOn": ["waves with merge gates", "long-clock loops", "published status surface", "two adversarial passes"],
-      "leaveOff": ["sub-orchestrators"],
+      "size": "L",
+      "tasks": "25-60",
+      "planningEffort": "2-4 days",
+      "phasesOn": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "turnOn": [
+        "waves with merge gates",
+        "long-clock loops",
+        "published status surface",
+        "two adversarial passes"
+      ],
+      "leaveOff": [
+        "sub-orchestrators"
+      ],
       "isolation": "worktrees + waves + integrator per merge group",
       "verification": "two independent adversarial passes; second must not see the first"
     },
     {
-      "size": "XL", "tasks": "60+", "planningEffort": "1 week+",
-      "phasesOn": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      "turnOn": ["sub-orchestrators per track", "plan-of-plans", "re-run phase 3 per track"],
+      "size": "XL",
+      "tasks": "60+",
+      "planningEffort": "1 week+",
+      "phasesOn": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "turnOn": [
+        "sub-orchestrators per track",
+        "plan-of-plans",
+        "re-run phase 3 per track"
+      ],
       "leaveOff": [],
       "isolation": "worktrees + waves + per-track integrators",
       "verification": "two passes per task, plus a completeness critic per track"
     }
   ],
-
   "neverScaleDown": [
-    { "phase": 3, "why": "grilling documents against the running system is the cheapest phase and catches the most expensive errors" },
-    { "phase": 9, "why": "the plan is itself a document, and documents drift — including the one you just wrote" }
+    {
+      "phase": 3,
+      "why": "grilling documents against the running system is the cheapest phase and catches the most expensive errors"
+    },
+    {
+      "phase": 9,
+      "why": "the plan is itself a document, and documents drift — including the one you just wrote"
+    }
   ],
-
   "principles": [
-    { "n": 1,  "text": "Declare precedence before you start. Say out loud when sources disagree." },
-    { "n": 2,  "text": "Count before you plan. Numbers size work; impressions don't." },
-    { "n": 3,  "text": "Documents drift; running systems don't." },
-    { "n": 4,  "text": "Shape before prose. Reject a diagram, not a chapter." },
-    { "n": 5,  "text": "Own by file, not by task." },
-    { "n": 6,  "text": "Contended files get one owner; everyone else emits a fragment." },
-    { "n": 7,  "text": "Evidence is execution, not inspection." },
-    { "n": 8,  "text": "Never certify your own work. Structural, not preference." },
-    { "n": 9,  "text": "Every loop has a cap. Hitting it is a stop-and-report." },
-    { "n": 10, "text": "Measure constraints; never quote them. Name what a limit governs." },
-    { "n": 11, "text": "Recurring context becomes a skill, loaded first." },
-    { "n": 12, "text": "Escalate on decisions, not on findings." }
+    {
+      "n": 1,
+      "text": "Declare precedence before you start. Say out loud when sources disagree."
+    },
+    {
+      "n": 2,
+      "text": "Count before you plan. Numbers size work; impressions don't."
+    },
+    {
+      "n": 3,
+      "text": "Documents drift; running systems don't."
+    },
+    {
+      "n": 4,
+      "text": "Shape before prose. Reject a diagram, not a chapter."
+    },
+    {
+      "n": 5,
+      "text": "Own by file, not by task."
+    },
+    {
+      "n": 6,
+      "text": "Contended files get one owner; everyone else emits a fragment."
+    },
+    {
+      "n": 7,
+      "text": "Evidence is execution, not inspection."
+    },
+    {
+      "n": 8,
+      "text": "Never certify your own work. Structural, not preference."
+    },
+    {
+      "n": 9,
+      "text": "Every loop has a cap. Hitting it is a stop-and-report."
+    },
+    {
+      "n": 10,
+      "text": "Measure constraints; never quote them. Name what a limit governs."
+    },
+    {
+      "n": 11,
+      "text": "Recurring context becomes a skill, loaded first."
+    },
+    {
+      "n": 12,
+      "text": "Escalate on decisions, not on findings."
+    },
+    {
+      "n": 13,
+      "text": "The plan is the artefact of record. Execution amends it. A status file reports progress; it never holds a correction the plan lacks."
+    },
+    {
+      "n": 14,
+      "text": "Assume amnesia. Anything that lives only in a conversation is already gone. Progress, decisions and corrections must be reconstructable from the repository alone."
+    }
   ],
-
   "inwardFacing": [
-    { "text": "Grill your own artefact last and hardest.", "why": "Your plan is a document. Documents drift." },
-    { "text": "When challenged, verify before you defend.", "why": "A challenge can be factually wrong and still be pointing at a real defect. Defending misses it; conceding fixes the wrong thing." },
-    { "text": "State your own errors plainly and fix them at source.", "why": "Capture the pattern, not the event — then search for the same wrong claim everywhere else." }
+    {
+      "text": "Grill your own artefact last and hardest.",
+      "why": "Your plan is a document. Documents drift."
+    },
+    {
+      "text": "When challenged, verify before you defend.",
+      "why": "A challenge can be factually wrong and still be pointing at a real defect. Defending misses it; conceding fixes the wrong thing."
+    },
+    {
+      "text": "State your own errors plainly and fix them at source.",
+      "why": "Capture the pattern, not the event — then search for the same wrong claim everywhere else."
+    }
   ],
-
   "antiPatterns": [
-    { "dont": "Start work at the acknowledgement", "because": "the restatement is where mismatched understanding surfaces" },
-    { "dont": "Plan from a spec without checking it", "because": "specs describe intended systems as though built" },
-    { "dont": "Estimate scope from impression", "because": "\"several\" is not a number" },
-    { "dont": "Write task prose before the shape is approved", "because": "you will rewrite all of it" },
-    { "dont": "Let one worker review its own output", "because": "it will certify it" },
-    { "dont": "Assign work by task when tasks share files", "because": "last writer wins, silently" },
-    { "dont": "Quote a documented limit", "because": "it may govern something else" },
-    { "dont": "Treat a failed read as proof of absence", "because": "check permissions first" },
-    { "dont": "Log lessons in a growing incident file", "because": "fix the document that was wrong" },
-    { "dont": "Turn a review finding into a stop-gate", "because": "fixing specified defects is execution" },
-    { "dont": "Ship a plan with no entry point", "because": "nobody can start it" }
+    {
+      "dont": "Start work at the acknowledgement",
+      "because": "the restatement is where mismatched understanding surfaces"
+    },
+    {
+      "dont": "Plan from a spec without checking it",
+      "because": "specs describe intended systems as though built"
+    },
+    {
+      "dont": "Estimate scope from impression",
+      "because": "\"several\" is not a number"
+    },
+    {
+      "dont": "Write task prose before the shape is approved",
+      "because": "you will rewrite all of it"
+    },
+    {
+      "dont": "Let one worker review its own output",
+      "because": "it will certify it"
+    },
+    {
+      "dont": "Assign work by task when tasks share files",
+      "because": "last writer wins, silently"
+    },
+    {
+      "dont": "Quote a documented limit",
+      "because": "it may govern something else"
+    },
+    {
+      "dont": "Treat a failed read as proof of absence",
+      "because": "check permissions first"
+    },
+    {
+      "dont": "Log lessons in a growing incident file",
+      "because": "fix the document that was wrong"
+    },
+    {
+      "dont": "Turn a review finding into a stop-gate",
+      "because": "fixing specified defects is execution"
+    },
+    {
+      "dont": "Ship a plan with no entry point",
+      "because": "nobody can start it"
+    },
+    {
+      "dont": "Record a deviation only in the status file",
+      "because": "the plan becomes confidently wrong, and a restarted worker trusts it first"
+    },
+    {
+      "dont": "Keep progress in the conversation",
+      "because": "a clear or a compaction erases it, and the work gets re-done or skipped"
+    }
   ],
-
   "taskContract": {
-    "required": ["persona", "ownedFiles", "evidenceAlreadyGathered", "steps", "loopWithCap", "doneMeansEvidence", "doNotList", "outputContract"],
+    "required": [
+      "persona",
+      "status",
+      "ownedFiles",
+      "evidenceAlreadyGathered",
+      "steps",
+      "loopWithCap",
+      "doneMeansEvidence",
+      "doNotList",
+      "outputContract"
+    ],
     "outputs": {
       "FINDINGS.md": "always — what it learned, cited, CONFIRMED vs SUSPECTED, ends with what I did not test",
       "CHANGES.md": "if it changed anything — three lines per file: did / why / risk",
-      "QUESTIONS.md": "if blocked — one question per heading, each with a recommendation"
-    }
+      "QUESTIONS.md": "if blocked or diverged — one question per heading, each with a recommendation"
+    },
+    "statusValues": [
+      "NOT STARTED",
+      "IN PROGRESS",
+      "BLOCKED",
+      "DONE"
+    ],
+    "statusNote": "A line inside TASK.md, updated in place. Not an output file. It is the progress record that survives a lost conversation."
+  },
+  "resumability": {
+    "premise": "Assume every worker forgets. A cleared agent loses its place; a compacted one feels oriented while reasoning from a lossy copy.",
+    "planIsRecord": "Deviations amend the plan itself. A dated changelog entry records what changed and why, referenced from the clause it changed.",
+    "receiptNotSubstitute": "Recording that something was wrong while the document stays wrong is the failure, not the fix.",
+    "amendedBy": "integrator — task agents report divergence in QUESTIONS.md and do not edit the plan",
+    "orientationBeforeAction": [
+      "read the entry point and plan",
+      "read task statuses",
+      "read the changelog",
+      "check git log, git status, worktrees, uncommitted diffs",
+      "re-derive completion from checkable evidence, not memory"
+    ],
+    "editsUsuallyLanded": "A worker that appeared to fail has usually already written its edits — verify against the tree before assuming nothing happened.",
+    "test": "If every conversation ended now and a new worker cloned the repository, could it tell what was done, what was in flight, and what changed since the plan was written?"
   }
 }

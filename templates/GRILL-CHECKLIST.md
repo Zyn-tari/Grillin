@@ -80,7 +80,20 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] A status surface the requester can read without asking
 - [ ] Escalation conditions listed, and they are decisions — not findings
 
+## Will it survive being forgotten?  ⚑ never skip
+
+- [ ] Every task carries a **status line updated in place** — not tracked in a conversation
+- [ ] Every "done" is a **command someone can re-run**, so completion re-derives without memory
+- [ ] Deviations amend **the plan itself**; the changelog is a receipt, not a substitute
+- [ ] Amendments are **referenced both ways** — plan to reason, record to clause
+- [ ] Who may amend the plan is named (the integrator), and task agents report instead
+- [ ] The entry point supports a **warm restart**, not only a cold one
+- [ ] Orientation steps come **before** work: statuses, changelog, gates, `git log`, working tree
+- [ ] A worker that appeared to fail is checked against the tree — **its edits usually landed**
+- [ ] **The test:** conversations all end, a new worker clones the repo — can it tell what was
+      done, what was in flight, and what changed since the plan was written?
+
 ---
 
-**If you tick everything except the last two sections, you have a document.
-The last two are what make it a plan.**
+**If you tick everything except the last three sections, you have a document.
+The last three are what make it a plan.**
