@@ -200,3 +200,30 @@ herdr agent list
 and recovers every agent, its pane, its cwd, and its lifecycle state. **The fleet outlives the
 conversation that started it.** Named agents make that recovery legible rather than merely
 possible — which is why §1 is a rule and not a nicety.
+
+### The boundary of that claim
+
+This is **daemon persistence, not boot persistence.** State the limit before anyone plans around
+the wrong one:
+
+| Event | Fleet survives? |
+|---|---|
+| A client detaches, or the terminal closes | **yes** |
+| The SSH connection to a remote session drops | **yes** |
+| The orchestrating agent is cleared or compacted | **yes** |
+| `server stop`, or the server crashes | **no** — panes are its children |
+| The machine reboots | **no**, unless a boot unit was installed deliberately |
+
+The session file persists **layout** — workspaces, tabs, panes, labels, working directories — and
+it records each agent's session identity. It does **not** record the command that produced any
+process. After a restart the furniture returns and the processes do not: panes come back as empty
+shells.
+
+Herdr is also **not a supervisor.** If an agent dies inside a pane, that is reported as a state
+change; nothing relaunches it.
+
+So this substrate removes one failure — losing the fleet when a conversation ends — and does not
+remove the other: losing it when the host goes down. If work must outlive a reboot, that comes
+from the same place it always did, and principle 13 already says where: **the repository.** A
+resumable plan does not care which machine is up. Treat pane persistence as a convenience that
+shortens recovery, never as the thing recovery depends on.
