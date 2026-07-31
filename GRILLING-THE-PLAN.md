@@ -174,7 +174,25 @@ conventions, the traps — not generic best practice. Generic advice is already 
 Each task declares which skills to load **before its first tool call**. Context loaded after work
 begins has already missed the decisions it existed to inform.
 
-**Output:** a small set of skills; one line per task referencing them.
+**Loading once is not enough, because context decays.** A worker forty tool calls into task 14 has
+a context full of task 14; the plan around it has been crowded out or summarised away. That is not
+disobedience, it is **attentional narrowing** — the work is being done correctly and the shape it
+sits in is gone.
+
+The fix is not to load more up front. It is to put the frame back at the moments it is most likely
+to have gone: at a session start, when a worker finishes, and — most valuably — **immediately
+before a compaction**, which is the literal instant of forgetting and the only moment where
+injected state ends up *inside* the summary rather than being what the summary drops.
+
+One rule governs whether any of that lands: **a reminder that repeats is wallpaper; a reminder
+that reports is news.** Re-pasting the rules is ignored by the third firing. A line computed from
+disk — statuses, commits, amendments — differs every time and keeps being read.
+
+Rules for this: [`templates/_AWARENESS.md`](templates/_AWARENESS.md.template), with a starting
+implementation in [`templates/awareness.sh`](templates/awareness.sh.template).
+
+**Output:** a small set of skills; one line per task referencing them; a state reporter wired to
+the boundaries.
 
 ---
 
@@ -286,7 +304,7 @@ author who had spent the session warning about exactly this.
 
 ---
 
-## Fifteen principles, portable
+## Sixteen principles, portable
 
 1. **Declare precedence before you start.** Say out loud when sources disagree.
 2. **Count before you plan.** Numbers size work; impressions don't.
@@ -309,6 +327,9 @@ author who had spent the session warning about exactly this.
     decisions and corrections must be reconstructable from the repository alone.
 15. **Name every agent by role.** An unnamed fleet is addressable only by opaque handles, and a
     role name still means something when the model tier changes.
+16. **A reminder that repeats is wallpaper; a reminder that reports is news.** Re-pasting rules
+    trains an agent to skip injected text. Compute the reminder from current state and it stays
+    worth reading.
 
 ---
 
@@ -401,6 +422,8 @@ They are the cheapest phases and they catch the most expensive errors.
 | Quote a documented limit | it may govern something else |
 | Treat a failed read as proof of absence | check permissions first |
 | Log lessons in a growing incident file | fix the document that was wrong |
+| Re-inject the same static reminder every turn | it becomes wallpaper, and teaches that injected text is skippable |
+| Block a tool call to fix a lost frame | narrowing is not disobedience; denial does not restore the shape |
 | Record a deviation only in the status file | the plan becomes confidently wrong, and a restarted worker trusts it first |
 | Keep progress in the conversation | a clear or a compaction erases it, and the work gets re-done or skipped |
 | Turn a review finding into a stop-gate | fixing specified defects is execution |

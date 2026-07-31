@@ -39,13 +39,15 @@ framework: no install, no dependencies, no lock-in.
 | File | What it is |
 |---|---|
 | **[`index.html`](index.html)** | **The visual map.** Open in any browser. Interactive — pick a project size and watch which phases turn on. |
-| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The method. Eleven phases, fifteen principles, the scaling model, anti-patterns. |
+| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The method. Eleven phases, sixteen principles, the scaling model, anti-patterns. |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | Where it came from — the arc in order, including the steps that went wrong. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Feed it to tooling, or hand it to an agent as a planning brief. |
 | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) | **Print this.** Tick it against any plan before handing it over. |
 | [`templates/TASK.md.template`](templates/TASK.md.template) | Starting point for a task contract. |
 | [`templates/_RULES.md.template`](templates/_RULES.md.template) | Starting point for the shared agent contract. |
 | [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
+| [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
+| [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Reads; never writes; always exits 0. |
 
 ---
 
@@ -115,6 +117,15 @@ than a timeout, and the fleet outlives the conversation that started it, so an
 orchestrator that loses context recovers the roster with one query. Neither wins
 universally. Measure both on the same real fan-out, and measure
 *time-to-detect-a-stall*, not only wall-clock.
+
+**Reminding without nagging.** A worker deep in task 14 has not disobeyed the
+plan, it has lost sight of it — its context is full of task 14. Blocking a tool
+call does not restore that shape. Putting the frame back does, but only if the
+reminder is *computed from current state*; static text becomes wallpaper by its
+third firing and teaches the agent that injected text is skippable. The highest-value
+moment to fire one is immediately **before a compaction** — the literal instant of
+forgetting, and the only point where injected state lands *inside* the summary
+instead of being what the summary drops.
 
 **Keeping the plan true while it runs.** A plan is written once and then reality
 moves — a task splits, a decision closes, an assumption proves false. The

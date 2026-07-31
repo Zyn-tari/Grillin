@@ -1,0 +1,140 @@
+# Awareness rules — resurfacing the frame
+
+> **Reminders, not gates.** Nothing here blocks anything. An agent deep in task 14 has not
+> *disobeyed* the plan; it has lost sight of it, because its context is full of task 14. You do
+> not fix that by denying a tool call. You fix it by putting the frame back in front of the agent
+> at the moments it is most likely to have gone.
+
+## The one rule that decides whether any of this works
+
+**A reminder that repeats is wallpaper. A reminder that reports is news.**
+
+Static text — the rules file pasted in again, the same banner every turn — stops being read after
+the third firing. Worse, it teaches the agent that injected text is skippable, which degrades the
+reminders that *do* matter.
+
+So every reminder here is **computed from current state**: task statuses parsed from disk, the
+commit log, the changelog. Then the message differs every time it fires, because the situation
+differs, and it keeps being read for the same reason a status line is read and a splash screen is
+not.
+
+This also makes it cheap: one script, no model, no tokens, one source of truth feeding several
+surfaces.
+
+---
+
+## Three registers
+
+Firing one reminder everywhere is the mistake. Different moments carry different weight.
+
+### 1 · Ambient — one line, constantly
+
+```
+Wave 2 · T14 search-guard · 6/20 done · 1 blocked (T09)
+```
+
+Position only. **No rules in this register** — hard rules repeated every turn become wallpaper
+within an hour and take the ambient line down with them. This exists so the agent is never more
+than one line away from knowing where it is.
+
+### 2 · Situational — at the moment of relevance
+
+Triggered by what the agent is about to do, and **non-blocking**:
+
+> *note: this file is owned by T12 — the fragment protocol applies here*
+
+This is how the ownership rule gets teeth without the harness ever saying no. It is never noise,
+because it only fires when it is the relevant fact. A situational reminder that fires when it is
+not relevant is an ambient reminder wearing a disguise, and should be demoted.
+
+### 3 · Punctuated — the full picture, rarely, at boundaries
+
+```
+WHERE:     Wave 2 of 4 · T14 in progress
+CLOSED:    T11, T12, T13 since last checkpoint
+IN FLIGHT: T14 (you), T15 (migrator)
+BLOCKED:   T09 — awaiting decision D4
+CHANGED:   plan amended twice since kickoff → CHANGELOG
+NEXT:      T16 gates on T14; wave 3 gates on all of wave 2
+```
+
+This is the institutional step-back — the thing standups and retrospectives exist to force in
+human teams. It is where hard rules belong, because a boundary is when the frame is being rebuilt
+anyway.
+
+Note where **CHANGED** comes from: the amendment receipts required by principle 13. That
+mechanism was built for exactly this feed.
+
+---
+
+## The moments
+
+Event names below are the common ones; **confirm the injection contract for each against your
+harness's hook documentation** before wiring, since what a hook may return differs per event.
+
+| Moment | Register | Why this instant |
+|---|---|---|
+| Session start | punctuated | cold or warm start — orient before acting |
+| **Before compaction** | **punctuated** | **the single highest-value hook — see below** |
+| A worker finishes | punctuated | one unit closed; the cheapest moment to zoom out |
+| Turn ends | thin check | *does the status line reflect what you just did?* |
+| Every turn | ambient | position, one line |
+| Before a tool call | situational | ownership, contended files, the deployed checkout |
+
+### Why the pre-compaction moment matters most
+
+Compaction is **literally the instant of forgetting.** Every other mechanism in this method tries
+to *recover* from lost context. A reminder fired before compaction is the only one that puts the
+durable state **into the thing being summarised**, so the frame survives as part of the summary
+rather than being what the summary drops.
+
+If you wire exactly one hook, wire that one.
+
+---
+
+## What the state script must do
+
+One script, two modes, called from several events. Requirements are mostly about not being
+harmful:
+
+- **Never fail.** Exit zero on every path. A reminder that breaks a tool call is worse than no
+  reminder at all.
+- **Never be slow.** No network. No expensive history walks. It runs constantly.
+- **Degrade out loud.** If there are no task files yet, say so in one line. Silence is
+  indistinguishable from "everything is fine."
+- **Read, never write.** It reports state; it does not maintain it. The moment a reminder starts
+  editing the plan, you no longer know who moved it.
+- **Stay boring.** No cleverness, no summarising, no model calls. Its whole value is that it
+  reports what is literally on disk.
+
+See [`awareness.sh.template`](awareness.sh.template) for a starting implementation.
+
+---
+
+## Do NOT
+
+- Do NOT block anything from these hooks. Awareness and enforcement are different jobs; a
+  reminder that can deny is an enforcement mechanism with a friendly tone, and it will be
+  designed as one within a week.
+- Do NOT put rules in the ambient register.
+- Do NOT emit an identical message twice in a row. If the state has not changed, the ambient line
+  is enough.
+- Do NOT let the script write to the plan, the status files, or the changelog.
+- Do NOT add a register because a moment *exists*. Every reminder competes for the same
+  attention; adding one makes the others cheaper to ignore.
+
+---
+
+## Why this is not enforcement
+
+It would be easy to read this file and build blocking hooks instead — they are simpler, and they
+*feel* stronger.
+
+They are not, for this problem. The failure being addressed is not disobedience, it is
+**attentional narrowing**: a worker is doing task 14 correctly and has lost the shape of the plan
+around it. Blocking a tool call does not restore that shape; it just stops the one action the
+harness happened to be able to pattern-match, while the frame stays gone.
+
+Enforcement has its place — file ownership, the deployed checkout, secrets — and that place is
+[`_RULES.md`](_RULES.md). This file is the other half: keeping the agent oriented, so the rules
+have something to be obeyed *in service of*.

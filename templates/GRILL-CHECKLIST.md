@@ -85,6 +85,16 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] A status surface the requester can read without asking
 - [ ] Escalation conditions listed, and they are decisions — not findings
 
+## Will the worker stay oriented?
+
+- [ ] Reminders are **computed from current state**, never static text re-pasted
+- [ ] Something fires **before compaction** — the one moment state lands inside the summary
+- [ ] Something fires at a **boundary** — session start, a worker finishing, a wave closing
+- [ ] The ambient reminder carries **position only** — no rules
+- [ ] No reminder can **block** anything; enforcement lives somewhere else
+- [ ] The state reporter **reads and never writes**, and exits zero on every path
+- [ ] It **degrades out loud** — "no tasks found" beats silence, which reads as fine
+
 ## Will it survive being forgotten?  ⚑ never skip
 
 - [ ] Every task carries a **status line updated in place** — not tracked in a conversation

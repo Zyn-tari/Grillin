@@ -360,6 +360,10 @@
     {
       "n": 15,
       "text": "Name every agent by role. An unnamed fleet is addressable only by opaque handles, and a role name still means something when the model tier changes."
+    },
+    {
+      "n": 16,
+      "text": "A reminder that repeats is wallpaper; a reminder that reports is news. Re-pasting rules trains an agent to skip injected text. Compute the reminder from current state and it stays worth reading."
     }
   ],
   "inwardFacing": [
@@ -436,6 +440,14 @@
     {
       "dont": "Treat an agent's unknown state as done",
       "because": "unknown means unclassified, not finished"
+    },
+    {
+      "dont": "Re-inject the same static reminder every turn",
+      "because": "it becomes wallpaper, and teaches that injected text is skippable"
+    },
+    {
+      "dont": "Block a tool call to fix a lost frame",
+      "because": "narrowing is not disobedience; denial does not restore the shape"
     }
   ],
   "taskContract": {
@@ -516,5 +528,66 @@
       "recovery cost after a context loss"
     ],
     "invariant": "Declare the substrate once and do not mix mid-run. Whichever is used, every agent is addressable by a role name — an unnamed fleet is a coincidence, not an organisation."
+  },
+  "awareness": {
+    "problem": "attentional narrowing — a worker deep in one task is doing it correctly and has lost the shape of the plan around it. Not disobedience.",
+    "governingRule": "A reminder that repeats is wallpaper; a reminder that reports is news. Compute it from disk — statuses, commits, amendments — so it differs every firing.",
+    "notEnforcement": "These reminders never block. Enforcement belongs in _RULES.md; this keeps the agent oriented so the rules have something to be obeyed in service of.",
+    "registers": {
+      "ambient": {
+        "weight": "one line, every turn",
+        "carries": "position only — never rules, which become wallpaper fastest"
+      },
+      "situational": {
+        "weight": "non-blocking note at the moment of relevance",
+        "carries": "ownership, contended files, the deployed checkout"
+      },
+      "punctuated": {
+        "weight": "full picture, rarely, at boundaries",
+        "carries": "where, closed, in flight, blocked, what changed, what is next"
+      }
+    },
+    "moments": [
+      {
+        "when": "session start",
+        "register": "punctuated",
+        "why": "cold or warm start — orient before acting"
+      },
+      {
+        "when": "before compaction",
+        "register": "punctuated",
+        "why": "the literal instant of forgetting; the only moment injected state lands inside the summary rather than being what it drops",
+        "highestValue": true
+      },
+      {
+        "when": "a worker finishes",
+        "register": "punctuated",
+        "why": "one unit closed is the cheapest moment to zoom out"
+      },
+      {
+        "when": "turn ends",
+        "register": "thin check",
+        "why": "does the status line reflect what just happened?"
+      },
+      {
+        "when": "every turn",
+        "register": "ambient",
+        "why": "never more than one line from knowing where you are"
+      },
+      {
+        "when": "before a tool call",
+        "register": "situational",
+        "why": "the fact is relevant precisely now"
+      }
+    ],
+    "reporterContract": [
+      "never fail — exit zero on every path",
+      "never be slow — no network, no expensive history walks",
+      "degrade out loud — silence reads as everything is fine",
+      "read, never write — it reports state, it does not maintain it",
+      "stay boring — no summarising, no model calls"
+    ],
+    "rules": "templates/_AWARENESS.md",
+    "implementation": "templates/awareness.sh"
   }
 }

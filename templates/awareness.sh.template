@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# awareness.sh — report where the work actually is, computed from disk.
+#
+# Starting point, not a finished tool. Adjust the CONFIG block to your layout.
+# See _AWARENESS.md for what this is for and why it must never block.
+#
+#   awareness.sh ambient      one line: position only
+#   awareness.sh checkpoint   the full picture, for a boundary
+#   awareness.sh stale        one line, only if a status looks untended
+#
+# Contract with the harness:
+#   - always exits 0, on every path, including every error
+#   - writes to stdout only
+#   - reads; never writes
+#   - no network, no model calls
+#
+# A reminder that breaks a tool call is worse than no reminder.
+
+set -uo pipefail   # deliberately no -e: a missing file must never abort a hook
+
+# ─── CONFIG ────────────────────────────────────────────────────────────────
+ROOT="${AWARENESS_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+TASK_GLOB="${AWARENESS_TASK_GLOB:-tasks/*/TASK.md}"   # each contains a Status: line
+CHANGELOG="${AWARENESS_CHANGELOG:-CHANGELOG.md}"      # principle 13 receipts
+PLAN="${AWARENESS_PLAN:-PLAN.md}"
+STATUS_RE='^\*\*Status:\*\*[[:space:]]*'
+# ───────────────────────────────────────────────────────────────────────────
+
+cd "$ROOT" 2>/dev/null || exit 0
+mode="${1:-ambient}"
+
+# Collect "<id>\t<status>" per task. Empty output is a valid, expected state.
+tasks() {
+  local f id status
+  for f in $TASK_GLOB; do
+    [ -f "$f" ] || continue
+    id="$(basename "$(dirname "$f")")"
+    status="$(grep -m1 -E "$STATUS_RE" "$f" 2>/dev/null \
+              | sed -E "s/$STATUS_RE//; s/[[:space:]]*\$//; s/ *—.*//")"
+    printf '%s\t%s\n' "$id" "${status:-NO STATUS LINE}"
+  done
+}
+
+# grep -c already prints 0 when nothing matches; it just exits 1. Adding `|| echo 0`
+# would emit "0\n0" and every later integer test would break on it.
+count_of() { tasks | grep -ciF "	$1" 2>/dev/null | head -1; }
+ids_of()   { tasks | grep -iF "	$1" 2>/dev/null | cut -f1 | paste -sd' ' - ; }
+
+TASKS="$(tasks)"
+
+if [ -z "$TASKS" ]; then
+  # Degrade out loud. Silence reads as "everything is fine".
+  echo "awareness: no task files match '$TASK_GLOB' under $ROOT — nothing to report"
+  exit 0
+fi
+
+total=$(printf '%s\n' "$TASKS" | wc -l | tr -d ' ')
+done_n=$(count_of "DONE")
+prog_n=$(count_of "IN PROGRESS")
+block_n=$(count_of "BLOCKED")
+blocked_ids="$(ids_of "BLOCKED")"
+active_ids="$(ids_of "IN PROGRESS")"
+
+case "$mode" in
+
+  ambient)
+    line="${done_n}/${total} done"
+    [ "$prog_n"  -gt 0 ] && line="$line · active: ${active_ids}"
+    [ "$block_n" -gt 0 ] && line="$line · BLOCKED: ${blocked_ids}"
+    echo "$line"
+    ;;
+
+  stale)
+    # Cheap honesty check: work committed recently while nothing is marked active.
+    recent="$(git log --since='2 hours ago' --oneline 2>/dev/null | wc -l | tr -d ' ')"
+    if [ "${recent:-0}" -gt 0 ] && [ "$prog_n" -eq 0 ]; then
+      echo "awareness: ${recent} commit(s) in the last 2h but no task is IN PROGRESS — is a status line untended?"
+    fi
+    ;;
+
+  checkpoint)
+    echo "── where the work is ─────────────────────────────────"
+    printf 'PROGRESS : %s of %s done' "$done_n" "$total"
+    [ "$block_n" -gt 0 ] && printf ' · %s blocked' "$block_n"
+    printf '\n'
+
+    [ -n "$active_ids"  ] && echo "IN FLIGHT: $active_ids"
+    [ -n "$blocked_ids" ] && echo "BLOCKED  : $blocked_ids"
+
+    notstarted="$(ids_of "NOT STARTED")"
+    [ -n "$notstarted" ] && echo "REMAINING: $notstarted"
+
+    if [ -f "$CHANGELOG" ]; then
+      # List items only — a heading is not an amendment.
+      amendments="$(grep -cE '^[-*] ' "$CHANGELOG" 2>/dev/null | head -1)"
+      echo "CHANGED  : ${amendments} plan amendment(s) recorded — see $CHANGELOG"
+      # Most recent receipt is the one most likely to be news.
+      last="$(grep -m1 -E '^[-*] ' "$CHANGELOG" 2>/dev/null | cut -c1-100)"
+      [ -n "$last" ] && echo "  latest → $last"
+    else
+      echo "CHANGED  : no $CHANGELOG — deviations are not being recorded (principle 13)"
+    fi
+
+    [ -f "$PLAN" ] || echo "PLAN     : no $PLAN found at $ROOT"
+
+    recent="$(git log --oneline -3 2>/dev/null)"
+    if [ -n "$recent" ]; then
+      echo "RECENT   :"
+      printf '  %s\n' "$recent"
+    fi
+    echo "──────────────────────────────────────────────────────"
+    ;;
+
+  *)
+    echo "awareness: unknown mode '$mode' (expected: ambient | checkpoint | stale)"
+    ;;
+esac
+
+exit 0
