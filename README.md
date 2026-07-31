@@ -39,12 +39,13 @@ framework: no install, no dependencies, no lock-in.
 | File | What it is |
 |---|---|
 | **[`index.html`](index.html)** | **The visual map.** Open in any browser. Interactive — pick a project size and watch which phases turn on. |
-| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The method. Eleven phases, fourteen principles, the scaling model, anti-patterns. |
+| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The method. Eleven phases, fifteen principles, the scaling model, anti-patterns. |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | Where it came from — the arc in order, including the steps that went wrong. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Feed it to tooling, or hand it to an agent as a planning brief. |
 | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) | **Print this.** Tick it against any plan before handing it over. |
 | [`templates/TASK.md.template`](templates/TASK.md.template) | Starting point for a task contract. |
 | [`templates/_RULES.md.template`](templates/_RULES.md.template) | Starting point for the shared agent contract. |
+| [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
 
 ---
 
@@ -103,6 +104,17 @@ precisely that.
 session a challenge was factually wrong — and checking revealed a real defect
 underneath it, in a different place entirely. Defending would have missed it;
 conceding would have fixed the wrong thing.
+
+**Measuring the substrate instead of assuming it.** Phase 8 says pick the
+execution substrate by measurement, and most methods quietly assume the first of
+two. **Script-and-collect** is cheap and deterministic, and blind in the middle —
+a worker stuck on an approval prompt looks exactly like one that is thinking,
+until it times out. **A managed terminal session** costs a pane per agent and
+buys two things the other cannot: `blocked` becomes an observable state rather
+than a timeout, and the fleet outlives the conversation that started it, so an
+orchestrator that loses context recovers the roster with one query. Neither wins
+universally. Measure both on the same real fan-out, and measure
+*time-to-detect-a-stall*, not only wall-clock.
 
 **Keeping the plan true while it runs.** A plan is written once and then reality
 moves — a task splits, a decision closes, an assumption proves false. The

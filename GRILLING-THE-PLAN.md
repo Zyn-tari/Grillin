@@ -222,6 +222,34 @@ paying a concurrency penalty.
 **Write the choice — and the rejected alternative — into the plan**, because the next operator
 will otherwise reach for the structured-looking tool.
 
+#### Two substrates worth measuring against each other
+
+Most methods assume the first of these. The second is worth a real trial before you rule it out.
+
+**Programmatic fan-out** — a script spawns workers, collects returns, and the orchestrator never
+sees the middle. Cheap, deterministic control flow, trivially repeatable. Its cost is *blindness*:
+a worker stuck on an approval prompt is indistinguishable from a worker thinking, until it times
+out. You cannot intervene in a running worker, only wait for it.
+
+**A managed terminal session** — real panes, named agents, queryable lifecycle
+(`working` / `idle` / `blocked` / `done` / `unknown`). Costs a pane per agent and needs the
+orchestration written rather than scripted. It buys two things the first cannot: **`blocked` is
+observable**, so a stalled agent is a fact rather than a timeout; and **the fleet outlives the
+conversation**, so an orchestrator that loses context recovers the roster with one query instead
+of losing the fleet.
+
+What to measure, since neither answer is universal:
+
+| Measure | Why it decides |
+|---|---|
+| Effective parallelism, both substrates | the advertised cap is not the number |
+| Wall-clock on the same real fan-out | not a synthetic benchmark |
+| Time-to-detect a stalled worker | the second substrate's core claim |
+| Orchestrator tokens spent watching | visibility is not free |
+| Recovery cost after a context loss | pairs with principles 13 and 14 |
+
+Rules for the second substrate, if you take it: [`templates/_HERDR.md`](templates/_HERDR.md.template).
+
 **Output:** tool per phase, with measurements.
 
 ---
@@ -258,7 +286,7 @@ author who had spent the session warning about exactly this.
 
 ---
 
-## Fourteen principles, portable
+## Fifteen principles, portable
 
 1. **Declare precedence before you start.** Say out loud when sources disagree.
 2. **Count before you plan.** Numbers size work; impressions don't.
@@ -279,6 +307,8 @@ author who had spent the session warning about exactly this.
     it never holds a correction the plan lacks.
 14. **Assume amnesia.** Anything that lives only in a conversation is already gone. Progress,
     decisions and corrections must be reconstructable from the repository alone.
+15. **Name every agent by role.** An unnamed fleet is addressable only by opaque handles, and a
+    role name still means something when the model tier changes.
 
 ---
 

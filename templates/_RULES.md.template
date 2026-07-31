@@ -44,6 +44,23 @@ cannot see a subagent's tier and must not have to ask.
 **State onward-delegation policy explicitly**: either "do NOT spawn sub-agents" or the tier
 sub-agents must use. An agent that spawns its own picks their models itself.
 
+## 2b · Substrate
+
+**Declare which substrate this run uses, and stick to it.** Mixing them mid-run is how a fleet
+becomes half-visible.
+
+- **Programmatic fan-out** (default) — a script spawns and collects. Cheap and deterministic;
+  blind in the middle.
+- **Managed terminal session** (secondary) — named agents in panes with queryable lifecycle.
+  See [`_HERDR.md`](_HERDR.md). Costs a pane per agent; makes `blocked` observable and lets the
+  fleet outlive the orchestrator's context.
+
+Phase 8 says measure rather than assume. If this project has not measured both yet, say so here
+rather than presenting the default as a decision.
+
+**Whichever is used, every agent is addressable by a role name.** An unnamed fleet is a
+coincidence, not an organisation.
+
 ## 2a · Containment
 
 - Agents work in an isolated copy, **never in the deployed checkout**.

@@ -356,6 +356,10 @@
     {
       "n": 14,
       "text": "Assume amnesia. Anything that lives only in a conversation is already gone. Progress, decisions and corrections must be reconstructable from the repository alone."
+    },
+    {
+      "n": 15,
+      "text": "Name every agent by role. An unnamed fleet is addressable only by opaque handles, and a role name still means something when the model tier changes."
     }
   ],
   "inwardFacing": [
@@ -424,6 +428,14 @@
     {
       "dont": "Keep progress in the conversation",
       "because": "a clear or a compaction erases it, and the work gets re-done or skipped"
+    },
+    {
+      "dont": "Run a fleet of identically-named agents",
+      "because": "they are addressable only by opaque pane ids, and terminal titles become the only clue to purpose"
+    },
+    {
+      "dont": "Treat an agent's unknown state as done",
+      "because": "unknown means unclassified, not finished"
     }
   ],
   "taskContract": {
@@ -465,5 +477,44 @@
     ],
     "editsUsuallyLanded": "A worker that appeared to fail has usually already written its edits — verify against the tree before assuming nothing happened.",
     "test": "If every conversation ended now and a new worker cloned the repository, could it tell what was done, what was in flight, and what changed since the plan was written?"
+  },
+  "substrates": {
+    "default": {
+      "id": "programmatic-fanout",
+      "how": "a script spawns workers, collects returns; the orchestrator never sees the middle",
+      "buys": [
+        "cheap",
+        "deterministic control flow",
+        "trivially repeatable"
+      ],
+      "costs": [
+        "blind mid-flight — a worker stuck on an approval prompt looks identical to one thinking, until timeout",
+        "no intervention in a running worker",
+        "fleet state lives in the orchestrator's context and dies with it"
+      ]
+    },
+    "secondary": {
+      "id": "managed-terminal-session",
+      "rules": "templates/_HERDR.md",
+      "how": "named agents in panes with queryable lifecycle: working | idle | blocked | done | unknown",
+      "buys": [
+        "blocked is observable, so a stall is a fact not a timeout",
+        "agents can be read and unblocked mid-flight",
+        "the fleet outlives the conversation — one query recovers the roster"
+      ],
+      "costs": [
+        "a pane per agent",
+        "orchestration is written, not scripted",
+        "visibility spends orchestrator tokens"
+      ]
+    },
+    "measure": [
+      "effective parallelism on both, not the advertised cap",
+      "wall-clock on the same real fan-out, not a synthetic benchmark",
+      "time-to-detect a stalled worker",
+      "orchestrator tokens spent watching",
+      "recovery cost after a context loss"
+    ],
+    "invariant": "Declare the substrate once and do not mix mid-run. Whichever is used, every agent is addressable by a role name — an unnamed fleet is a coincidence, not an organisation."
   }
 }

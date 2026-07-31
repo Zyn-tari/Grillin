@@ -54,6 +54,11 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] What actually binds identified (compute? memory? latency? admission control?)
 - [ ] Every quoted limit checked for **what it governs**
 - [ ] The rejected alternative written into the plan, with why
+- [ ] **Both substrates tried on the same real fan-out** — script-and-collect vs managed session
+- [ ] Time-to-detect a **stalled** worker measured on each, not just wall-clock
+- [ ] Recovery cost after a context loss measured on each
+- [ ] The substrate is **declared once** and not mixed mid-run
+- [ ] **Every agent has a role name** — never a fleet of identical kind labels
 
 ## Against the environment  ⚑ never skip
 

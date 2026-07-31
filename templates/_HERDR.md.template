@@ -1,0 +1,202 @@
+# Herdr rules — the observable substrate
+
+> **Secondary substrate.** The default in this method is programmatic fan-out: a script
+> spawns workers, collects returns, and the orchestrator never sees the middle. Herdr is the
+> alternative — real panes, named agents, observable lifecycle. Adopt it when the trade in
+> [`_RULES.md`](_RULES.md) §2b says to, not by default.
+
+Herdr organises terminals into workspaces, tabs and panes, recognises coding agents inside
+panes, and exposes the session through the `herdr` CLI. Every rule below exists because the
+substrate makes something *visible* that programmatic fan-out leaves *inferred*.
+
+**The binary is the authority on syntax.** Run `herdr --help`, then a command group with no
+subcommand (`herdr agent`, `herdr pane`, `herdr worktree`) to print its surface. Do not run bare
+`herdr` to discover — it launches the TUI. Do not probe a mutating nested command by omitting
+arguments; `herdr workspace create` is valid with defaults and will execute.
+
+---
+
+## 0 · Confirm you are inside it
+
+```bash
+test "${HERDR_ENV:-}" = 1
+```
+
+If that fails, you are not in a Herdr pane. Say so and stop — never inspect or drive a session
+from outside it. When it passes, your own coordinates are injected:
+
+```bash
+printf '%s\n' "$HERDR_WORKSPACE_ID" "$HERDR_TAB_ID" "$HERDR_PANE_ID"
+```
+
+---
+
+## 1 · Every agent gets a name — this is the whole point
+
+`agent start` takes a name matching `[a-z][a-z0-9_-]{0,31}`, unique among live agents:
+
+```bash
+herdr agent start <role-name> --kind <kind> --pane <pane-id>
+```
+
+An unnamed fleet is addressable only by opaque pane ID, with terminal titles as the sole clue to
+purpose. Five agents called `claude` is not a fleet, it is a coincidence. **Name by role, not by
+model** — `reviewer`, `migrator`, `t14-search` — so the name still means something when the model
+tier changes.
+
+Names follow the pane occupant and clear when that agent exits, is released, or is replaced.
+Agent commands accept a live name or the pane ID hosting it; they do not accept terminal IDs or
+bare kind labels.
+
+Existing unnamed agents can be adopted rather than restarted:
+
+```bash
+herdr agent rename <pane-id> <role-name>
+```
+
+---
+
+## 2 · Read state; never infer it
+
+| State | Means |
+|---|---|
+| `working` | actively producing |
+| `idle` | ready for input, and its tab has been seen in the focused UI |
+| `done` | the same idle state after *unseen* background work finished |
+| `blocked` | Herdr recognised an approval or question UI |
+| `unknown` | an agent is present but unclassified — **not** proof of completion |
+
+```bash
+herdr agent list                 # every agent, every workspace, one call
+herdr agent get <target>
+herdr agent read <target> --source recent-unwrapped --lines 120
+```
+
+`blocked` is the state programmatic fan-out cannot see. There, an agent waiting on an approval
+prompt is indistinguishable from an agent thinking, until it times out. Here it is a queryable
+fact — which is the single strongest argument for this substrate.
+
+Treat `unknown` as unknown. It is not a success.
+
+CLI reads do **not** mark a tab seen; only focusing it does. That is why `done` exists as a
+distinct label from `idle`.
+
+---
+
+## 3 · Submitting work
+
+```bash
+herdr agent prompt <name> "<task>" --wait --timeout 120000
+```
+
+`agent prompt` atomically submits text and Enter, honouring the pane's live bracketed-paste mode.
+`--wait` returns on the first settled `idle`, `done` or `blocked`. Do not restate those defaults
+with `--until`.
+
+A prompt sent from a non-working state must produce an observed lifecycle change within five
+seconds, or Herdr returns `agent_prompt_stalled` rather than waiting forever. The wait tracks
+lifecycle, not a specific turn — if the agent was already working, the active turn completing can
+satisfy it.
+
+Use `--until` only for a state-specific wait:
+
+```bash
+herdr agent wait <name> --until blocked --timeout 120000
+```
+
+When a wait returns `blocked`, **read before you send**: `agent get`, then `agent read`. Sending
+keys at an approval prompt you have not read is how an agent approves something nobody chose.
+
+```bash
+herdr agent send-keys <name> esc
+```
+
+---
+
+## 4 · Layout discipline
+
+Default to a sibling pane in the current tab and the caller's working directory. Do not create a
+workspace, tab or worktree unless the topology was actually asked for.
+
+```bash
+herdr pane layout --pane "$HERDR_PANE_ID"          # inspect before splitting
+herdr pane split --current --direction right --cwd "$PWD" --no-focus
+```
+
+Split a wide pane **right**, a narrow or tall pane **down**. Avoid repeated same-direction splits
+that produce unusable columns. Read the new pane ID from `.result.pane.pane_id` — parse it from
+JSON, never derive it from sidebar order or an example.
+
+**`--no-focus` on all background work.** The human's focus belongs to the human. Use `--current`
+or an explicit ID; omitting a target may hit the UI-focused pane, which can belong to someone
+else entirely.
+
+`agent start` requires an existing shell pane at an interactive prompt with nothing in the
+foreground. It never creates or moves layout. Use pane commands for ordinary processes and agent
+commands only when identity and lifecycle matter.
+
+---
+
+## 5 · Isolation
+
+Herdr's worktree commands do the phase-7 job and the observability job in one step:
+
+```bash
+herdr worktree create --branch <name> --base <ref> --label <text> --no-focus
+```
+
+This does not repeal the phase-7 rule. **Separate worktrees are the easy half of isolation; the
+contended-file list is the hard half.** A branch per task still ends in one merge, and two agents
+editing one file are still one conflict, relocated. Name the contended files and give each a
+single owner regardless of substrate.
+
+---
+
+## 6 · Reading output
+
+| Source | Use for |
+|---|---|
+| `visible` | the rendered viewport |
+| `recent` | recent output including soft wraps |
+| `recent-unwrapped` | **logs and transcripts** — soft wraps joined |
+| `detection` | the plain-text snapshot Herdr classifies agents from |
+
+Use `--format ansi` only when colour is evidence.
+
+If raising `--lines` stops revealing more of a finished response, the agent is drawing on the
+terminal's alternate screen; those rows never enter host scrollback and no line count recovers
+them. **Fallback only then:** ask the agent to write its full response to a file and reply with
+the path, then read the file. Do not ask for file output up front — it costs a round trip on
+every task to solve a problem most tasks do not have.
+
+---
+
+## 7 · Do NOT
+
+- Do NOT close a workspace, tab, pane or session you did not create.
+- Do NOT run `herdr server stop` from an active session — it stops the server and its panes.
+- Do NOT kill the main Herdr process. Use a named session for experiments needing isolation.
+- Do NOT steal focus for background work.
+- Do NOT target another client's focused pane by omitting a target.
+- Do NOT treat `unknown` as done, or a read as proof a tab was seen.
+- Do NOT reuse a pane ID after `pane move` — take the new one from
+  `.result.move_result.pane.pane_id`. Closed IDs are never reused.
+
+---
+
+## 8 · Why this substrate survives amnesia
+
+Principle 14 says assume amnesia: anything living only in a conversation is already gone.
+
+Programmatic fan-out holds worker state in the orchestrator's context. Clear it and the fleet
+becomes invisible — still running, unaddressable, its progress unknown until it returns or dies.
+
+Herdr holds that state in the session. A cleared orchestrator runs one command:
+
+```bash
+herdr agent list
+```
+
+and recovers every agent, its pane, its cwd, and its lifecycle state. **The fleet outlives the
+conversation that started it.** Named agents make that recovery legible rather than merely
+possible — which is why §1 is a rule and not a nicety.
