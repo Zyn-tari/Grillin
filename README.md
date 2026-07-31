@@ -47,7 +47,7 @@ framework: no install, no dependencies, no lock-in.
 | [`templates/_RULES.md.template`](templates/_RULES.md.template) | Starting point for the shared agent contract. |
 | [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
 | [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
-| [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Reads; never writes; always exits 0. |
+| [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Never touches the plan; always exits 0. |
 
 ---
 

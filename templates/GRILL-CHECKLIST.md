@@ -92,8 +92,12 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] Something fires at a **boundary** — session start, a worker finishing, a wave closing
 - [ ] The ambient reminder carries **position only** — no rules
 - [ ] No reminder can **block** anything; enforcement lives somewhere else
-- [ ] The state reporter **reads and never writes**, and exits zero on every path
+- [ ] The state reporter **never touches the plan** — its only writes are its own log and
+      the published surface — and it exits zero on every path
 - [ ] It **degrades out loud** — "no tasks found" beats silence, which reads as fine
+- [ ] The requester's surface is **derived from the status writes**, not maintained by hand
+- [ ] That surface is **silent to the agent** — acknowledgement turns a record into a performance
+- [ ] It separates **claimed** done from **verified** done, and never renders them alike
 
 ## Will it survive being forgotten?  ⚑ never skip
 

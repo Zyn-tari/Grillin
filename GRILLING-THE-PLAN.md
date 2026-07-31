@@ -294,7 +294,10 @@ author who had spent the session warning about exactly this.
 - **One entry point** with an explicit read order.
 - **A paste-ready kickoff prompt.**
 - **Persistent memory updated** so a cold start lands on this plan, not on last month's work.
-- **A status surface** the requester can read without asking — published, not narrated.
+- **A status surface** the requester can read without asking — published, not narrated. The
+  cheapest way to keep one true is to derive it from the status lines principle 13 already
+  requires, on the write that updates them: that write is the only *work-shaped* event a harness
+  offers, and it costs the worker nothing because the surface is never shown to it.
 - **Hand-off items you cannot do yourself**, stated explicitly rather than silently skipped.
 - **A warm restart, not just a cold one.** The entry point tells a fresh worker what the plan
   *is*; it must also let one that is halfway through establish *where it got to*. See

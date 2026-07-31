@@ -545,6 +545,12 @@
       "punctuated": {
         "weight": "full picture, rarely, at boundaries",
         "carries": "where, closed, in flight, blocked, what changed, what is next"
+      },
+      "silent": {
+        "weight": "a written record, never shown to the agent",
+        "carries": "the requester's progress surface",
+        "audience": "the requester, not the agent",
+        "why": "free — no tokens, no interruption — and an agent acknowledged for status updates starts producing them performatively"
       }
     },
     "moments": [
@@ -563,6 +569,11 @@
         "when": "a worker finishes",
         "register": "punctuated",
         "why": "one unit closed is the cheapest moment to zoom out"
+      },
+      {
+        "when": "a status line is written",
+        "register": "silent",
+        "why": "the only work-shaped event available; costs the agent nothing"
       },
       {
         "when": "turn ends",
@@ -584,10 +595,14 @@
       "never fail — exit zero on every path",
       "never be slow — no network, no expensive history walks",
       "degrade out loud — silence reads as everything is fine",
-      "read, never write — it reports state, it does not maintain it",
-      "stay boring — no summarising, no model calls"
+      "stay boring — no summarising, no model calls",
+      "never touch the plan, the task files or the changelog — its only writes are its own log and the surface it publishes",
+      "report claims as claims; mark verified only when the done-command actually ran"
     ],
     "rules": "templates/_AWARENESS.md",
-    "implementation": "templates/awareness.sh"
+    "implementation": "templates/awareness.sh",
+    "manufacturedEvent": "Almost every hook event is harness-shaped, not work-shaped: a turn ending means a turn ended. Principle 13 already obliges the status line to be updated in place, which makes a write to a task file the one observable act coinciding with a real work boundary. Hooking that write yields the event the harness never offered, without adding a second obligation.",
+    "freeMeasurement": "Status transitions are timestamped by the filesystem, so NOT STARTED to IN PROGRESS to DONE yields real elapsed time per task and per wave — the phase 8 substrate comparison, collected as a byproduct of working rather than as a benchmark.",
+    "claimsVsEvidence": "A DONE status is a claim. It is evidence only once the task's own done-command has run and that fact was recorded. A surface rendering the two alike is a certificate the worker issued to itself, and is worse than no surface because it will be trusted."
   }
 }

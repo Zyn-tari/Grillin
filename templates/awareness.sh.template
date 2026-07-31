@@ -7,11 +7,14 @@
 #   awareness.sh ambient      one line: position only
 #   awareness.sh checkpoint   the full picture, for a boundary
 #   awareness.sh stale        one line, only if a status looks untended
+#   awareness.sh record       SILENT: log a transition, refresh the published surface
+#   awareness.sh surface      print the published surface (what the requester reads)
 #
 # Contract with the harness:
 #   - always exits 0, on every path, including every error
-#   - writes to stdout only
-#   - reads; never writes
+#   - `record` prints NOTHING — it is for the requester, never the agent
+#   - never touches the plan, the task files or the changelog;
+#     its only writes are its own log and the surface it publishes
 #   - no network, no model calls
 #
 # A reminder that breaks a tool call is worse than no reminder.
@@ -24,6 +27,11 @@ TASK_GLOB="${AWARENESS_TASK_GLOB:-tasks/*/TASK.md}"   # each contains a Status: 
 CHANGELOG="${AWARENESS_CHANGELOG:-CHANGELOG.md}"      # principle 13 receipts
 PLAN="${AWARENESS_PLAN:-PLAN.md}"
 STATUS_RE='^\*\*Status:\*\*[[:space:]]*'
+LOG="${AWARENESS_LOG:-.awareness/progress.log}"       # append-only transition log
+SURFACE="${AWARENESS_SURFACE:-PROGRESS.md}"           # what the requester reads
+# A task counts as verified only once its done-command has actually run and a
+# worker recorded that fact here. Absence means "claimed", never "failed".
+VERIFIED="${AWARENESS_VERIFIED:-.awareness/verified}" # one task id per line
 # ───────────────────────────────────────────────────────────────────────────
 
 cd "$ROOT" 2>/dev/null || exit 0
@@ -46,11 +54,28 @@ tasks() {
 count_of() { tasks | grep -ciF "	$1" 2>/dev/null | head -1; }
 ids_of()   { tasks | grep -iF "	$1" 2>/dev/null | cut -f1 | paste -sd' ' - ; }
 
+# A DONE status is a claim. It is evidence only if the task's done-command ran.
+is_verified() { [ -f "$VERIFIED" ] && grep -qxF "$1" "$VERIFIED" 2>/dev/null; }
+done_split() {
+  local id v="" c=""
+  while IFS="$(printf '\t')" read -r id status; do
+    case "$status" in
+      DONE|done|Done) if is_verified "$id"; then v="$v $id"; else c="$c $id"; fi ;;
+    esac
+  done <<EOF
+$TASKS
+EOF
+  printf '%s\t%s\n' "${v# }" "${c# }"
+}
+
 TASKS="$(tasks)"
 
 if [ -z "$TASKS" ]; then
-  # Degrade out loud. Silence reads as "everything is fine".
-  echo "awareness: no task files match '$TASK_GLOB' under $ROOT — nothing to report"
+  # Degrade out loud — silence reads as "everything is fine". Except in `record`,
+  # whose whole contract is to print nothing; there, saying so would inject text
+  # into the agent that this register exists specifically to avoid.
+  [ "$mode" = "record" ] || \
+    echo "awareness: no task files match '$TASK_GLOB' under $ROOT — nothing to report"
   exit 0
 fi
 
@@ -111,8 +136,53 @@ case "$mode" in
     echo "──────────────────────────────────────────────────────"
     ;;
 
+  record)
+    # SILENT. Fired when a status line is written — the one work-shaped event
+    # available. Prints nothing: this register is for the requester, and echoing
+    # it back turns the status line into a performance.
+    mkdir -p "$(dirname "$LOG")" 2>/dev/null
+    stamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null)"
+    prev="$(tail -1 "$LOG" 2>/dev/null | cut -f2- )"
+    now="$(printf '%s\n' "$TASKS" | tr '\n' ';')"
+    # Only append on an actual change — an unchanged snapshot is not a transition.
+    if [ "$prev" != "$now" ]; then
+      printf '%s\t%s\n' "$stamp" "$now" >>"$LOG" 2>/dev/null
+    fi
+    "$0" surface >"$SURFACE" 2>/dev/null
+    ;;
+
+  surface)
+    # What the requester reads without having to ask. Claims and evidence are
+    # reported in different columns on purpose.
+    split="$(done_split)"
+    verified="$(printf '%s' "$split" | cut -f1)"
+    claimed="$(printf '%s' "$split" | cut -f2)"
+    echo "# Progress"
+    echo
+    echo "_Generated from task status lines. \`DONE\` is a worker's claim; **verified** means the"
+    echo "task's own done-command was run and recorded._"
+    echo
+    echo "| State | Tasks |"
+    echo "|---|---|"
+    [ -n "$verified"    ] && echo "| done — verified | $verified |"
+    [ -n "$claimed"     ] && echo "| done — claimed, ungated | $claimed |"
+    [ -n "$active_ids"  ] && echo "| in progress | $active_ids |"
+    [ -n "$blocked_ids" ] && echo "| blocked | $blocked_ids |"
+    ns="$(ids_of 'NOT STARTED')"; [ -n "$ns" ] && echo "| not started | $ns |"
+    echo
+    echo "${done_n} of ${total} tasks report done."
+    if [ -n "$claimed" ]; then
+      echo
+      echo "> ⚠ ${claimed} report done without a recorded gate run."
+    fi
+    if [ -f "$LOG" ]; then
+      echo
+      echo "Last transition: $(tail -1 "$LOG" 2>/dev/null | cut -f1)"
+    fi
+    ;;
+
   *)
-    echo "awareness: unknown mode '$mode' (expected: ambient | checkpoint | stale)"
+    echo "awareness: unknown mode '$mode' (expected: ambient | checkpoint | stale | record | surface)"
     ;;
 esac
 
