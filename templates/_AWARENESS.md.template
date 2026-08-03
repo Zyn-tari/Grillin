@@ -126,8 +126,8 @@ If you wire exactly one hook, wire that one.
 
 ## What the state script must do
 
-One script, two modes, called from several events. Requirements are mostly about not being
-harmful:
+One script, one mode per register, called from several events. Requirements are mostly about
+not being harmful:
 
 - **Never fail.** Exit zero on every path. A reminder that breaks a tool call is worse than no
   reminder at all.
@@ -143,7 +143,14 @@ harmful:
 - **Stay boring.** No cleverness, no summarising, no model calls. Its whole value is that it
   reports what is literally on disk.
 
-See [`awareness.sh.template`](awareness.sh.template) for a starting implementation.
+See [`awareness.sh.template`](awareness.sh.template) for a starting implementation, and
+[`hooks.json.template`](hooks.json.template) for the wiring. Start with the pre-compaction hook
+alone: it is the highest-value one, it cannot break anything, and confirming one injection
+actually lands is worth more than wiring five that might not.
+
+The situational register reads the phase-7 contended-file list — the `OWNERS` file described in
+[`_WORKTREES.md`](_WORKTREES.md.template). Without one it is a no-op, which is the correct
+failure: no ownership map, no ownership claims.
 
 ---
 

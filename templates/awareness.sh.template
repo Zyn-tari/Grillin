@@ -4,11 +4,13 @@
 # Starting point, not a finished tool. Adjust the CONFIG block to your layout.
 # See _AWARENESS.md for what this is for and why it must never block.
 #
-#   awareness.sh ambient      one line: position only
-#   awareness.sh checkpoint   the full picture, for a boundary
-#   awareness.sh stale        one line, only if a status looks untended
-#   awareness.sh record       SILENT: log a transition, refresh the published surface
-#   awareness.sh surface      print the published surface (what the requester reads)
+#   awareness.sh ambient        one line: position only
+#   awareness.sh checkpoint     the full picture, for a boundary
+#   awareness.sh precompact     what must survive the summary — fire before compaction
+#   awareness.sh situational F  non-blocking note if file F belongs to someone else
+#   awareness.sh stale          one line, only if a status looks untended
+#   awareness.sh record         SILENT: log a transition, refresh the published surface
+#   awareness.sh surface        print the published surface (what the requester reads)
 #
 # Contract with the harness:
 #   - always exits 0, on every path, including every error
@@ -32,10 +34,33 @@ SURFACE="${AWARENESS_SURFACE:-PROGRESS.md}"           # what the requester reads
 # A task counts as verified only once its done-command has actually run and a
 # worker recorded that fact here. Absence means "claimed", never "failed".
 VERIFIED="${AWARENESS_VERIFIED:-.awareness/verified}" # one task id per line
+# Contended-file list from phase 7: "<path-or-glob><TAB><owner>" per line.
+OWNERS="${AWARENESS_OWNERS:-OWNERS}"
 # ───────────────────────────────────────────────────────────────────────────
 
 cd "$ROOT" 2>/dev/null || exit 0
 mode="${1:-ambient}"
+
+# Situational runs before everything else: it answers a question about one file
+# and does not depend on any task existing. It NEVER blocks — it prints a note
+# and exits 0, always. Denial is enforcement's job, not this file's.
+if [ "$mode" = "situational" ]; then
+  target="${2:-}"
+  [ -n "$target" ] || exit 0
+  [ -f "$OWNERS" ] || exit 0
+  rel="${target#"$ROOT"/}"
+  while IFS="$(printf '\t')" read -r pattern owner; do
+    case "$pattern" in ''|'#'*) continue ;; esac
+    # shellcheck disable=SC2254 — pattern is intentionally a glob
+    case "$rel" in
+      $pattern)
+        echo "note: $rel is owned by ${owner}. If that is not you, emit a fragment for the integrator rather than editing it — see the contended-file list."
+        exit 0
+        ;;
+    esac
+  done <"$OWNERS"
+  exit 0
+fi
 
 # Collect "<id>\t<status>" per task. Empty output is a valid, expected state.
 tasks() {
@@ -136,6 +161,34 @@ case "$mode" in
     echo "──────────────────────────────────────────────────────"
     ;;
 
+  precompact)
+    # Fired immediately before the context is summarised — the one moment where
+    # injected state lands INSIDE the summary instead of being what the summary
+    # drops. So this output is written for the agent that exists AFTER the
+    # summary: it carries position, and it carries how to recover the rest.
+    # Keep it short. Everything here competes for room in the summary.
+    echo "── carry this through the summary ────────────────────"
+    printf 'POSITION : %s of %s done' "$done_n" "$total"
+    [ -n "$active_ids"  ] && printf ' · in flight: %s' "$active_ids"
+    [ -n "$blocked_ids" ] && printf ' · BLOCKED: %s' "$blocked_ids"
+    printf '\n'
+
+    if [ -f "$CHANGELOG" ]; then
+      last="$(grep -m1 -E '^[-*] ' "$CHANGELOG" 2>/dev/null | cut -c1-90)"
+      [ -n "$last" ] && echo "LAST CHANGE: $last"
+    fi
+
+    # The durable state is on disk. Say where, so the post-summary agent can
+    # rebuild what the summary lost instead of trusting what it remembers.
+    echo "TRUTH LIVES IN (re-read rather than recall):"
+    [ -f "$PLAN" ] && echo "  · $PLAN — amended in place; it is current by construction"
+    echo "  · $TASK_GLOB — status lines are the progress record"
+    [ -f "$CHANGELOG" ] && echo "  · $CHANGELOG — what changed since the plan was written"
+    echo "  · git log / git status — what actually landed"
+    echo "RECOVER WITH: $0 checkpoint"
+    echo "──────────────────────────────────────────────────────"
+    ;;
+
   record)
     # SILENT. Fired when a status line is written — the one work-shaped event
     # available. Prints nothing: this register is for the requester, and echoing
@@ -182,7 +235,7 @@ case "$mode" in
     ;;
 
   *)
-    echo "awareness: unknown mode '$mode' (expected: ambient | checkpoint | stale | record | surface)"
+    echo "awareness: unknown mode '$mode' (expected: ambient | checkpoint | precompact | situational | stale | record | surface)"
     ;;
 esac
 

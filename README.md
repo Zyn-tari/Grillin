@@ -48,6 +48,8 @@ framework: no install, no dependencies, no lock-in.
 | [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
 | [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
 | [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Never touches the plan; always exits 0. |
+| [`templates/hooks.json.template`](templates/hooks.json.template) | The wiring. Start with the pre-compaction hook — the rest can wait. |
+| [`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template) | Phase 7's artefact — waves, worktrees, and the contended-file list with owners. |
 
 ---
 

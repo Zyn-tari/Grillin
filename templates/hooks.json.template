@@ -1,0 +1,99 @@
+{
+  "_comment": [
+    "Wiring for the awareness layer. Merge into your harness's settings file.",
+    "See _AWARENESS.md for what each register is and why none of these block.",
+    "",
+    "Event names below are the common ones. CONFIRM AGAINST YOUR HARNESS'S HOOK",
+    "DOCUMENTATION before relying on any of it — what a hook may return, and",
+    "whether its stdout reaches the model, differs per event and per harness.",
+    "Phase 9 exists because assumptions about the environment are where plans die.",
+    "",
+    "Start with PreCompact alone. It is the highest-value one, it cannot break",
+    "anything, and it is worth confirming the injection actually lands before",
+    "wiring five more. Add the rest once you have seen one work.",
+    "",
+    "AWARENESS points at your copy of awareness.sh. Use an absolute path or a",
+    "variable your harness expands — a relative path resolves against whatever",
+    "directory the hook happens to run in, which is not a promise you have."
+  ],
+
+  "hooks": {
+
+    "PreCompact": [
+      {
+        "_why": "THE ONE THAT MATTERS. Fires immediately before the context is summarised — the only moment where injected state lands inside the summary rather than being what the summary drops.",
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "bash \"$AWARENESS\" precompact", "timeout": 10 }
+        ]
+      }
+    ],
+
+    "SessionStart": [
+      {
+        "_why": "Cold or warm start. Orient before acting — never resume by starting at task 1.",
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "bash \"$AWARENESS\" checkpoint", "timeout": 10 }
+        ]
+      }
+    ],
+
+    "SubagentStop": [
+      {
+        "_why": "A worker finished: one unit closed, the cheapest moment to zoom out. This is the wave boundary.",
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "bash \"$AWARENESS\" checkpoint", "timeout": 10 }
+        ]
+      }
+    ],
+
+    "PostToolUse": [
+      {
+        "_why": "SILENT. A status line was written — the only work-shaped event a harness offers. Refreshes the requester's surface. Prints nothing: this register's audience is not the agent.",
+        "_note": "Narrow the matcher to your task-file path so this fires on work boundaries, not on every write.",
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "bash \"$AWARENESS\" record", "timeout": 10 }
+        ]
+      }
+    ],
+
+    "PreToolUse": [
+      {
+        "_why": "Situational, and NON-BLOCKING by design. Notes that a file has an owner; never denies. Enforcement belongs in _RULES.md, not here.",
+        "_note": "Requires an OWNERS file — the phase-7 contended-file list. Without one this is a no-op, which is the correct failure.",
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "bash \"$AWARENESS\" situational \"$CLAUDE_TOOL_FILE_PATH\"", "timeout": 5 }
+        ]
+      }
+    ],
+
+    "Stop": [
+      {
+        "_why": "Turn ended. Asks whether the status line reflects what just happened — the check that keeps principle 13 self-maintaining rather than aspirational.",
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "bash \"$AWARENESS\" stale", "timeout": 5 }
+        ]
+      }
+    ]
+  },
+
+  "_deliberately_absent": {
+    "UserPromptSubmit": [
+      "The ambient register — one line, every turn — is the one most likely to become noise,",
+      "and noise is expensive here: an agent that learns injected text is skippable stops",
+      "reading the reminders that matter. Add it only once the punctuated ones have proved",
+      "useful, and only if you actually miss it."
+    ]
+  },
+
+  "_before_you_add_more": [
+    "Every reminder competes for the same attention. Adding one makes the others",
+    "cheaper to ignore. The test for a new hook is not 'does this moment exist' but",
+    "'does a worker at this moment need something it does not have'."
+  ]
+}

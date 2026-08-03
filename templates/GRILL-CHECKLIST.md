@@ -41,6 +41,7 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] One owner per file — no file appears in two tasks' ownership
 - [ ] **The contended-file list exists.** Which files do many tasks want?
 - [ ] Each contended file has a single owner and a fragment protocol
+- [ ] The owner list exists **machine-readably**, not only as prose in a table
 - [ ] Every task has a loop **with a cap**
 - [ ] Every "done" is evidence someone else can check
 - [ ] Every task has an explicit do-NOT list
@@ -89,6 +90,8 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 
 - [ ] Reminders are **computed from current state**, never static text re-pasted
 - [ ] Something fires **before compaction** — the one moment state lands inside the summary
+- [ ] That pre-compaction output names **where truth lives**, so the post-summary worker
+      re-reads rather than recalls
 - [ ] Something fires at a **boundary** — session start, a worker finishing, a wave closing
 - [ ] The ambient reminder carries **position only** — no rules
 - [ ] No reminder can **block** anything; enforcement lives somewhere else

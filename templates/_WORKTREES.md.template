@@ -1,0 +1,132 @@
+# Isolation map — worktrees, owners, and the collision
+
+One copy. Every `TASK.md` references this file for its branch and its wave; if a task and this
+file disagree, **this file wins and one of them needs fixing.**
+
+Phase 7 says the separate workspaces are the *easy* half. This file exists for the hard half.
+
+---
+
+## 1 · The waves
+
+Tasks in the same wave run concurrently. A wave closes when every task in it is **verified**, not
+when every task reports done — a claim is not evidence.
+
+| Wave | Tasks | Gates on | Notes |
+|---|---|---|---|
+| W1 | `<ids>` | — | `<why these are first>` |
+| W2 | `<ids>` | W1 | |
+| W3 | `<ids>` | W2 | |
+
+State the gating relation, not just the order. "W2 after W1" is a schedule; "W2 gates on W1
+because it consumes the schema W1 lands" is a reason, and a reason survives a change of plan.
+
+---
+
+## 2 · Worktrees
+
+Each task gets its own checkout. **The deployed or live checkout is never a workspace** — read
+from it if you must, write to it never.
+
+| Task | Branch | Worktree path |
+|---|---|---|
+| `<id>` | `<prefix>/<id>-<slug>` | `<path>` |
+
+Creating one:
+
+```
+git worktree add <path> -b <prefix>/<id>-<slug> <base-ref>
+```
+
+Removing one, after its branch is merged and its findings are collected:
+
+```
+git worktree remove <path>
+```
+
+Do not remove a worktree you did not create, and do not remove one whose task is not verified —
+uncommitted work inside it is invisible from outside.
+
+---
+
+## 3 · The contended-file list — the point of this document
+
+**Which files do many tasks want?** Every project has some: a build script, a schema file, a
+route table, a shared client, a registry, a config. Several branches editing one file is several
+conflicts resolved by whoever merges last — the same collision, relocated to merge time, where it
+is most expensive and least visible.
+
+Find them before the work starts, not at merge:
+
+```
+# rough but effective: which paths appear in more than one task's "What you own"?
+grep -h -A20 'What you own' tasks/*/TASK.md | grep -oE '[a-zA-Z0-9_./-]+\.[a-z]+' | sort | uniq -d
+```
+
+Record every one here. **A contended file has exactly one owner, and it is never a task agent** —
+it is the integrator.
+
+| File | Owner | Tasks that need it | Fragment name |
+|---|---|---|---|
+| `<path>` | integrator | `<ids>` | `<FRAGMENT>.ext` |
+
+### The machine-readable copy
+
+Keep the same list in an `OWNERS` file at the repository root, one entry per line, `<path or
+glob><TAB><owner>`:
+
+```
+src/api/client.js	integrator
+src/routes/*.js	T14
+db/schema.sql	integrator
+```
+
+That file is what [`awareness.sh`](awareness.sh.template) reads in `situational` mode, so a worker
+about to edit a contended file gets told whose it is **at the moment it matters**. It is a note,
+never a denial — see [`_AWARENESS.md`](_AWARENESS.md.template). Blank lines and `#` comments are
+ignored.
+
+Two lists that can disagree is a defect. If you only keep one, keep `OWNERS` and generate the
+table above from it.
+
+---
+
+## 4 · The fragment protocol
+
+A task that needs a change in a file it does not own **does not edit it**. It writes the exact
+change into its own task folder and names it in `FINDINGS.md`:
+
+```
+tasks/<id>/<FRAGMENT>.ext
+```
+
+A fragment states **where** the change goes, **what** it is, and **why** — enough that the
+integrator applies it without rereading the task. A fragment that says "add this somewhere in the
+client" is not a fragment, it is a request for someone else to do the work.
+
+---
+
+## 5 · The integrator
+
+One role, one job: applies fragments in merge order and **writes no feature code**. Writing
+feature code is what turns an integrator into another contending author, and then this whole file
+describes something that is no longer true.
+
+Merge order is the wave order. Within a wave, order by fragment dependency where one exists, and
+otherwise by task id, so the sequence is reproducible rather than whoever finished first.
+
+After each merge the integrator runs the gates. **Never merge on green fragments alone** — a
+fragment that applies cleanly is not a fragment that is correct.
+
+---
+
+## 6 · Do NOT
+
+- Do NOT edit a file you do not own, even trivially, even to fix something obviously broken.
+  Record it; the fragment protocol exists for exactly this.
+- Do NOT create or remove worktrees from inside a task agent.
+- Do NOT merge your own branch.
+- Do NOT treat "no merge conflict" as "no collision" — two tasks can edit different lines of one
+  file and still produce something incoherent.
+- Do NOT let the `OWNERS` file drift from this table. One of them is read by a machine; the other
+  is read by people; they must say the same thing.

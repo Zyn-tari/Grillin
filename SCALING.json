@@ -557,38 +557,45 @@
       {
         "when": "session start",
         "register": "punctuated",
-        "why": "cold or warm start — orient before acting"
+        "why": "cold or warm start — orient before acting",
+        "mode": "checkpoint"
       },
       {
         "when": "before compaction",
         "register": "punctuated",
         "why": "the literal instant of forgetting; the only moment injected state lands inside the summary rather than being what it drops",
-        "highestValue": true
+        "highestValue": true,
+        "mode": "precompact"
       },
       {
         "when": "a worker finishes",
         "register": "punctuated",
-        "why": "one unit closed is the cheapest moment to zoom out"
+        "why": "one unit closed is the cheapest moment to zoom out",
+        "mode": "checkpoint"
       },
       {
         "when": "a status line is written",
         "register": "silent",
-        "why": "the only work-shaped event available; costs the agent nothing"
+        "why": "the only work-shaped event available; costs the agent nothing",
+        "mode": "record"
       },
       {
         "when": "turn ends",
         "register": "thin check",
-        "why": "does the status line reflect what just happened?"
+        "why": "does the status line reflect what just happened?",
+        "mode": "stale"
       },
       {
         "when": "every turn",
         "register": "ambient",
-        "why": "never more than one line from knowing where you are"
+        "why": "never more than one line from knowing where you are",
+        "mode": "ambient"
       },
       {
         "when": "before a tool call",
         "register": "situational",
-        "why": "the fact is relevant precisely now"
+        "why": "the fact is relevant precisely now",
+        "mode": "situational"
       }
     ],
     "reporterContract": [
@@ -603,6 +610,26 @@
     "implementation": "templates/awareness.sh",
     "manufacturedEvent": "Almost every hook event is harness-shaped, not work-shaped: a turn ending means a turn ended. Principle 13 already obliges the status line to be updated in place, which makes a write to a task file the one observable act coinciding with a real work boundary. Hooking that write yields the event the harness never offered, without adding a second obligation.",
     "freeMeasurement": "Status transitions are timestamped by the filesystem, so NOT STARTED to IN PROGRESS to DONE yields real elapsed time per task and per wave — the phase 8 substrate comparison, collected as a byproduct of working rather than as a benchmark.",
-    "claimsVsEvidence": "A DONE status is a claim. It is evidence only once the task's own done-command has run and that fact was recorded. A surface rendering the two alike is a certificate the worker issued to itself, and is worse than no surface because it will be trusted."
+    "claimsVsEvidence": "A DONE status is a claim. It is evidence only once the task's own done-command has run and that fact was recorded. A surface rendering the two alike is a certificate the worker issued to itself, and is worse than no surface because it will be trusted.",
+    "wiring": "templates/hooks.json",
+    "startWith": "PreCompact alone — highest value, cannot break anything, and confirming one injection lands beats wiring five that might not.",
+    "precompactCarries": [
+      "position: done/total, in flight, blocked",
+      "the most recent plan amendment",
+      "where truth lives, so the post-summary worker re-reads rather than recalls",
+      "the command that rebuilds the full picture"
+    ]
+  },
+  "isolation": {
+    "artefact": "templates/_WORKTREES.md",
+    "carries": [
+      "the wave grid and what each wave gates on",
+      "one worktree per task, never the deployed checkout",
+      "the contended-file list — the hard half of phase 7",
+      "an OWNERS file, machine-readable, read by awareness.sh in situational mode",
+      "the fragment protocol",
+      "the integrator, who applies fragments and writes no feature code"
+    ],
+    "rule": "A contended file has exactly one owner and it is never a task agent."
   }
 }
