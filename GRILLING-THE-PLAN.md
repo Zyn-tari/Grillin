@@ -68,14 +68,17 @@ overlap. Each writes one document to a shared frozen folder.
 
 - Cite `file:line` for every claim.
 - **Give counts.** "Several components fetch their own data" is useless; "21 of 49" sizes work.
-- Label **VERIFIED** (read it) vs **REPORTED** (inferred).
+- Label **CONFIRMED** (you checked it yourself) vs **SUSPECTED** (you inferred it, or were
+  told). One vocabulary, used everywhere in this method — an inventory, a finding and a
+  claim in a report all take the same two labels, so nobody has to translate.
 - End each with **"what I did not verify."**
 - Use your cheapest capable model. Inventory is not reasoning work.
 
 This folder is written once and **frozen**. Everything downstream reads it instead of
 re-deriving it — that is where the speed comes from.
 
-**Output:** an inventory folder, with counts.
+**Output:** an inventory folder — one document per worker, every claim cited, every category
+carrying a number, each labelled CONFIRMED or SUSPECTED, each ending in "what I did not verify".
 
 ---
 
@@ -89,12 +92,13 @@ Recon always finds defects. Sort them, never absorb them:
 | **B — needs a human decision** | product or safety semantics; you do not decide these |
 | **C — real but out of scope** | record it, do not schedule it |
 
-Label each **VERIFIED** or **REPORTED**. Spot-check the headline items yourself.
+Label each **CONFIRMED** or **SUSPECTED**. Spot-check the headline items yourself.
 
 **Why:** without triage a discovery either silently expands scope or gets lost. This makes scope
 creep a visible decision instead of a side effect.
 
-**Output:** a triaged defect register.
+**Output:** a triaged defect register — one row per defect: what it is, `file:line`, bucket
+A/B/C, and CONFIRMED or SUSPECTED.
 
 ---
 
@@ -116,7 +120,9 @@ ladder. Hunt specifically for:
 Write the contradictions down. **Never resolve one silently** — surface it, state which source
 wins by the ladder, and say the ladder is why.
 
-**Output:** a contradictions register. Expect it to resize the work.
+**Output:** a contradictions register — one row per contradiction: the claim, where it was
+asserted, what the running system actually says, which source wins, and the ladder rule that
+decides it. Expect it to resize the work.
 
 ---
 
@@ -134,11 +140,21 @@ doing its job.
 
 **Output:** an approved graph.
 
+**Record what you turned off.** The scaling table will switch phases off, and your job may make
+others meaningless — there is no substrate to measure when nothing runs, no contended files when
+one person works alone. Keep a short table in the plan: *phase · on/off/reduced · why*. The
+method's whole objection is to skipping **silently**; a skip with a reason next to it is a
+decision, and the next reader can disagree with it.
+
 ---
 
 ### Phase 5 — Decompose into owned tasks
 
-**One folder per task. Always, and regardless of how many tasks there are.** Three tasks or forty,
+**One folder per task. Always, and regardless of how many tasks there are** — including at
+sizes where the *rest* of this phase is switched off. The scaling table reduces what a `TASK.md`
+must contain; it never removes the folder, the owner, the status line or the done-command. Those
+four are what an orchestrator needs to dispatch and resume, and a task without them is not a
+smaller task, it is an unrunnable one. Three tasks or forty,
 the structure does not change — a flat pile of task files is the thing this rule exists to prevent,
 because it is where ownership, outputs and status stop being locatable.
 
@@ -467,9 +483,9 @@ interactive map in [`index.html`](index.html).
 
 | Size | Tasks | Turn on |
 |---|---|---|
-| **XS** | 1–3 | Phases 0, 3, 9. No fan-out, no skills, no isolation. ~1 hour of planning. |
-| **S** | 4–10 | + Phase 1 (2–3 recon workers), + Phase 4 diagram, 1 skill, branches only. |
-| **M** | 10–25 | + Phase 5 full contracts, 3–5 skills, worktrees, **integrator**, adversarial pass. |
+| **XS** | 1–3 | Phases 0, 3, 9, **10**. No fan-out, no skills, no isolation. ~1 hour of planning. |
+| **S** | 4–10 | + Phase 1 (2–3 recon workers), + Phase 4 diagram, + **Phase 5 reduced** (folder, owner, status, done-command — no persona, no skills, no fragments), 1 skill, branches only. |
+| **M** | 10–25 | + Phase 5 **full** contracts (persona, skills, fragments), 3–5 skills, worktrees, **integrator**, adversarial pass. |
 | **L** | 25–60 | + waves, + long-clock loops, + published status surface, two adversarial passes. |
 | **XL** | 60+ | + sub-orchestrators per track, + a plan-of-plans. Re-run Phase 3 per track. |
 

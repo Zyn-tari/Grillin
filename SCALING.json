@@ -183,6 +183,7 @@
         2,
         3,
         4,
+        5,
         9,
         10
       ],
@@ -200,7 +201,8 @@
         "long-clock loops"
       ],
       "isolation": "branches, no worktrees",
-      "verification": "one adversarial pass on the risky task"
+      "verification": "one adversarial pass on the risky task",
+      "phase5Form": "reduced — folder, owner, status, done-command; no persona, skills or fragments"
     },
     {
       "size": "M",
@@ -232,7 +234,8 @@
         "plan-of-plans"
       ],
       "isolation": "worktrees + single-owner contended files",
-      "verification": "adversarial pass after every build task"
+      "verification": "adversarial pass after every build task",
+      "phase5Form": "full — persona, skills, fragments, integrator"
     },
     {
       "size": "L",
@@ -523,7 +526,13 @@
         "the output contract files into it",
         "the state reporter globs tasks/*/TASK.md for status"
       ],
-      "bornMidRun": "A task created mid-wave gets its folder before its first artefact. In the pilot all 26 planned folders survived intact; every loose file belonged to a task reality added later."
+      "bornMidRun": "A task created mid-wave gets its folder before its first artefact. In the pilot all 26 planned folders survived intact; every loose file belonged to a task reality added later.",
+      "minimumAtEverySize": [
+        "its own folder",
+        "an owner",
+        "a status line",
+        "a done-command that fails before the work"
+      ]
     }
   },
   "resumability": {

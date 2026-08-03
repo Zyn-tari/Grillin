@@ -34,17 +34,28 @@ It was extracted from a single real planning session that turned a vague redesig
 brief into a 29-file executable plan, and caught roughly **30 errors** along the
 way — including several in its own text.
 
-Nothing here is tied to the codebase it came from. It is a method, not a
-framework: no install, no dependencies, no lock-in.
+Nothing here is tied to the codebase it came from.
+
+**What it needs.** The method itself needs nothing — it is prose and you can follow
+it with a text editor. The gate needs **python3** (stdlib only, no packages). The
+templates in `templates/` are a different matter: six of the seven assume you are
+running **a fleet of AI agents against a code repository**, and one is specific to a
+named terminal multiplexer. If that is not your situation, use the method and the
+gate and ignore those — they are the execution scaffolding, not the planning method.
 
 ---
 
 ## Start here
 
+**New? → [`QUICKSTART.md`](QUICKSTART.md).** Twenty minutes, six steps, in order.
+
+After that, in roughly the order you need them:
+
 | File | What it is |
 |---|---|
-| **[`index.html`](index.html)** | **The visual map.** Open in any browser. Interactive — pick a project size and watch which phases turn on. |
-| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The method. Eleven phases, sixteen principles, the scaling model, anti-patterns. |
+| **[`QUICKSTART.md`](QUICKSTART.md)** | **Start here.** What to actually do, in order, with the times. |
+| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The reasoning behind it. Eleven phases, sixteen principles, the scaling model, anti-patterns. |
+| **[`examples/`](examples/)** | **A real first plan** by a first-time user, and the gate report that fails it with 26 findings. |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | Where it came from — the arc in order, including the steps that went wrong. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Feed it to tooling, or hand it to an agent as a planning brief. |
 | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) | **Print this.** Tick it against any plan before handing it over. |
@@ -53,6 +64,7 @@ framework: no install, no dependencies, no lock-in.
 | [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
 | [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
 | [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Never touches the plan; always exits 0. |
+| [`index.html`](index.html) | Visual map of the phases. **Download and open locally** — GitHub renders it as source. |
 | **[`scripts/validate-plan.py`](scripts/validate-plan.py)** | **The gate.** Reads a plan and fails if it is not operable. Zero deps, fail-closed, validates its own config. |
 | [`templates/hooks.json.template`](templates/hooks.json.template) | The wiring. Start with the pre-compaction hook — the rest can wait. |
 | [`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template) | Phase 7's artefact — waves, worktrees, and the contended-file list with owners. |
