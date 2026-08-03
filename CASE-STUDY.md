@@ -67,7 +67,7 @@ one you expect.*
 - **B** — needs a human decision (product or product semantics)
 - **C** — real but out of scope (backend, backlog)
 
-Each labelled **VERIFIED** (read live, cited) or **REPORTED** (agent claim, unchecked).
+Each labelled **CONFIRMED** (read live, cited) or **SUSPECTED** (agent claim, unchecked).
 
 **Why it matters:** without triage, a discovered bug either gets swept into the work — quietly
 expanding scope — or gets lost. The three-way split makes scope creep a visible decision.
