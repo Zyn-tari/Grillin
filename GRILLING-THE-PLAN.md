@@ -146,7 +146,7 @@ One folder per task. Each is a **contract**, not a description:
 | **Exactly the files it owns** | one owner per file, always |
 | **The evidence already gathered** | cite the inventory sections; it reads instead of re-deriving |
 | **Steps** | specific, ordered, referencing real paths |
-| **A loop** | exit condition **and** an iteration cap |
+| **A loop** | exit condition **and** an iteration cap; a fix is confirmed by someone who did not make it |
 | **Done means** | evidence someone else can check — never "it works" |
 | **An explicit do-NOT list** | including the universal one |
 | **Output contract** | what it writes and where |
@@ -191,6 +191,11 @@ disk — statuses, commits, amendments — differs every time and keeps being re
 Rules for this: [`templates/_AWARENESS.md`](templates/_AWARENESS.md.template), with a starting
 implementation in [`templates/awareness.sh`](templates/awareness.sh.template).
 
+**Skills accrete during the run, not only before it.** The scar tissue that matters most is the
+incident you just had. In the pilot a live mail incident became a permanent never-rule the same
+day — folded into the skills and the memory, not filed in a lessons document. Treat the skill set
+as something the work edits, on the same standing loop that keeps the plan true.
+
 **Output:** a small set of skills; one line per task referencing them; a state reporter wired to
 the boundaries.
 
@@ -232,6 +237,9 @@ Do not pick the tool that *looks* structured. Measure.
 - **Name what a limit governs before it shapes the plan.** A real number scoped to the wrong
   thing looks authoritative and silently shrinks the work.
 - If a constraint is cheap to measure, measure it instead of quoting it.
+- **Then check the instrument.** A number from a tool nobody has verified is a quote with extra
+  steps. The pilot's blur-performance tool over-counted, and the over-count was found only because
+  someone questioned the tool rather than the result.
 
 Then match substrate to shape: wide independent fan-out and long-running isolated work have
 different answers, and *deterministic cross-agent control flow* is the only thing that justifies
@@ -317,15 +325,20 @@ author who had spent the session warning about exactly this.
 6. **Contended files get one owner; everyone else emits a fragment.**
 7. **Evidence is execution, not inspection.** *A call that returns 409 is evidence; "the code
    looks right" is not.*
-8. **Never certify your own work.** Structural, not preference.
+8. **Never certify your own work — and one independent pass is not two.** Structural, not
+    preference. Independent review is probabilistic, not binary: in the first pilot a second pass
+    with fresh context *overturned work on all five branches* the first had let through.
 9. **Every loop has a cap.** Hitting it is a stop-and-report.
-10. **Measure constraints; never quote them.** Name what a limit governs.
+10. **Measure constraints; never quote them — then check the instrument.** Name what a limit
+    governs. A measurement is only as good as the thing taking it: the pilot's performance tool
+    reported nine surfaces and was itself found to over-count.
 11. **Recurring context becomes a skill, loaded first.**
 12. **Escalate on decisions, not on findings.** A review returning findings is the process
     working. Fix them and continue. Stop only for genuine semantic ambiguity, a closed decision
     reopening, a fix that is itself a product decision, or a loop hitting its cap.
-13. **The plan is the artefact of record.** Execution amends it. A status file reports progress;
-    it never holds a correction the plan lacks.
+13. **The plan is the artefact of record.** Execution amends it — and so do the rules, the
+    skills and the durable memory, because a correction that lands in only one of them leaves the
+    others wrong. A status file reports progress; it never holds a correction the plan lacks.
 14. **Assume amnesia.** Anything that lives only in a conversation is already gone. Progress,
     decisions and corrections must be reconstructable from the repository alone.
 15. **Name every agent by role.** An unnamed fleet is addressable only by opaque handles, and a
@@ -378,6 +391,20 @@ both ways** — the plan points at the reason, the record points at the clause.
 > *"Wave 3 grid amended: task added, decision closed — see §Wave 3"* is a **receipt** for a fix
 > that already happened. Keep the receipt. Never let it stand in for the fix.
 
+**The loop is wider than the plan file.** A correction usually belongs in more than one place:
+the plan clause it changes, the rules that let it happen, the skill that should have warned, and
+the durable memory the next session starts from. Landing it in one and not the others is how a
+decision gets re-litigated three waves later. The pilot ran this as a standing loop —
+*receipt → fold into the plan → update the rules and memory in place → the next wave briefs from
+the corrected set* — which is why its twelve waves each started from a plan that was true rather
+than a plan that was original.
+
+**Gates drift too, and a changed gate is an amendment.** Mid-pilot the whole verification baseline
+was replaced — a 58-test suite retired for a 16-test smoke suite, and the expected numbers
+redefined with it. If that lands without a receipt, "the gates pass" quietly means something
+different than it did last week and nobody can say when it changed. Record what the gate was, what
+it became, and why.
+
 **Orientation precedes action.** A worker resuming mid-plan does not start at task 1; it starts by
 establishing where it is — task statuses, the gates, the commit log, the working tree. This costs
 a minute and is the difference between resuming and re-doing. It is also the only defence against
@@ -427,7 +454,13 @@ They are the cheapest phases and they catch the most expensive errors.
 | Log lessons in a growing incident file | fix the document that was wrong |
 | Re-inject the same static reminder every turn | it becomes wallpaper, and teaches that injected text is skippable |
 | Block a tool call to fix a lost frame | narrowing is not disobedience; denial does not restore the shape |
+| Treat one independent review as sufficient | a second pass with fresh context overturned all five branches in the pilot |
+| Let the agent that fixed a defect confirm the fix | that is self-certification, one level down |
+| Change a gate or its baseline without a receipt | "the gates pass" silently stops meaning what it did |
+| Schedule a deletion before its replacements are verified | teardown is where you discover the predecessors nobody finished |
 | Record a deviation only in the status file | the plan becomes confidently wrong, and a restarted worker trusts it first |
 | Keep progress in the conversation | a clear or a compaction erases it, and the work gets re-done or skipped |
+| Run a fleet of identically-named agents | they are addressable only by opaque handles, and terminal titles become the only clue to purpose |
+| Treat an agent's `unknown` state as done | unknown means unclassified, not finished |
 | Turn a review finding into a stop-gate | fixing specified defects is execution |
 | Ship a plan with no entry point | nobody can start it |

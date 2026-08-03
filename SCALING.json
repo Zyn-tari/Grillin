@@ -331,7 +331,7 @@
     },
     {
       "n": 8,
-      "text": "Never certify your own work. Structural, not preference."
+      "text": "Never certify your own work — and one independent pass is not two. Independent review is probabilistic, not binary: in the first pilot a second pass with fresh context overturned work on all five branches the first had let through."
     },
     {
       "n": 9,
@@ -339,7 +339,7 @@
     },
     {
       "n": 10,
-      "text": "Measure constraints; never quote them. Name what a limit governs."
+      "text": "Measure constraints; never quote them — then check the instrument. A measurement is only as good as the thing taking it; the pilot's performance tool over-counted."
     },
     {
       "n": 11,
@@ -351,7 +351,7 @@
     },
     {
       "n": 13,
-      "text": "The plan is the artefact of record. Execution amends it. A status file reports progress; it never holds a correction the plan lacks."
+      "text": "The plan is the artefact of record. Execution amends it — and so do the rules, the skills and the durable memory, because a correction that lands in only one of them leaves the others wrong."
     },
     {
       "n": 14,
@@ -448,6 +448,22 @@
     {
       "dont": "Block a tool call to fix a lost frame",
       "because": "narrowing is not disobedience; denial does not restore the shape"
+    },
+    {
+      "dont": "Treat one independent review as sufficient",
+      "because": "a second pass with fresh context overturned all five branches in the pilot"
+    },
+    {
+      "dont": "Let the agent that fixed a defect confirm the fix",
+      "because": "that is self-certification, one level down"
+    },
+    {
+      "dont": "Change a gate or its baseline without a receipt",
+      "because": "'the gates pass' silently stops meaning what it did"
+    },
+    {
+      "dont": "Schedule a deletion before its replacements are verified",
+      "because": "teardown is where you discover the predecessors nobody finished"
     }
   ],
   "taskContract": {
@@ -473,7 +489,8 @@
       "BLOCKED",
       "DONE"
     ],
-    "statusNote": "A line inside TASK.md, updated in place. Not an output file. It is the progress record that survives a lost conversation."
+    "statusNote": "A line inside TASK.md, updated in place. Not an output file. It is the progress record that survives a lost conversation.",
+    "loop": "do → verify → fix → confirm the fix by someone who did not make it → re-verify, with a stated cap"
   },
   "resumability": {
     "premise": "Assume every worker forgets. A cleared agent loses its place; a compacted one feels oriented while reasoning from a lossy copy.",
@@ -631,5 +648,33 @@
       "the integrator, who applies fragments and writes no feature code"
     ],
     "rule": "A contended file has exactly one owner and it is never a task agent."
+  },
+  "revisionLoop": {
+    "scope": [
+      "the plan clause it changes",
+      "the rules that allowed it",
+      "the skill that should have warned",
+      "the durable memory the next session starts from"
+    ],
+    "why": "A correction landing in one place leaves the others wrong, and the decision gets re-litigated waves later.",
+    "gatesDrift": "A replaced or re-baselined gate is itself an amendment and needs a receipt naming the old gate, the new one, and the new expected numbers.",
+    "skillsAccrete": "Scar tissue is written during the run, not only before it — in the pilot a live mail incident became a permanent never-rule the same day."
+  },
+  "pilot": {
+    "what": "the product redesign — first run of this method end to end",
+    "when": "2026-07-31 to 2026-08-01",
+    "waves": 12,
+    "autonomousRun": "10h 46m",
+    "changelogReceipts": 109,
+    "tasksClosed": "19 of 23",
+    "tags": "w2 … w11",
+    "substrateMeasurement": "Agent tool 4.9x vs Workflow 1.78x effective parallelism on that host — phase 8 producing a number rather than a preference",
+    "lessonsFolded": [
+      "a second adversarial pass overturned all five branches the first let through",
+      "the fix needs independent confirmation, not just the work",
+      "a replaced gate baseline is a plan amendment",
+      "the measuring instrument itself over-counted",
+      "the revision loop covers rules and memory, not only the plan"
+    ]
   }
 }

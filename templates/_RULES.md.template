@@ -38,6 +38,9 @@ to inform.
 - **Top** (high effort) — safety-critical paths, authz, schema, architecture, and **every
   adversarial pass**.
 
+**Two adversarial passes on anything that moves money or grants access**, the second with fresh
+context and no sight of the first. One independent pass is a filter, not a proof.
+
 **Declare the tier out loud** when you fan out — publish an agent→model table. The requester
 cannot see a subagent's tier and must not have to ask.
 
@@ -92,8 +95,13 @@ Task **status** is not an output file — it is a line inside each `TASK.md`, up
 
 ## 5 · Every task has a loop
 
-**Converge loop** — do → verify → feed back, with a stated cap. Hitting the cap is a
-stop-and-report. **Watch loop** — only for genuinely slow external state.
+**Converge loop** — do → verify → **fix** → **confirm the fix, by someone who did not make it** →
+re-verify, with a stated cap. Hitting the cap is a stop-and-report.
+
+The confirm step is not ceremony. An agent that repairs a defect and then declares it repaired is
+self-certifying one level down from the rule in §3, and it is the level nobody watches.
+
+**Watch loop** — only for genuinely slow external state.
 
 ## 6 · Verification order — non-negotiable
 
@@ -103,6 +111,11 @@ State the ordering trap for your project explicitly. Every project has one.
 
 **Never ship on green gates alone.** Record your own track record here — it is more persuasive
 than any principle.
+
+**A changed gate is a plan amendment.** If a suite is replaced, retired or re-baselined mid-run,
+that gets a receipt like any other deviation, naming what the gate was, what it became, and the
+new expected numbers. Without it, "the gates pass" stops meaning what it meant and no one can say
+when it changed.
 
 ## 7 · Escalation
 
@@ -124,6 +137,10 @@ closes, an assumption proves false — **the plan itself is amended**, and a dat
   plan still holds the wrong path is the failure, not the fix.
 - **The integrator amends the plan.** Task agents *report* divergence in `QUESTIONS.md`; they do
   not edit the plan, for the same reason they do not edit contended files.
+- **A correction usually belongs in more than one place.** The plan clause it changes, the rules
+  that allowed it, the skill that should have warned, and the durable memory the next session
+  starts from. Land it in one and the others stay wrong, and the decision gets re-litigated later.
+- **A changed gate is one of these deviations** — see §6.
 
 ## 9 · Resuming after a context loss
 

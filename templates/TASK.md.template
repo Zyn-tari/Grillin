@@ -5,7 +5,7 @@
 it is the progress record, and it is the only one that survives a lost conversation*
 **Agent:** `<persona>` · **Model:** <cheap | mid | top> · **Effort:** <default | high>
 **Blocked by:** <ids> · **Blocks:** <ids>
-**Mandatory downstream:** <adversarial pass? integrator?>
+**Mandatory downstream:** <adversarial passes — TWO, the second with fresh context, on money/authz? integrator?>
 
 Rules: [`../_RULES.md`](../_RULES.md)
 
@@ -50,8 +50,12 @@ sentence in the file.>
 
 ## Loop
 
-**Converge, cap <N>.** <Cycle: do → verify → feed failures back.> Exit when <condition someone
-else can check>. Hitting the cap is a **stop-and-report**, never a silent partial.
+**Converge, cap <N>.** <Cycle: do → verify → fix → confirm the fix → re-verify.> Exit when
+<condition someone else can check>. Hitting the cap is a **stop-and-report**, never a silent
+partial.
+
+**You do not confirm your own repair.** A fix you made is checked by someone who did not make it —
+same rule as the work itself, one level down.
 
 ## Done means
 

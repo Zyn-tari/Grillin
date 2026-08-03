@@ -42,7 +42,9 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] **The contended-file list exists.** Which files do many tasks want?
 - [ ] Each contended file has a single owner and a fragment protocol
 - [ ] The owner list exists **machine-readably**, not only as prose in a table
-- [ ] Every task has a loop **with a cap**
+- [ ] Every task has a loop **with a cap**, and the loop confirms the **fix**, not just the work
+- [ ] Nobody confirms a repair they made themselves
+- [ ] Money and authz work gets **two** adversarial passes, the second with fresh context
 - [ ] Every "done" is evidence someone else can check
 - [ ] Every task has an explicit do-NOT list
 - [ ] Onward-delegation policy stated in every prompt
@@ -54,6 +56,7 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] Effective parallelism recorded, not the advertised cap
 - [ ] What actually binds identified (compute? memory? latency? admission control?)
 - [ ] Every quoted limit checked for **what it governs**
+- [ ] The **instrument** was checked, not only the number it produced
 - [ ] The rejected alternative written into the plan, with why
 - [ ] **Both substrates tried on the same real fan-out** — script-and-collect vs managed session
 - [ ] Time-to-detect a **stalled** worker measured on each, not just wall-clock
@@ -107,6 +110,8 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] Every task carries a **status line updated in place** — not tracked in a conversation
 - [ ] Every "done" is a **command someone can re-run**, so completion re-derives without memory
 - [ ] Deviations amend **the plan itself**; the changelog is a receipt, not a substitute
+- [ ] Corrections land in **every** place they belong — plan, rules, skills, durable memory
+- [ ] A replaced or re-baselined **gate** got a receipt, with the old and new expected numbers
 - [ ] Amendments are **referenced both ways** — plan to reason, record to clause
 - [ ] Who may amend the plan is named (the integrator), and task agents report instead
 - [ ] The entry point supports a **warm restart**, not only a cold one
