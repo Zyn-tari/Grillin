@@ -15,12 +15,26 @@ Say out loud when two sources disagree.
 
 ## 1 · What every agent gets
 
-Every agent inherits `<inventory folder>` — the frozen map of what already exists. **No agent
+**Every agent receives a directory, not a prompt.** Its task folder — `tasks/<ID>/` — is the
+briefing. `TASK.md` is the contract; every artefact the agent produces is written back into the
+same folder. Inbox and outbox are one place.
+
+This holds no matter how many tasks there are. **One folder per task, always.** The layout is
+fixed because three separate mechanisms depend on it: containment (§2a) scopes writes to it,
+the output contract (§4) files into it, and the state reporter globs `tasks/*/TASK.md` for status.
+A task file living loose, or two tasks sharing a folder, breaks all three at once.
+
+```
+tasks/<ID>/TASK.md · FINDINGS.md · CHANGES.md · QUESTIONS.md · <fragments>
+```
+
+Every agent also inherits `<inventory folder>` — the frozen map of what already exists. **No agent
 re-derives it.** If an agent starts searching for something already in there, the prompt failed.
 
-Every prompt carries: a **persona** · the **exact files it owns** · the **evidence already
-gathered** (cited) · what **"done"** means in checkable evidence · an explicit **do-NOT list** ·
-its **output contract**.
+The contract in `TASK.md` carries: a **persona** · the **exact files it owns** · the **evidence
+already gathered** (cited) · what **"done"** means in checkable evidence · an explicit
+**do-NOT list** · its **output contract**. **If a fact is needed and is neither in the folder nor
+cited from the inventory, the briefing failed** — there is no ambient context to fall back on.
 
 ## 1a · Skills are starting context — invoke them FIRST
 
@@ -83,6 +97,8 @@ coincidence, not an organisation.
 - Do NOT <project-specific wrong-source-of-truth trap>.
 
 ## 4 · Output contract
+
+All three are written **into the agent's own task folder** — `tasks/<ID>/` — never elsewhere.
 
 | File | When | Contents |
 |---|---|---|

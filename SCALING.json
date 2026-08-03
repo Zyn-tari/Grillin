@@ -464,6 +464,10 @@
     {
       "dont": "Schedule a deletion before its replacements are verified",
       "because": "teardown is where you discover the predecessors nobody finished"
+    },
+    {
+      "dont": "Keep task files loose, or share one folder between tasks",
+      "because": "containment, the output contract and the status glob all key on tasks/<ID>/ and break together"
     }
   ],
   "taskContract": {
@@ -490,7 +494,24 @@
       "DONE"
     ],
     "statusNote": "A line inside TASK.md, updated in place. Not an output file. It is the progress record that survives a lost conversation.",
-    "loop": "do → verify → fix → confirm the fix by someone who did not make it → re-verify, with a stated cap"
+    "loop": "do → verify → fix → confirm the fix by someone who did not make it → re-verify, with a stated cap",
+    "layout": {
+      "rule": "One folder per task, always, regardless of task count.",
+      "path": "tasks/<ID>/",
+      "contract": "tasks/<ID>/TASK.md",
+      "outputsGoInTheSameFolder": true,
+      "theAgentReceivesTheFolder": "The directory is the briefing, not a prompt with the task pasted into it. Inbox and outbox are one place.",
+      "whyStructural": [
+        "self-contained — a fact not in the folder or cited from the frozen inventory means the briefing failed",
+        "resumable — a worker that lost context re-reads one directory and has the contract, its findings and its status",
+        "addressable — status and progress derive from globbing tasks/*/TASK.md; break the layout and the awareness layer goes blind"
+      ],
+      "dependsOnIt": [
+        "containment scopes writes to the task folder",
+        "the output contract files into it",
+        "the state reporter globs tasks/*/TASK.md for status"
+      ]
+    }
   },
   "resumability": {
     "premise": "Assume every worker forgets. A cleared agent loses its place; a compacted one feels oriented while reasoning from a lossy copy.",

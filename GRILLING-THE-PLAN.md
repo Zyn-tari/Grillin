@@ -138,7 +138,37 @@ doing its job.
 
 ### Phase 5 — Decompose into owned tasks
 
-One folder per task. Each is a **contract**, not a description:
+**One folder per task. Always, and regardless of how many tasks there are.** Three tasks or forty,
+the structure does not change — a flat pile of task files is the thing this rule exists to prevent,
+because it is where ownership, outputs and status stop being locatable.
+
+```
+tasks/
+  <ID>/                 one directory per task, named for the id
+    TASK.md             the contract — persona, owned files, steps, loop, done, do-NOTs
+    FINDINGS.md         what it learned, cited                      (written by the agent)
+    CHANGES.md          did / why / risk, if anything changed       (written by the agent)
+    QUESTIONS.md        if blocked or diverged                      (written by the agent)
+    <FRAGMENT>.ext      edits to files it does not own              (written by the agent)
+```
+
+**That folder is what the working agent receives.** Not a prompt with the task pasted into it —
+the directory itself. Everything the agent needs to start is inside it, and everything it produces
+goes back into it. The folder is both the inbox and the outbox.
+
+Three things follow from that, and they are the reason it is a structural rule rather than a
+convention:
+
+- **Self-contained.** If a fact is needed to do the task and is not in the folder or cited from
+  the frozen inventory, the briefing failed. There is no ambient context to fall back on.
+- **Resumable.** A worker that lost its context re-reads one directory and has the contract, its
+  own findings so far, and its status line. This is principle 14 made concrete: the task survives
+  the conversation because the task was never in the conversation.
+- **Addressable.** Status, progress and ownership are all derivable by globbing `tasks/*/TASK.md`
+  — which is exactly what the state reporter does. Break the layout and the awareness layer goes
+  blind.
+
+Each `TASK.md` is a **contract**, not a description:
 
 | Element | Why |
 |---|---|
@@ -458,6 +488,7 @@ They are the cheapest phases and they catch the most expensive errors.
 | Let the agent that fixed a defect confirm the fix | that is self-certification, one level down |
 | Change a gate or its baseline without a receipt | "the gates pass" silently stops meaning what it did |
 | Schedule a deletion before its replacements are verified | teardown is where you discover the predecessors nobody finished |
+| Keep task files loose, or share one folder between tasks | containment, the output contract and the status glob all key on `tasks/<ID>/` and break together |
 | Record a deviation only in the status file | the plan becomes confidently wrong, and a restarted worker trusts it first |
 | Keep progress in the conversation | a clear or a compaction erases it, and the work gets re-done or skipped |
 | Run a fleet of identically-named agents | they are addressable only by opaque handles, and terminal titles become the only clue to purpose |

@@ -38,6 +38,11 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 
 ## Against the decomposition
 
+- [ ] **One folder per task** — `tasks/<ID>/`, no exceptions, whatever the task count
+- [ ] Each task's `TASK.md` is **inside its own folder**, never loose and never shared
+- [ ] The folder is what the agent **receives** — a directory, not a pasted prompt
+- [ ] Every output the agent writes lands **back in that same folder**
+- [ ] Nothing needed to do the task lives outside the folder or the cited inventory
 - [ ] One owner per file — no file appears in two tasks' ownership
 - [ ] **The contended-file list exists.** Which files do many tasks want?
 - [ ] Each contended file has a single owner and a fragment protocol

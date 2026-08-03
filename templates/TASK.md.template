@@ -1,3 +1,6 @@
+<!-- Lives at tasks/<ID>/TASK.md. This folder is your briefing and your output location:
+     everything you need is here, everything you produce goes here. One folder per task. -->
+
 # <ID> — <Short title>
 
 **Type:** BUILD | REFACTOR | RECONSIDER | ASK | VERIFY | LOOP
@@ -72,3 +75,6 @@ never "it works".>
 ## Outputs
 
 `FINDINGS.md` · `CHANGES.md` (if code changed) · `QUESTIONS.md` (if blocked) · `<fragments>`
+
+All of them written **into this folder** (`tasks/<ID>/`), never anywhere else. A worker that lost
+its context recovers by re-reading this directory — so if it is not in here, it does not exist.
