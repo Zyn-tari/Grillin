@@ -22,7 +22,12 @@ reasons:
 - the author never **attacked their own draft**
 
 **Grillin'** is eleven phases that make those three failures expensive to commit
-and cheap to catch. Three of the phases produce no plan text at all — they only
+and cheap to catch — plus one script that reads the plan you produced and fails
+if an orchestrator could not run it:
+
+```
+./scripts/validate-plan.py <plan-dir> --run-gates
+``` Three of the phases produce no plan text at all — they only
 produce corrections — and they are the highest-value phases in the method.
 
 It was extracted from a single real planning session that turned a vague redesign
@@ -48,6 +53,7 @@ framework: no install, no dependencies, no lock-in.
 | [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
 | [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
 | [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Never touches the plan; always exits 0. |
+| **[`scripts/validate-plan.py`](scripts/validate-plan.py)** | **The gate.** Reads a plan and fails if it is not operable. Zero deps, fail-closed, validates its own config. |
 | [`templates/hooks.json.template`](templates/hooks.json.template) | The wiring. Start with the pre-compaction hook — the rest can wait. |
 | [`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template) | Phase 7's artefact — waves, worktrees, and the contended-file list with owners. |
 
