@@ -57,7 +57,30 @@ the shape** of the plan. Then stop.
 Do not start work at the acknowledgement. The restatement is the cheapest place to find out you
 heard it differently.
 
-**Output:** a paragraph and two or three flags.
+**Output:** a paragraph, two or three flags, and the five answers below.
+
+#### What kind of plan does this need? — five questions
+
+The scaling table sizes the work. It does not tell you what *kind* of work it is, and that is
+the other half. Answer these before phase 1; each switches something on or off, and the answers go at the
+top of the plan so the next reader can disagree with them. Size is the sixth axis and the
+scaling table below handles it.
+
+The questions are about **properties of the work, not its domain**. A documentation job and a
+migration can have identical answers. "Is it software?" is the wrong question and produces the
+wrong plan.
+
+| # | Question | If YES | If NO |
+|---|---|---|---|
+| **1** | Does the thing already exist in some inspectable form — a running system, a live document, a current state? | Rung 2 of the precedence ladder is **that thing**. Phase 3 grills every claim against it. | There is no rung 2. Phase 3 still runs, but it grills your sources **against each other and against the constraints** — and you say so, because a ladder with a hole in it is worse than a ladder you know is short. |
+| **2** | Will more than one worker act on this concurrently? | Phases 5 and 7 in full. Ownership and the contended-artefact list are load-bearing. | Phase 7 off — nothing is contended when one worker acts serially. Phase 5 stays **reduced**: folder, owner, status, done-command. Those four are for resumability, not coordination, and a solo worker still forgets. |
+| **3** | Are the workers AI agents? | Phases 6 and 8 apply, and so do the templates in `templates/`. | Skip 6 and 8, and ignore the templates entirely — they are scaffolding for a fleet. The phases still work; a person reads the plan instead. |
+| **4** | Does "done" produce something that runs, deploys, or is otherwise executed? | Verification order matters: build → promote → restart → gate. Get it wrong and you gate the old artefact. | No ordering to trap you. **"Done" is still a command someone can re-run** — a file test, a grep, a count. Not executable is not the same as not checkable. |
+| **5** | Is any step irreversible, or expensive to undo? | Two adversarial passes on those steps, different lenses. Explicit stop-and-ask nodes where a human must decide. | One pass. Escalate on decisions only. |
+
+**Write the answers down.** Five lines at the top of the plan, each naming what it turned on or
+off. That table is the thing a reader argues with when they think you scoped it wrong — and it
+is the difference between a phase you *decided* not to run and one you forgot.
 
 ---
 
@@ -140,11 +163,11 @@ doing its job.
 
 **Output:** an approved graph.
 
-**Record what you turned off.** The scaling table will switch phases off, and your job may make
-others meaningless — there is no substrate to measure when nothing runs, no contended files when
-one person works alone. Keep a short table in the plan: *phase · on/off/reduced · why*. The
-method's whole objection is to skipping **silently**; a skip with a reason next to it is a
-decision, and the next reader can disagree with it.
+**Record what you turned off.** By now two things have switched phases off: the size table, and
+the six questions in phase 0. Keep the combined result as one table in the plan —
+*phase · on / off / reduced · which answer or size decided it*. The method's whole objection is
+to skipping **silently**; a skip with its reason beside it is a decision, and the next reader can
+disagree with it.
 
 ---
 
