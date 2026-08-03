@@ -19,7 +19,9 @@ Say out loud when two sources disagree.
 briefing. `TASK.md` is the contract; every artefact the agent produces is written back into the
 same folder. Inbox and outbox are one place.
 
-This holds no matter how many tasks there are. **One folder per task, always.** The layout is
+This holds no matter how many tasks there are. **One folder per task, always** — and a task
+created mid-wave gets `mkdir tasks/<ID>/` **before its first artefact**, which is the point at
+which this rule is actually broken in practice. The layout is
 fixed because three separate mechanisms depend on it: containment (§2a) scopes writes to it,
 the output contract (§4) files into it, and the state reporter globs `tasks/*/TASK.md` for status.
 A task file living loose, or two tasks sharing a folder, breaks all three at once.
@@ -147,6 +149,9 @@ closes, an assumption proves false — **the plan itself is amended**, and a dat
 `<CHANGELOG file>` records what changed and why, referenced from the clause it changed.
 
 - The status artefact reports **progress**. It never carries a correction the plan lacks.
+- **A deviation is written the moment it happens. A close-out batches at the boundary** — its
+  facts (final baselines, DONE markers) do not exist until the wave closes, so batching them is
+  correct rather than late.
 - A plan that no longer describes the work is worse than none: it is confidently wrong, and it is
   the first thing a restarted worker trusts.
 - **The changelog is a receipt, not a substitute.** Recording *"the path was wrong"* while the

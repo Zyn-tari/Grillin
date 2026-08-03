@@ -331,7 +331,7 @@
     },
     {
       "n": 8,
-      "text": "Never certify your own work — and one independent pass is not two. Independent review is probabilistic, not binary: in the first pilot a second pass with fresh context overturned work on all five branches the first had let through."
+      "text": "Never certify your own work — and a second pass earns its cost only as a different lens. In the pilot the two passes found disjoint things; on one task pass A returned PASS and pass B found a confirmed high-severity defect, on another pass B added nothing. A second identical sweep does not pay."
     },
     {
       "n": 9,
@@ -339,7 +339,7 @@
     },
     {
       "n": 10,
-      "text": "Measure constraints; never quote them — then check the instrument. A measurement is only as good as the thing taking it; the pilot's performance tool over-counted."
+      "text": "Measure constraints; never quote them — then check the instrument, and label the conditions. The pilot's performance tool over-counted, and its headline concurrency figures came from two different workloads on different runs: safe direction, unearned magnitude."
     },
     {
       "n": 11,
@@ -351,7 +351,7 @@
     },
     {
       "n": 13,
-      "text": "The plan is the artefact of record. Execution amends it — and so do the rules, the skills and the durable memory, because a correction that lands in only one of them leaves the others wrong."
+      "text": "The plan is the artefact of record. Execution amends it — and so do the rules, the skills and the durable memory. Write a deviation the moment it happens; close-out facts legitimately batch at a boundary because they do not exist until the boundary."
     },
     {
       "n": 14,
@@ -468,6 +468,18 @@
     {
       "dont": "Keep task files loose, or share one folder between tasks",
       "because": "containment, the output contract and the status glob all key on tasks/<ID>/ and break together"
+    },
+    {
+      "dont": "Run a second identical sweep and call it a second pass",
+      "because": "it re-finds what the first found; only a different lens or fresh context pays"
+    },
+    {
+      "dont": "Absorb a recurring violation at integration instead of fixing its cause",
+      "because": "the pilot's integrator silently cleaned up out-of-folder writes seven times and the cause was never fixed"
+    },
+    {
+      "dont": "Leave an ambient indicator stale",
+      "because": "an indicator that never updates is worse than none, because it is believed"
     }
   ],
   "taskContract": {
@@ -510,7 +522,8 @@
         "containment scopes writes to the task folder",
         "the output contract files into it",
         "the state reporter globs tasks/*/TASK.md for status"
-      ]
+      ],
+      "bornMidRun": "A task created mid-wave gets its folder before its first artefact. In the pilot all 26 planned folders survived intact; every loose file belonged to a task reality added later."
     }
   },
   "resumability": {
@@ -656,7 +669,14 @@
       "the most recent plan amendment",
       "where truth lives, so the post-summary worker re-reads rather than recalls",
       "the command that rebuilds the full picture"
-    ]
+    ],
+    "compactionBoundary": {
+      "confirmed": "Compaction is the instant of forgetting.",
+      "corrected": "An earlier version claimed the pre-compaction hook alone was sufficient. Measured across three compactions: a register re-fired AFTER the boundary held the frame 3/3; verbatim survival of an injection INTO the summary was 1/2.",
+      "rule": "Treat them as one system — inject before so the summary can keep the frame, re-establish after because half the time it did not.",
+      "note": "Session-start registers commonly re-fire on the post-compact context; that is the backstop, and in the pilot it carried a mid-run compaction that had no pre-compaction hook wired at all.",
+      "instrumentWarning": "The reporter itself is not exempt: the pilot's status hook looped, and its position computation was wrong twice before a heuristic fixed it."
+    }
   },
   "isolation": {
     "artefact": "templates/_WORKTREES.md",
@@ -689,13 +709,22 @@
     "changelogReceipts": 109,
     "tasksClosed": "19 of 23",
     "tags": "w2 … w11",
-    "substrateMeasurement": "Agent tool 4.9x vs Workflow 1.78x effective parallelism on that host — phase 8 producing a number rather than a preference",
+    "substrateMeasurement": "Agent tool 4.87x (8 haiku recons, 682 agent-sec in ~140s, peak 4 concurrent) vs Workflow 1.78x (13 mixed agents, 6881 agent-sec in 3870s, max overlap 2). LABEL: one host, one day, uncontrolled and non-comparable workloads, instrument unverified — the agent-second figures may include queue-wait. The direction is safe because the Workflow cap min(16, nproc-2)=2 is documented; the magnitude is an inference across different experiments, not a measured delta.",
     "lessonsFolded": [
       "a second adversarial pass overturned all five branches the first let through",
       "the fix needs independent confirmation, not just the work",
       "a replaced gate baseline is a plan amendment",
       "the measuring instrument itself over-counted",
       "the revision loop covers rules and memory, not only the plan"
+    ],
+    "reworkShare": "~2-2.5h of 10h46m (~20%), concentrated in one wave where the fix-and-confirm cycle was ~45% of that wave. SUSPECTED sum; per-wave windows confirmed.",
+    "failuresObserved": [
+      "agents wrote outside their folders at least seven times; the integrator absorbed it every time and the cause was never fixed at source",
+      "close-out files left PARTIAL while their waves closed by receipt — status and record disagreed",
+      "an ambient indicator read the same wave for the entire run",
+      "a task was orphaned by a host restart and recovered only by the check-the-working-tree rule",
+      "the rulebook had no clause for a whole class of hazard until an incident created one",
+      "the awareness instrument itself looped and computed the wrong position twice"
     ]
   }
 }

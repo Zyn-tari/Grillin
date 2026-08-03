@@ -8,9 +8,11 @@
     "whether its stdout reaches the model, differs per event and per harness.",
     "Phase 9 exists because assumptions about the environment are where plans die.",
     "",
-    "Start with PreCompact alone. It is the highest-value one, it cannot break",
-    "anything, and it is worth confirming the injection actually lands before",
-    "wiring five more. Add the rest once you have seen one work.",
+    "Start with the PreCompact + SessionStart PAIR — they are one system, not a",
+    "ranking. Inject before the boundary so the summary can keep the frame; re-establish",
+    "after it because measurably, half the time, the summary did not. In the first pilot",
+    "the post-boundary register held the frame 3/3; verbatim survival into the summary",
+    "was 1/2. Add the rest once you have seen the pair work.",
     "",
     "AWARENESS points at your copy of awareness.sh. Use an absolute path or a",
     "variable your harness expands — a relative path resolves against whatever",
@@ -21,7 +23,7 @@
 
     "PreCompact": [
       {
-        "_why": "THE ONE THAT MATTERS. Fires immediately before the context is summarised — the only moment where injected state lands inside the summary rather than being what the summary drops.",
+        "_why": "Fires immediately before the context is summarised, so the frame has a chance to land INSIDE the summary. Measured 1/2 for verbatim survival — pair it with SessionStart, which re-fires after the boundary and held 3/3.",
         "matcher": "*",
         "hooks": [
           { "type": "command", "command": "bash \"$AWARENESS\" precompact", "timeout": 10 }
@@ -31,7 +33,7 @@
 
     "SessionStart": [
       {
-        "_why": "Cold or warm start. Orient before acting — never resume by starting at task 1.",
+        "_why": "Cold or warm start — AND it re-fires on the post-compact context, which is the measured backstop when the summariser drops the injected frame. Never resume by starting at task 1.",
         "matcher": "*",
         "hooks": [
           { "type": "command", "command": "bash \"$AWARENESS\" checkpoint", "timeout": 10 }

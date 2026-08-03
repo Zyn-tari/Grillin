@@ -39,6 +39,7 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 ## Against the decomposition
 
 - [ ] **One folder per task** — `tasks/<ID>/`, no exceptions, whatever the task count
+- [ ] Tasks **born mid-run** got a folder before their first artefact — where this always breaks
 - [ ] Each task's `TASK.md` is **inside its own folder**, never loose and never shared
 - [ ] The folder is what the agent **receives** — a directory, not a pasted prompt
 - [ ] Every output the agent writes lands **back in that same folder**
@@ -49,7 +50,8 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] The owner list exists **machine-readably**, not only as prose in a table
 - [ ] Every task has a loop **with a cap**, and the loop confirms the **fix**, not just the work
 - [ ] Nobody confirms a repair they made themselves
-- [ ] Money and authz work gets **two** adversarial passes, the second with fresh context
+- [ ] Money and authz work gets **two** adversarial passes, the second a **different lens** —
+      not a repeat sweep, which re-finds what the first found
 - [ ] Every "done" is evidence someone else can check
 - [ ] Every task has an explicit do-NOT list
 - [ ] Onward-delegation policy stated in every prompt
@@ -62,6 +64,8 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] What actually binds identified (compute? memory? latency? admission control?)
 - [ ] Every quoted limit checked for **what it governs**
 - [ ] The **instrument** was checked, not only the number it produced
+- [ ] The **conditions** are labelled — one host, one day, and whether the workloads compared
+      were actually comparable
 - [ ] The rejected alternative written into the plan, with why
 - [ ] **Both substrates tried on the same real fan-out** — script-and-collect vs managed session
 - [ ] Time-to-detect a **stalled** worker measured on each, not just wall-clock
@@ -97,7 +101,8 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 ## Will the worker stay oriented?
 
 - [ ] Reminders are **computed from current state**, never static text re-pasted
-- [ ] Something fires **before compaction** — the one moment state lands inside the summary
+- [ ] Something fires **before** compaction **and** something re-establishes **after** it —
+      verbatim survival into the summary measured 1/2; the post-boundary register measured 3/3
 - [ ] That pre-compaction output names **where truth lives**, so the post-summary worker
       re-reads rather than recalls
 - [ ] Something fires at a **boundary** — session start, a worker finishing, a wave closing

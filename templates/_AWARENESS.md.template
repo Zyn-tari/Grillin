@@ -105,22 +105,49 @@ of working.
 
 | Moment | Register | Why this instant |
 |---|---|---|
-| Session start | punctuated | cold or warm start — orient before acting |
-| **Before compaction** | **punctuated** | **the single highest-value hook — see below** |
+| Session start | punctuated | cold or warm start — **and re-fires after a compaction, which is the backstop that measurably held 3/3** |
+| **Before compaction** | **punctuated** | **inject into the summary — pairs with the register below** |
 | A worker finishes | punctuated | one unit closed; the cheapest moment to zoom out |
 | **A status line is written** | **silent** | **the only work-shaped event you have; costs the agent nothing** |
 | Turn ends | thin check | *does the status line reflect what you just did?* |
 | Every turn | ambient | position, one line |
 | Before a tool call | situational | ownership, contended files, the deployed checkout |
 
-### Why the pre-compaction moment matters most
+### The compaction boundary — inject before, re-establish after
 
-Compaction is **literally the instant of forgetting.** Every other mechanism in this method tries
-to *recover* from lost context. A reminder fired before compaction is the only one that puts the
-durable state **into the thing being summarised**, so the frame survives as part of the summary
-rather than being what the summary drops.
+Compaction is **literally the instant of forgetting**, and that part is confirmed. What was wrong
+was the mechanism claim: an earlier version of this file said the pre-compaction hook was the only
+one that mattered and that wiring it alone was enough. The first pilot measured otherwise.
 
-If you wire exactly one hook, wire that one.
+Across three observed compactions:
+
+| Mechanism | Held the frame |
+|---|---|
+| A register re-fired **after** the boundary, on the post-compact context | **3 of 3** |
+| Injection **into** the summary, surviving verbatim | **1 of 2** |
+
+The design intent does work — one summary contained the injected `WHERE:` line verbatim, which is
+exactly the point of firing before. But **you cannot rely on the summariser carrying your lines
+through.** It carried them once and dropped them once, and nothing in the injection controls which.
+
+So treat the two as **one system, not a ranking**:
+
+- **Before the boundary** — inject state, so the summary has the chance to keep it.
+- **After the boundary** — re-establish it, because half the time the summary did not.
+
+The recovery half exists for free in most harnesses: a session-start register re-fires on the
+post-compact context. In the pilot the mid-run compaction had *no* pre-compaction hook wired at
+all, and the frame still held — the post-boundary register carried it, and the agent's first turn
+afterwards correctly knew a commit hash, that two adversarial passes were in flight, and a
+never-ship rule. The backstop did the work the headline mechanism was supposed to do.
+
+Wire both. If you are forced to choose, the observed evidence favours the one that fires **after**
+— which is the opposite of what this file used to say.
+
+> **The instrument is not exempt.** In the pilot the status hook first looped, and its position
+> computation was wrong twice before a receipt-count heuristic fixed it. A reminder that reports
+> the wrong position confidently is worse than no reminder, and it will not announce itself. Test
+> the reporter against fixtures before trusting what it says.
 
 ---
 

@@ -152,6 +152,13 @@ tasks/
     <FRAGMENT>.ext      edits to files it does not own              (written by the agent)
 ```
 
+**A task born mid-run gets its folder before its first artefact.** This is where the rule actually
+breaks. In the first pilot all twenty-six *planned* folders survived intact — nothing renamed,
+nothing merged — while the only loose files at the plan root belonged to tasks created under
+pressure mid-wave that never got a directory. The discipline holds for what you decompose up front
+and fails for what reality adds later, so `mkdir` is the first act of creating a task, not a
+tidying step afterwards.
+
 **That folder is what the working agent receives.** Not a prompt with the task pasted into it —
 the directory itself. Everything the agent needs to start is inside it, and everything it produces
 goes back into it. The folder is both the inbox and the outbox.
@@ -355,20 +362,26 @@ author who had spent the session warning about exactly this.
 6. **Contended files get one owner; everyone else emits a fragment.**
 7. **Evidence is execution, not inspection.** *A call that returns 409 is evidence; "the code
    looks right" is not.*
-8. **Never certify your own work — and one independent pass is not two.** Structural, not
-    preference. Independent review is probabilistic, not binary: in the first pilot a second pass
-    with fresh context *overturned work on all five branches* the first had let through.
+8. **Never certify your own work — and a second pass earns its cost only as a different lens.**
+    Structural, not preference. In the first pilot the two passes mostly found *disjoint* things
+    because they attacked from different angles; on one task pass A returned PASS and pass B found
+    a confirmed high-severity defect. On another, pass B added nothing. So: a second pass with
+    fresh context or a different lens pays for itself; a second identical sweep does not.
 9. **Every loop has a cap.** Hitting it is a stop-and-report.
-10. **Measure constraints; never quote them — then check the instrument.** Name what a limit
-    governs. A measurement is only as good as the thing taking it: the pilot's performance tool
-    reported nine surfaces and was itself found to over-count.
+10. **Measure constraints; never quote them — then check the instrument, and label the
+    conditions.** Name what a limit governs. A measurement is only as good as the thing taking it
+    and the conditions it was taken under: the pilot's performance tool over-counted, and its
+    headline concurrency figures turned out to come from two different workloads on different
+    runs — a safe *direction* and an unearned *magnitude*.
 11. **Recurring context becomes a skill, loaded first.**
 12. **Escalate on decisions, not on findings.** A review returning findings is the process
     working. Fix them and continue. Stop only for genuine semantic ambiguity, a closed decision
     reopening, a fix that is itself a product decision, or a loop hitting its cap.
 13. **The plan is the artefact of record.** Execution amends it — and so do the rules, the
     skills and the durable memory, because a correction that lands in only one of them leaves the
-    others wrong. A status file reports progress; it never holds a correction the plan lacks.
+    others wrong. Write a **deviation** the moment it happens; **close-out facts** legitimately
+    batch at a boundary, because they do not exist until the boundary. A status file reports
+    progress; it never holds a correction the plan lacks.
 14. **Assume amnesia.** Anything that lives only in a conversation is already gone. Progress,
     decisions and corrections must be reconstructable from the repository alone.
 15. **Name every agent by role.** An unnamed fleet is addressable only by opaque handles, and a
@@ -489,6 +502,9 @@ They are the cheapest phases and they catch the most expensive errors.
 | Change a gate or its baseline without a receipt | "the gates pass" silently stops meaning what it did |
 | Schedule a deletion before its replacements are verified | teardown is where you discover the predecessors nobody finished |
 | Keep task files loose, or share one folder between tasks | containment, the output contract and the status glob all key on `tasks/<ID>/` and break together |
+| Run a second identical sweep and call it a second pass | it re-finds what the first found; only a different lens or fresh context pays |
+| Absorb a recurring violation at integration instead of fixing its cause | the pilot's integrator silently cleaned up out-of-folder writes seven times and the cause was never fixed |
+| Leave an ambient indicator stale | the pilot's title read one wave for the entire run — an indicator that never updates is worse than none, because it is believed |
 | Record a deviation only in the status file | the plan becomes confidently wrong, and a restarted worker trusts it first |
 | Keep progress in the conversation | a clear or a compaction erases it, and the work gets re-done or skipped |
 | Run a fleet of identically-named agents | they are addressable only by opaque handles, and terminal titles become the only clue to purpose |
