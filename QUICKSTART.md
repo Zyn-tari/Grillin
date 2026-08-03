@@ -13,11 +13,36 @@ Nothing else in this repo is required reading before you begin.
 | Your job | Do this |
 |---|---|
 | One obvious change, no ambiguity | **Don't use this.** Just do it. |
-| 1–3 tasks, roughly an hour | Steps 1, 2, 4, 6 below. Skip 3 and 5. |
-| 4–10 tasks, half a day | All six steps. |
-| More than that | All six, then read [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) properly. |
+| 1–3 tasks, roughly an hour | 0b, then steps 1, 2, 4, 6. Skip 3 and 5. |
+| 4–10 tasks, half a day | 0b, then all six steps. |
+| More than that | All of it, then read [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) properly. |
+
+**0b is never skipped.** It takes two minutes and it is what tells you which of the
+rest applies.
 
 The times are for the planning, not the work.
+
+---
+
+## 0b · Six questions that decide the shape
+
+Size tells you how much. These tell you what **kind**. Answer them now — they take two
+minutes and they switch parts of this off, which is the point.
+
+They ask about **properties of your work, not what field it is in.** A documentation job and
+a server migration can get identical answers.
+
+| | Question | Yes | No |
+|---|---|---|---|
+| **1** | Does the thing already exist in some form you can inspect? | Step 2 checks every claim against **it**. | Step 2 checks your sources against **each other** — say out loud that there is nothing live to check against. |
+| **2** | Will more than one worker act at the same time? | Step 5 matters. Ownership is real. | Skip step 5. Still give every task a folder, owner, status and done-command — that is for *resuming*, not coordinating, and you will forget too. |
+| **3** | Are the workers AI agents? | The `templates/` folder is for you. | Ignore `templates/` entirely. Everything else still works; a person reads the plan. |
+| **4** | Does "done" produce something that runs or deploys? | Mind the order: build → promote → restart → check. Gate the new thing, not the old one. | No ordering trap. **"Done" is still a command** — `test -f`, a `grep`, a count. Not executable ≠ not checkable. |
+| **5** | Is any step hard to undo? | Have someone try to break the plan before you run it, and stop-and-ask where a human must decide. | One review is enough. |
+
+**Write the five answers at the top of your plan.** Anyone who thinks you scoped it wrong
+argues with that list — and it is the difference between a step you *decided* to skip and one
+you forgot.
 
 ---
 
@@ -80,7 +105,7 @@ tasks/
 
 `TASK.md` needs six things, and an orchestrator will fail without them:
 
-```markdown
+~~~~markdown
 # T1 — <short title>
 
 **Status:** NOT STARTED
@@ -100,7 +125,7 @@ tasks/
 
 ## Do NOT
 - <the specific trap for this task>
-```
+~~~~
 
 **The `Done means` block is the one people get wrong.** It has to be a *command*, not a
 description. "The docs are updated" is not checkable. `test -f CHANGELOG.md` is.

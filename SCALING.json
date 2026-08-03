@@ -735,5 +735,49 @@
       "the rulebook had no clause for a whole class of hazard until an incident created one",
       "the awareness instrument itself looped and computed the wrong position twice"
     ]
+  },
+  "shape": {
+    "why": "The scaling axis sizes the work. This axis says what KIND it is. Without it a plan inherits phases that assume concurrency, agents or deployability when none are present — the failure a first-time user hit.",
+    "askedIn": "phase 0, before phase 1",
+    "notADomainTest": "The questions are about properties of the work, not its field. 'Is it software?' is the wrong question and produces the wrong plan; a documentation job and a migration can answer identically.",
+    "questions": [
+      {
+        "n": 1,
+        "ask": "Does the thing already exist in some inspectable form?",
+        "yes": "precedence rung 2 is that thing; phase 3 grills every claim against it",
+        "no": "there is no rung 2 — phase 3 grills the sources against each other and against constraints, and the plan says so"
+      },
+      {
+        "n": 2,
+        "ask": "Will more than one worker act concurrently?",
+        "yes": "phases 5 and 7 in full; ownership and the contended-artefact list are load-bearing",
+        "no": "phase 7 off; phase 5 stays reduced — folder, owner, status, done-command, which exist for resumability rather than coordination"
+      },
+      {
+        "n": 3,
+        "ask": "Are the workers AI agents?",
+        "yes": "phases 6 and 8 apply, and so do the templates",
+        "no": "skip 6 and 8 and ignore templates/ — they are fleet scaffolding, not the method"
+      },
+      {
+        "n": 4,
+        "ask": "Does done produce something that runs or deploys?",
+        "yes": "verification order matters: build, promote, restart, then gate",
+        "no": "no ordering trap, but done is still a re-runnable command — not executable is not the same as not checkable"
+      },
+      {
+        "n": 5,
+        "ask": "Is any step irreversible or expensive to undo?",
+        "yes": "two adversarial passes with different lenses on those steps, plus explicit stop-and-ask nodes",
+        "no": "one pass; escalate on decisions only"
+      },
+      {
+        "n": 6,
+        "ask": "How many tasks, roughly?",
+        "yes": "see scaling",
+        "no": "see scaling"
+      }
+    ],
+    "output": "The answers are written at the top of the plan, and combine with the size table into one phase/on/off/reduced/why table. A skip with its reason beside it is a decision; a silent one is an omission."
   }
 }
