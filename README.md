@@ -5,9 +5,10 @@
 </p>
 
 <p align="center">
+  <a href="QUICKSTART.md">Quickstart</a> ·
   <a href="#the-eleven-phases">Phases</a> ·
+  <a href="OPERATING-THE-PLAN.md">Operating</a> ·
   <a href="#start-here">Files</a> ·
-  <a href="#scaling-it-down">Scaling</a> ·
   <a href="templates/GRILL-CHECKLIST.md">Checklist</a> ·
   <a href="CASE-STUDY.md">Case study</a>
 </p>
