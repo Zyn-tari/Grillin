@@ -36,6 +36,12 @@ way — including several in its own text.
 
 Nothing here is tied to the codebase it came from.
 
+**And there is a brother.** Grillin builds the plan and stops — something else has to run it, and
+for a long time that something else was a conversation, which dies. [**Smokin**](https://github.com/A-Pex97/smokin)
+is an idempotent tick that reads a plan directory off disk, dispatches what is ready across any
+agent CLI, re-runs each task's own done-command as a second hand, and renders a surface a human can
+read. Grillin answers *is this plan operable?*; Smokin answers *is it running, and where is it?*
+
 **And one number, because it should change how you use this.** On the first job run
 end to end with every layer active, the gate caught **2** defects and the human-and-agent
 readers caught **50**. The two layers catch disjoint classes — structure here, meaning

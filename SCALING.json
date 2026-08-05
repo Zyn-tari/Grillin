@@ -587,7 +587,31 @@
       "orchestrator tokens spent watching",
       "recovery cost after a context loss"
     ],
-    "invariant": "Declare the substrate once and do not mix mid-run. Whichever is used, every agent is addressable by a role name — an unnamed fleet is a coincidence, not an organisation."
+    "invariant": "Declare the substrate once and do not mix mid-run. A substrate that uses more than one mechanism internally -- as Smokin does, scripts for control flow and panes for the tasks that need a human -- is ONE substrate, not a mixture, provided the choice between them is declared per task and checkable. Mixing means switching substrate mid-run, not composing one.",
+    "third": {
+      "id": "smokin",
+      "repo": "https://github.com/A-Pex97/smokin",
+      "rules": "templates/_SMOKIN.md (from the smokin repo)",
+      "how": "an idempotent tick dispatches from disk and reaps receipts; panes are an escape hatch under a stated rule",
+      "buys": [
+        "survives orchestrator death -- the frontier is re-derived from files, which is what principle 14 has always demanded and never had for a RUNNING fleet",
+        "heterogeneous by construction -- a runtime is a row in a JSON file, not a code path",
+        "a missing receipt is a message, not an absence, so the result set is total",
+        "a generated human surface: STATUS.json is machine truth, PROGRESS.md is rendered only from it"
+      ],
+      "costs": [
+        "a wrapper on every launch and a capability table to maintain",
+        "the tick is only as fresh as its last run -- latency, never lost work",
+        "no mid-flight intervention unless a pane was opened for it"
+      ],
+      "measured": "NOT YET. substrates.measure[] has five rows and not one is filled for Smokin. Under phase 8's own rule it may be declared and used; it may NOT be recommended over the default until those numbers exist for a real fan-out."
+    },
+    "invariantAmended": {
+      "at": "2026-08-05",
+      "was": "Declare the substrate once and do not mix mid-run. Whichever is used, every agent is addressable by a role name — an unnamed fleet is a coincidence, not an organisation.",
+      "now": "Declare the substrate once and do not mix mid-run. A substrate that uses more than one mechanism internally -- as Smokin does, scripts for control flow and panes for the tasks that need a human -- is ONE substrate, not a mixture, provided the choice between them is declared per task and checkable. Mixing means switching substrate mid-run, not composing one.",
+      "why": "Smokin reads as the forbidden mixture unless it is named as one substrate. Recorded as an amendment rather than an edit: the method's rule is never to resolve a contradiction silently."
+    }
   },
   "awareness": {
     "problem": "attentional narrowing — a worker deep in one task is doing it correctly and has lost the shape of the plan around it. Not disobedience.",
