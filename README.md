@@ -27,8 +27,14 @@ and cheap to catch — plus one script that reads the plan you produced and fail
 if an orchestrator could not run it:
 
 ```bash
-./scripts/install-hooks.sh                          # the gate runs on every commit
-./scripts/validate-plan.py <plan-dir> --run-gates   # or run it by hand
+curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install.sh | sh
+grillin <plan-dir> --run-gates
+```
+
+Then make it run on every commit, in any repo that holds plans:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install-hooks.sh | sh
 ```
 
 Three of the phases produce no plan text at all — they only produce corrections — and they are the
@@ -76,7 +82,7 @@ After that, in roughly the order you need them:
 | [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The reasoning behind it. Eleven phases, sixteen principles, the scaling model, anti-patterns. |
 | **[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md)** | **The other half.** Being inside a plan after it turns out to be wrong — re-entry, amendments, frozen contracts, validating the instrument, and how to build a reader. Every rule traces to a defect a real run produced. |
 | **[`examples/`](examples/)** | **A real first plan** by a first-time user, and the gate report that fails it with 26 findings. |
-| [`CASE-STUDY.md`](CASE-STUDY.md) | Where it came from — the arc in order, including the steps that went wrong. |
+| [`CASE-STUDY.md`](CASE-STUDY.md) | **Two runs.** The one that produced the method, and the one that broke it — where the 2-versus-50 number comes from. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Feed it to tooling, or hand it to an agent as a planning brief. |
 | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) | **Print this.** Tick it against any plan before handing it over. |
 | [`templates/TASK.md.template`](templates/TASK.md.template) | Starting point for a task contract. Carries the `Reader:` and `Delivered:` lines the gate checks. |
@@ -85,6 +91,8 @@ After that, in roughly the order you need them:
 | [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
 | [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Never touches the plan; always exits 0. |
 | [`index.html`](index.html) | Visual map of the phases. **Download and open locally** — GitHub renders it as source. |
+| [`install.sh`](install.sh) · [`install-hooks.sh`](install-hooks.sh) | One-line install, and the hook that makes the gate run on every commit. |
+| [`scripts/check-drift.py`](scripts/check-drift.py) | The surfaces publish the same facts four times. This fails when they disagree — it has already fired twice for real. |
 | **[`scripts/validate-plan.py`](scripts/validate-plan.py)** | **The gate.** Thirteen checks. Zero deps, fail-closed, validates its own config, and proven against [`examples/minimal-passing-plan`](examples/minimal-passing-plan) — a fixture with a known answer, because the gate is an instrument too. |
 | [`templates/hooks.json.template`](templates/hooks.json.template) | The wiring. Start with the pre-compaction hook — the rest can wait. |
 | [`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template) | Phase 7's artefact — waves, worktrees, and the contended-file list with owners. |

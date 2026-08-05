@@ -86,3 +86,6 @@ jobs:
 
       - name: the machine-readable surfaces parse
         run: python3 -c "import json;json.load(open('SCALING.json'));print('SCALING.json ok')"
+
+      - name: the four surfaces agree
+        run: ./scripts/check-drift.py
