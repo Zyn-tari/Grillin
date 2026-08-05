@@ -176,9 +176,44 @@ code{font-family:var(--mono);font-size:.87em;background:var(--bg2);padding:.1em 
     <table><thead><tr><th>Don't</th><th>Because</th></tr></thead><tbody id="anti"></tbody></table>
   </div>
 
+  <h2>Operating the plan — after it turns out to be wrong</h2>
+  <p>The eleven phases are written for the author, before anything runs. On the first run measured
+  end to end, the plan-maker/operator separation held about twenty minutes. Five gaps reported
+  separately were one gap with five faces: <strong>there was no execution-time method.</strong></p>
+  <div class="tscroll">
+    <table><thead><tr><th>Rule</th><th>Because</th><th>Enforced?</th></tr></thead><tbody>
+      <tr><td>When phase 2 kills a premise, re-answer 0b</td><td>the sizing table is consulted once, before phase 2 has had a chance to change the answer</td><td>advisory</td></tr>
+      <tr><td><code>PLAN.md</code> and <code>tasks/</code> must agree</td><td>task files can drift as a set and stay self-consistent; that hid a defect for three review rounds</td><td><code>plan-truth</code></td></tr>
+      <tr><td>A human's contract freezes on delivery</td><td>a capture method was rewritten 2½ hours after the human satisfied the original, then graded against the rewrite</td><td><code>frozen-contract</code></td></tr>
+      <tr><td>CONFIRMED means <em>exercised</em></td><td>a capability read out of a compiled binary satisfied &ldquo;you checked it yourself&rdquo; exactly, and was false</td><td><code>confirmed-exercised</code></td></tr>
+      <tr><td>Validate the instrument before the measurements it authorises</td><td>a measuring script reported &ldquo;no accent detectable&rdquo;; every number true, the conclusion worthless</td><td><code>instrument</code></td></tr>
+      <tr><td>Repairs go through the converge loop too</td><td>the repair pass was the second-most defect-producing activity in the job</td><td>advisory</td></tr>
+      <tr><td>Containment covers derivatives</td><td>the leak was not in the protected capture, it was in the file transcribed out of it</td><td>advisory</td></tr>
+    </tbody></table>
+  </div>
+
+  <h2>How to build a reader</h2>
+  <p>The only part of the method backed by a number. <strong>The gate caught 2 defects. The readers
+  caught 50.</strong> Two roles, and they are not the same role &mdash; on that run the health
+  checker disqualified itself from the adversarial pass, correctly, having read the plan by round
+  two. The thing that makes it good at its job makes it useless at the other one.</p>
+  <div class="tscroll">
+    <table><thead><tr><th></th><th>Health checker</th><th>Adversary</th></tr></thead><tbody>
+      <tr><td>Asks</td><td>are the rules being followed?</td><td>is the result true?</td></tr>
+      <tr><td>Reads</td><td>everything</td><td>the deliverable and its evidence &mdash; <em>not</em> the plan's reasoning</td></tr>
+      <tr><td>Contamination</td><td>inevitable, and required</td><td>disqualifying</td></tr>
+      <tr><td>Found</td><td>~20</td><td>30 blocking, 14 non-blocking</td></tr>
+    </tbody></table>
+  </div>
+  <p>The checkable half is ownership: <strong>the adversary's owner must appear nowhere else in the
+  plan.</strong> Caveats on the number, stated rather than buried: one job, one operator, one domain;
+  the two layers catch disjoint classes and are not the same kind of count; the gate ran continuously
+  and the readers in bursts, so this is yield, not rate. <em>Nothing in this repository runs the gate
+  &mdash; no hook, no CI &mdash; so every rule above is enforceable, not enforced.</em></p>
+
   <footer>
     <p>Full method in <code>GRILLING-THE-PLAN.md</code> · worked example in
-    <code>CASE-STUDY.md</code> · machine-readable in <code>SCALING.json</code> ·
+    <code>CASE-STUDY.md</code> · execution-time rules in <code>OPERATING-THE-PLAN.md</code> · machine-readable in <code>SCALING.json</code> ·
     starting files in <code>templates/</code>.</p>
     <p style="margin-top:.6rem">Two phases never scale down, at any project size:
     <strong>grill the documents against the running system</strong>, and

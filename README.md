@@ -36,6 +36,15 @@ way — including several in its own text.
 
 Nothing here is tied to the codebase it came from.
 
+**And one number, because it should change how you use this.** On the first job run
+end to end with every layer active, the gate caught **2** defects and the human-and-agent
+readers caught **50**. The two layers catch disjoint classes — structure here, meaning
+there — so a green gate is a floor, and the floor is low. That is why the most valuable
+check in the script does nothing except refuse to pass a plan with **nobody staffed to
+attack it**, why `CONFIRMED` now means *exercised* and must quote the invocation that
+produced it, and why there is a second document about being inside a plan after it turns
+out to be wrong: [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md).
+
 **What it needs.** The method itself needs nothing — it is prose and you can follow
 it with a text editor. The gate needs **python3** (stdlib only, no packages). The
 templates in `templates/` are a different matter: six of the seven assume you are
@@ -55,17 +64,18 @@ After that, in roughly the order you need them:
 |---|---|
 | **[`QUICKSTART.md`](QUICKSTART.md)** | **Start here.** What to actually do, in order, with the times. |
 | [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The reasoning behind it. Eleven phases, sixteen principles, the scaling model, anti-patterns. |
+| **[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md)** | **The other half.** Being inside a plan after it turns out to be wrong — re-entry, amendments, frozen contracts, validating the instrument, and how to build a reader. Every rule traces to a defect a real run produced. |
 | **[`examples/`](examples/)** | **A real first plan** by a first-time user, and the gate report that fails it with 26 findings. |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | Where it came from — the arc in order, including the steps that went wrong. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Feed it to tooling, or hand it to an agent as a planning brief. |
 | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) | **Print this.** Tick it against any plan before handing it over. |
-| [`templates/TASK.md.template`](templates/TASK.md.template) | Starting point for a task contract. |
+| [`templates/TASK.md.template`](templates/TASK.md.template) | Starting point for a task contract. Carries the `Reader:` and `Delivered:` lines the gate checks. |
 | [`templates/_RULES.md.template`](templates/_RULES.md.template) | Starting point for the shared agent contract. |
 | [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
 | [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
 | [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Never touches the plan; always exits 0. |
 | [`index.html`](index.html) | Visual map of the phases. **Download and open locally** — GitHub renders it as source. |
-| **[`scripts/validate-plan.py`](scripts/validate-plan.py)** | **The gate.** Reads a plan and fails if it is not operable. Zero deps, fail-closed, validates its own config. |
+| **[`scripts/validate-plan.py`](scripts/validate-plan.py)** | **The gate.** Thirteen checks. Zero deps, fail-closed, validates its own config, and proven against [`examples/minimal-passing-plan`](examples/minimal-passing-plan) — a fixture with a known answer, because the gate is an instrument too. |
 | [`templates/hooks.json.template`](templates/hooks.json.template) | The wiring. Start with the pre-compaction hook — the rest can wait. |
 | [`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template) | Phase 7's artefact — waves, worktrees, and the contended-file list with owners. |
 

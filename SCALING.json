@@ -779,5 +779,72 @@
       }
     ],
     "output": "The answers are written at the top of the plan, and combine with the size table into one phase/on/off/reduced/why table. A skip with its reason beside it is a decision; a silent one is an omission."
-  }
+  },
+  "operating": {
+    "premise": "GRILLING-THE-PLAN.md builds a plan; OPERATING-THE-PLAN.md is being inside one after it has turned out to be wrong. The phases are all written for the author, before anything runs.",
+    "theSeam": "On the reference run the plan-maker/operator separation held about twenty minutes. Five reported gaps -- the gate never reading PLAN.md, no instrument rule, containment stopping at the step, no re-sizing trigger, repairs producing defects -- are one gap with five faces: there was no execution-time method.",
+    "reEntry": "If phase 2 invalidates a load-bearing premise, the shaping answers are stale. Re-answer them, date the new set, leave the old one visible with what killed it. Work created by a dead premise gets its own task; folding it into an existing one is scope smuggling.",
+    "amendment": "Every plan change carries what changed, what triggered it, who caught it, when. A change recorded only in a status line makes the plan confidently wrong, and a restarted worker trusts the plan first.",
+    "frozenContract": "A task with a human owner records **Delivered:** <date> · contract sha256:<12 hex> when handed over, covering What you own / Steps / Done means / Do NOT. Changing it afterwards is a retroactively moved goalpost, not a deviation by the human. ENFORCED by check_frozen_human_contracts.",
+    "repairScope": "The converge loop in _RULES.md section 5 already says confirm the fix by someone who did not make it. Its scope is any change, including changes to the plan, the rules and the gate. On the reference run the repair pass was the second-most defect-producing activity in the job.",
+    "instrument": "Anything producing evidence other work depends on is an instrument. Prove it against a known answer BEFORE the measurements it authorises, and make that proof its gate. Appeared twice in one run: a ground-truth fixture, and a positive control (search for something known to exist, so an empty result means real absence). ENFORCED by check_instrument_fixture.",
+    "derivatives": "Containment is a property of the data, not of the step that fetched it. Whatever covers the raw artefact covers everything transcribed out of it. ADVISORY -- a machine cannot tell a transcribed figure from an original."
+  },
+  "readers": {
+    "why": "The only section in the method backed by a number. Two roles, and they are not the same role.",
+    "healthChecker": {
+      "runs": "continuously, in rounds",
+      "asks": "are the rules being followed?",
+      "reads": "everything",
+      "contamination": "inevitable and required",
+      "found": "~20, including every process violation"
+    },
+    "adversary": {
+      "runs": "once, at the end",
+      "asks": "is the result true?",
+      "reads": "the deliverable and its evidence, not the plan's reasoning",
+      "contamination": "disqualifying",
+      "found": "30 blocking, 14 non-blocking"
+    },
+    "contaminationDefined": "A reader is contaminated if it produced any artefact under review, or read the plan's reasoning. The checkable half is ownership: the adversary's owner must appear nowhere else in the plan.",
+    "staffing": [
+      "name it in the plan as a task, with an owner",
+      "fresh context, not a subagent of the orchestrator",
+      "a different lens beats a second identical sweep",
+      "two passes on anything irreversible, the second blind to the first",
+      "it reports, it does not repair"
+    ],
+    "enforced": "check_adversary, at 4 tasks and above",
+    "selfDisqualification": "On the reference run the health checker disqualified itself from the adversarial pass, correctly, having read the plan by round two. The thing that makes it good at its job makes it useless at the other one."
+  },
+  "measurement": {
+    "run": "one job, run end to end, 5 Aug 2026",
+    "gate": 2,
+    "healthChecker": 20,
+    "adversary": 44,
+    "fixture": 1,
+    "headline": "The machine-checkable layer caught 2 defects. The readers caught 50.",
+    "caveats": [
+      "one job, one operator, one domain",
+      "not the same kind of thing: the gate cannot find a false premise, the readers cannot run a command on every commit",
+      "the gate ran continuously and the readers in bursts, so this is yield, not rate"
+    ],
+    "consequence": "The layers catch disjoint classes. Grillin had spent nearly all its written mechanism on the class that yields 2, which is why the highest-value check added does nothing but refuse to pass a plan with nobody staffed to attack it."
+  },
+  "gateChecks": [
+    "config-integrity",
+    "layout",
+    "owner",
+    "status",
+    "done-checkable",
+    "references",
+    "graph",
+    "plan-truth",
+    "adversary",
+    "confirmed-exercised",
+    "frozen-contract",
+    "instrument",
+    "gate-fails-first"
+  ],
+  "gateNotRun": "LARGEST OPEN ITEM: nothing in this repository runs the gate. No git hook, no CI, no register. It is documentation with an exit code, so every ENFORCED rule is enforceable, not enforced. A run without --run-gates now exits 2 (INCOMPLETE) rather than 0, which closes the cheapest half of the hole."
 }
