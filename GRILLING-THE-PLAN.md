@@ -164,7 +164,7 @@ doing its job.
 **Output:** an approved graph.
 
 **Record what you turned off.** By now two things have switched phases off: the size table, and
-the six questions in phase 0. Keep the combined result as one table in the plan —
+the five shaping questions in phase 0, plus the size question. Keep the combined result as one table in the plan —
 *phase · on / off / reduced · which answer or size decided it*. The method's whole objection is
 to skipping **silently**; a skip with its reason beside it is a decision, and the next reader can
 disagree with it.

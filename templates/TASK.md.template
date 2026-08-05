@@ -10,6 +10,23 @@ it is the progress record, and it is the only one that survives a lost conversat
 **Blocked by:** <ids> · **Blocks:** <ids>
 **Mandatory downstream:** <adversarial passes — TWO, the second with fresh context, on money/authz? integrator?>
 
+<!-- READER — only on the two reading roles. See OPERATING-THE-PLAN.md §7.
+     **Reader:** adversary  → judges whether the RESULT is true. Its Owner must appear nowhere
+                              else in the plan; the gate fails the plan if it does. It reads the
+                              deliverable and its evidence, NOT the plan's reasoning. It reports,
+                              it does not repair.
+     **Reader:** health     → judges whether the RULES were followed. Contamination is expected
+                              and required; that is exactly why it cannot also be the adversary. -->
+**Reader:** <adversary | health — omit this line entirely on ordinary work tasks>
+
+<!-- DELIVERY — required on any task whose Owner is a human, once it leaves NOT STARTED.
+     A human does not read this directory, so record that the contract actually reached them,
+     and freeze it. The hash covers "What you own", "Steps", "Done means" and "Do NOT".
+     Change any of them afterwards and `check_frozen_human_contracts` fails the plan: grading
+     someone against wording they were never given is moving the goalpost, not a deviation.
+       printf '%s' "$(sed -n '/^## What you own/,$p' TASK.md)" | sha256sum   # see the script -->
+**Delivered:** <YYYY-MM-DD> · contract sha256:<first 12 hex>
+
 Rules: [`../_RULES.md`](../_RULES.md)
 
 **Skills — invoke ALL of these before your first tool call, in this order:** `<skill>` · `<skill>`

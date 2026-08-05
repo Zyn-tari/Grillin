@@ -1,4 +1,16 @@
-# A real first plan, and what the gate said about it
+# Two examples: one that fails, one that passes
+
+| | |
+|---|---|
+| [`a-real-first-plan/`](a-real-first-plan) | A genuine first attempt. **Fails, with 30+ findings.** Read it to see how finished a broken plan feels. |
+| [`minimal-passing-plan/`](minimal-passing-plan) | The smallest plan that passes cleanly. **A fixture, not a specimen** — do not copy it as a model. |
+
+One of each is the minimum needed to tell a working validator from a broken one, which is the rule
+[`OPERATING-THE-PLAN.md`](../OPERATING-THE-PLAN.md) §5 applies to every other instrument.
+
+---
+
+## A real first plan, and what the gate said about it
 
 The first version of this repository contained **zero completed artefacts** — sixty-eight
 template placeholders and a case study that *described* a plan without shipping any of it.

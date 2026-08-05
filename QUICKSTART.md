@@ -24,9 +24,10 @@ The times are for the planning, not the work.
 
 ---
 
-## 0b · Six questions that decide the shape
+## 0b · Five questions that decide the shape
 
-Size tells you how much. These tell you what **kind**. Answer them now — they take two
+Size tells you how much — that is the sixth question, and step 0 above already asked it.
+These five tell you what **kind**. Answer them now — they take two
 minutes and they switch parts of this off, which is the point.
 
 They ask about **properties of your work, not what field it is in.** A documentation job and
