@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Grillin pre-commit gate.
+#
+# Until this file existed, nothing in this repository ran the validator. It was
+# documentation with an exit code — every rule marked ENFORCED was enforceable
+# in principle and advisory in practice, which is the difference between a
+# mechanism and a preference. This is the mechanism.
+#
+# Install:  ./scripts/install-hooks.sh
+# Skip:     GRILLIN_SKIP=1 git commit ...   (says so, loudly, in the log)
+set -uo pipefail
+
+REPO="$(git rev-parse --show-toplevel)"
+VALIDATE="$REPO/scripts/validate-plan.py"
+[ -x "$VALIDATE" ] || VALIDATE="$(command -v validate-plan.py || true)"
+
+if [ "${GRILLIN_SKIP:-}" = "1" ]; then
+  echo "grillin: GATE SKIPPED by GRILLIN_SKIP=1 — this commit was not validated." >&2
+  # Leave a trace. A skip nobody can see is indistinguishable from a pass.
+  printf '%s  gate skipped  %s\n' "$(date -u +%FT%TZ)" "$(git rev-parse --short HEAD 2>/dev/null || echo initial)" \
+    >> "$REPO/.git/grillin-skips.log"
+  exit 0
+fi
+
+[ -n "$VALIDATE" ] && [ -x "$VALIDATE" ] || {
+  echo "grillin: validate-plan.py not found or not executable — refusing to pass silently" >&2
+  exit 1
+}
+
+# Which plan directories does this commit touch? A plan directory is one that
+# contains tasks/<ID>/TASK.md — the same definition the validator uses.
+plans=""
+while IFS= read -r f; do
+  d="$REPO/$f"
+  while [ "$d" != "$REPO" ] && [ "$d" != "/" ]; do
+    if compgen -G "$d/tasks/*/TASK.md" > /dev/null 2>&1; then
+      case " $plans " in *" $d "*) ;; *) plans="$plans $d" ;; esac
+      break
+    fi
+    d="$(dirname "$d")"
+  done
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+
+# The repo's own fixtures are non-negotiable: the gate is an instrument, and an
+# instrument is calibrated against a known answer before the measurements it
+# authorises. Known-good must exit 0; known-bad must exit 1. A validator that
+# passes everything is the failure mode nobody notices.
+fail=0
+if [ -d "$REPO/examples/minimal-passing-plan" ]; then
+  "$VALIDATE" "$REPO/examples/minimal-passing-plan" --run-gates >/dev/null 2>&1
+  [ $? -eq 0 ] || { echo "grillin: CALIBRATION FAILED — the known-good fixture does not pass." >&2
+                    echo "         The gate is broken, not the plan. Fix the validator." >&2; fail=1; }
+fi
+if [ -d "$REPO/examples/a-real-first-plan" ]; then
+  "$VALIDATE" "$REPO/examples/a-real-first-plan" --run-gates >/dev/null 2>&1
+  [ $? -eq 1 ] || { echo "grillin: CALIBRATION FAILED — the known-bad example no longer fails." >&2
+                    echo "         A gate that passes everything catches nothing." >&2; fail=1; }
+fi
+
+for p in $plans; do
+  case "$p" in "$REPO/examples/a-real-first-plan") continue ;; esac   # fails on purpose
+  echo "grillin: gating ${p#$REPO/}"
+  "$VALIDATE" "$p" --run-gates
+  rc=$?
+  case $rc in
+    0) ;;
+    2) echo "grillin: INCOMPLETE on ${p#$REPO/} — gates did not execute." >&2; fail=1 ;;
+    *) fail=1 ;;
+  esac
+done
+
+if [ "$fail" -ne 0 ]; then
+  cat >&2 <<'MSG'
+
+grillin: commit refused.
+
+  A green gate means the plan is OPERABLE, not correct — so this is the low bar
+  and it was not cleared. Fix what is listed above.
+
+  To commit anyway, deliberately and on the record:
+      GRILLIN_SKIP=1 git commit ...
+MSG
+  exit 1
+fi
+exit 0
