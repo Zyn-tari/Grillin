@@ -226,11 +226,21 @@ Honest accounting. A rule a machine cannot check is a preference.
 
 ## 10 · What this does not solve
 
-**Nothing in this repository runs the gate.** There is no git hook, no CI, no register that invokes
-`validate-plan.py`; it is documentation with an exit code. Until something runs it on a schedule
-nobody controls, every ENFORCED row above is *enforceable*, not *enforced* — and the distinction is
-the whole difference between a mechanism and a preference. This is the largest open item in the
-method and it is not fixed here.
+~~**Nothing in this repository runs the gate.**~~ **Closed.** It used to be true, and it was the
+largest open item in the method: `validate-plan.py` was documentation with an exit code, so every
+ENFORCED row above was *enforceable*, not *enforced*. Three things now run it, and they fail
+differently on purpose:
+
+| | Runs | Skippable |
+|---|---|---|
+| [`.githooks/pre-commit`](.githooks/pre-commit) | every commit, on any plan directory the commit touches | yes — `GRILLIN_SKIP=1`, which **logs the skip**, because a skip nobody can see is indistinguishable from a pass |
+| [`.github/workflows/gate.yml`](.github/workflows/gate.yml) | every push and PR | no |
+| `templates/hooks.json.template` | agent session start | it is a reminder, not a gate |
+
+Both the hook and CI **calibrate before they gate**: the known-good fixture must exit 0 and the
+known-bad example must exit 1. A validator that passes everything catches nothing, and that failure
+is silent unless something tests for it. CI additionally mutation-tests each check, so one that
+quietly stops firing fails the build rather than passing everything.
 
 **The adversary is staffed but not scoped.** The gate can prove the owner is clean. It cannot prove
 the reader looked at the right things, or looked hard.
