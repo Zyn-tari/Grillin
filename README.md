@@ -25,10 +25,13 @@ reasons:
 and cheap to catch — plus one script that reads the plan you produced and fails
 if an orchestrator could not run it:
 
+```bash
+./scripts/install-hooks.sh                          # the gate runs on every commit
+./scripts/validate-plan.py <plan-dir> --run-gates   # or run it by hand
 ```
-./scripts/validate-plan.py <plan-dir> --run-gates
-``` Three of the phases produce no plan text at all — they only
-produce corrections — and they are the highest-value phases in the method.
+
+Three of the phases produce no plan text at all — they only produce corrections — and they are the
+highest-value phases in the method.
 
 It was extracted from a single real planning session that turned a vague redesign
 brief into a 29-file executable plan, and caught roughly **30 errors** along the
