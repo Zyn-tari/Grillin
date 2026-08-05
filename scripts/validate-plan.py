@@ -268,11 +268,21 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
         # own inputs is not a working gate — it is an unanchored one, and reading
         # its non-zero exit as "correctly fails" is false reassurance on exactly
         # the plans that are broken.
-        blew_up = re.search(
-            r"FileNotFoundError|No such file or directory|command not found|"
-            r"ModuleNotFoundError|ImportError|cannot open|Permission denied|"
-            r"unbound variable|syntax error",
-            (r.stderr or "") + (r.stdout or ""), re.I)
+        # Exit status first, wording second. `shell=True` runs /bin/sh, which is
+        # dash on Debian and Ubuntu, and dash says "not found" where bash says
+        # "command not found" — so a regex written against bash silently passed
+        # a gate that shells out to a binary nobody has installed, and reported
+        # it as failing cleanly. 127 and 126 are POSIX and say it without prose.
+        blew_up = None
+        if r.returncode in (126, 127):
+            blew_up = type("M", (), {"group": lambda self, n=0:
+                                     f"exit {r.returncode} — not found or not executable"})()
+        else:
+            blew_up = re.search(
+                r"FileNotFoundError|No such file or directory|command not found|"
+                r"\bnot found\b|ModuleNotFoundError|ImportError|cannot open|"
+                r"Permission denied|unbound variable|syntax error",
+                (r.stderr or "") + (r.stdout or ""), re.I)
         if blew_up:
             f.fail("gate-fails-first", f"{path}",
                    f"{tid}'s done-command could not run here — it failed on its own "
