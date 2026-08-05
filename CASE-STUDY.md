@@ -219,3 +219,110 @@ inward.
 
 **The grilling is not a review stage at the end. It is the load-bearing activity, applied
 continuously — most valuably to your own work.**
+
+---
+
+# The second run — where the method broke
+
+That first session produced the method. A later job **operated** one, end to end, with two
+retrospectives written afterwards: one by the agent that ran the plan, one by the agent that
+wrote it. It is the more useful of the two case studies, because this time the method failed in
+places, and the failures are specific.
+
+The job: take a company's client dashboard, assess it against a designer's inspiration, and hand
+their engineers a plain-language reskin document. Ten tasks. Nobody touched their code.
+
+## The premise died in twenty minutes
+
+Phase 2 exists to kill premises. It killed this one: the plan's opening sentence said *"both
+inputs must be assessed by Codewhale"*, and Codewhale **cannot see images at all** — not a missing
+model, not a config gap. Posting an image to the provider's API returns
+`HTTP 400 — unknown variant 'image_url'`. There is no image input path in the product, so no
+credential or setting could have created one.
+
+**Proof-first ordering is the only reason that surfaced before an image-blind description reached
+the client's engineers.** Task 1 existed solely to prove the tool could see, *before anything
+depended on it*. That is the single best thing the method did, and it did it structurally rather
+than by luck.
+
+Then the instrument built to replace it was **also** wrong. A pixel-counting script shattered a
+gradient background into 24 near-identical near-blacks, filled every palette slot, and reported
+*no accent detectable* at a contrast ratio of 1.05:1. Every individual number was true. The
+conclusion was worthless. A fixture with a known answer caught it — a fixture that existed only
+because task 1 said *prove it on a throwaway first*.
+
+## The number
+
+Every layer ran. Here is what each one caught:
+
+| Layer | Defects |
+|---|---|
+| `validate-plan.py`, on every structural change | **2** |
+| A health checker, three rounds | ~**20** |
+| An adversarial reader, five passes | **30 blocking**, 14 non-blocking |
+| A ground-truth fixture | **1** — and it was the one that would have poisoned the deliverable |
+
+**The machine-checkable layer caught 2. The readers caught 50.**
+
+Three caveats, stated rather than buried: one job, one operator, one domain; the counts are not the
+same kind of thing, since a gate cannot find a false premise and a reader cannot run on every
+commit; and the gate ran continuously while the readers ran in bursts, so this is yield, not rate.
+
+The direction is not in doubt, and it reorganised the method. Grillin had spent nearly all of its
+written mechanism on the layer that yields 2 — and had **nothing at all** about how to staff the
+layer that yields 50. [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) is the answer, and
+`check_adversary` is the first gate check whose entire job is refusing to pass a plan with nobody
+staffed to attack it.
+
+## Five gaps that were one gap
+
+The operator reported five separate failures. They are one failure with five faces — every one of
+them only occurs *after* a plan is already running:
+
+| Reported as | Only happens |
+|---|---|
+| the gate never reads `PLAN.md` | once the plan changes |
+| nothing says the instrument can be wrong | instruments get built mid-run |
+| containment stops at the step, not the data | derivatives exist only once work starts |
+| no re-sizing trigger when a premise dies | phase 2 killed the premise |
+| the repair pass produced six new defects | repairing is an execution activity |
+
+**Grillin was a plan-making method being used as a plan-running method.** The operator's own words:
+*"That separation held for about twenty minutes."*
+
+## The one that was the plan maker's fault
+
+The capture method was rewritten **two and a half hours after** the human had already satisfied the
+original version — and the run then recorded their delivery as a deviation, against wording that
+did not exist when they did the work.
+
+Git settled it: the original spec was committed at 11:44, the human delivered at 12:37, and the
+rewrite landed at 15:03. That is not a deviation by the human. It is a **retroactively moved
+goalpost**, and it is why a human-owned task now freezes its contract with a hash the moment it is
+handed over.
+
+The deeper cause: Grillin's briefing model is *every agent receives a directory, not a prompt* —
+and **a human does not read the directory.** Nothing put the contract in front of the person who
+had to satisfy it, and nothing told them when it moved.
+
+## What changed because of it
+
+| Finding | Now |
+|---|---|
+| `CONFIRMED` was recorded from a string compiled into a binary — and was false | CONFIRMED means **exercised** and must quote the invocation. Principle 7 already said *evidence is execution, not inspection*; the **label** did not carry the principle |
+| A silently rewritten dependency edge hid for three review rounds | `check_plan_source_of_truth` cross-checks `PLAN.md` against `tasks/` |
+| The adversary was the highest-yield task and the least specified | `check_adversary` — and its owner must appear nowhere else in the plan |
+| A measuring instrument was confidently wrong | `check_instrument_fixture` — prove the ruler against a known answer first |
+| Nothing ran the gate | a pre-commit hook, CI, and an installer. Both calibrate before they gate |
+
+## The lesson the first case study could not teach
+
+The first session showed that grilling a plan finds errors. The second showed something harder:
+**a plan can pass every mechanical check and still be built on a premise that was never true**, and
+the thing that catches that is not a validator. It is a person, or an agent, who did not write the
+plan, reading it with the intent to break it — and who has been kept clean enough to be able to.
+
+The health checker on that run **disqualified itself** from the adversarial pass, correctly, having
+read the plan by round two. That single act is the most instructive moment in either case study:
+the thing that made it good at enforcing process is the thing that made it useless at judging the
+result.
