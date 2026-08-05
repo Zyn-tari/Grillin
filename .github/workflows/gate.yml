@@ -1,0 +1,88 @@
+name: gate
+
+# The hook is local and skippable. This is the copy nobody can skip.
+#
+# It runs the same two things the pre-commit hook runs, for the same reason:
+# the validator is an instrument, and an instrument that has not been calibrated
+# against a known answer authorises every measurement downstream of it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  calibration:
+    name: the gate is calibrated
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: known-good fixture must PASS
+        run: |
+          ./scripts/validate-plan.py examples/minimal-passing-plan --run-gates
+          echo "exit 0 as required"
+
+      - name: known-bad example must FAIL
+        run: |
+          if ./scripts/validate-plan.py examples/a-real-first-plan --run-gates; then
+            echo "::error::The known-bad example passed. A gate that passes everything catches nothing."
+            exit 1
+          fi
+          echo "exit 1 as required"
+
+      - name: a run without --run-gates must report INCOMPLETE, not success
+        run: |
+          set +e
+          ./scripts/validate-plan.py examples/minimal-passing-plan > /dev/null 2>&1
+          rc=$?
+          set -e
+          if [ "$rc" -ne 2 ]; then
+            echo "::error::Expected exit 2 (INCOMPLETE), got $rc. The cheap half of the check must not read as the whole of it."
+            exit 1
+          fi
+          echo "exit 2 as required"
+
+      - name: every new check fires on its own defect
+        run: |
+          fail=0
+          probe() { # name, check, mutation
+            rm -rf /tmp/mut && cp -r examples/minimal-passing-plan /tmp/mut
+            sed -i 's|\[`../a-real-first-plan`\](../a-real-first-plan)|the failing example|' /tmp/mut/PLAN.md
+            ( cd /tmp/mut && eval "$3" )
+            if ./scripts/validate-plan.py /tmp/mut --run-gates 2>&1 | grep -q "^FAIL — $2"; then
+              echo "  ok    $1"
+            else
+              echo "::error::$1 did not fire — check '$2' is dead"; fail=1
+            fi
+          }
+          probe adversary-missing    adversary           "sed -i '/Reader:/d' tasks/T4/TASK.md"
+          probe adversary-dirty      adversary           "sed -i 's/^\*\*Owner:\*\* reviewer/**Owner:** worker-a/' tasks/T4/TASK.md"
+          probe plan-truth-edge      plan-truth          "sed -i 's/worker-a | T2 |/worker-a | T1 |/' PLAN.md"
+          probe confirmed-no-cmd     confirmed-exercised "printf '\n| F-1 | a thing | CONFIRMED |\n' >> PLAN.md"
+          probe human-not-delivered  frozen-contract     "sed -i 's/^\*\*Owner:\*\* worker-a/**Owner:** human/;s/^\*\*Status:\*\* NOT STARTED/**Status:** IN PROGRESS/' tasks/T1/TASK.md"
+          probe missing-binary-gate  gate-fails-first    "sed -i 's|test -f findings/T2.md|definitelynotarealbinary --check|' tasks/T2/TASK.md"
+          exit $fail
+
+      - name: links resolve
+        run: |
+          python3 - <<'PY'
+          import re, pathlib, sys
+          bad = 0
+          for md in pathlib.Path('.').rglob('*.md'):
+              if '.git' in md.parts or 'a-real-first-plan' in md.parts:
+                  continue          # that example ships with dangling links on purpose
+              for i, line in enumerate(md.read_text(errors='replace').splitlines(), 1):
+                  for t in re.findall(r'\[[^\]]*\]\(([^)#][^)]*)\)', line):
+                      t = t.split('#')[0].strip()
+                      if not t or '://' in t or t.startswith('mailto:'):
+                          continue
+                      if not (md.parent / t).exists():
+                          print(f"::error file={md},line={i}::dangling link {t!r}")
+                          bad += 1
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: the machine-readable surfaces parse
+        run: python3 -c "import json;json.load(open('SCALING.json'));print('SCALING.json ok')"
