@@ -57,6 +57,9 @@ FLOORS = {
     "require_confirmed_is_exercised": True,
     "require_frozen_human_contracts": True,
     "require_instrument_fixture": True,
+    # lifted from project-base, which enforced both before Grillin existed
+    "require_rollback_real": True,
+    "require_paths_disjoint": True,
 }
 VALID_STATUS = {"NOT STARTED", "IN PROGRESS", "BLOCKED", "DONE"}
 
@@ -708,6 +711,153 @@ def check_instrument_fixture(f: Findings, plan: Path, tasks: dict, cfg: dict):
         f.ok("instrument", f"{len(scripts)} instrument(s), each proven against a known answer")
 
 
+RE_REVERSIBLE = re.compile(r"\*\*Reversible:\*\*\s*([^·\n]*?)(?=\*\*|·|$)", re.M | re.I)
+RE_ROLLBACK = re.compile(r"\*\*Rollback:\*\*\s*(.+?)$", re.M | re.I)
+RE_PLACEHOLDER = re.compile(r"^\s*(TODO|TBD|N/?A|none|—|-|\?+|<[^>]*>)\s*$", re.I)
+RE_OWNED_PATH = re.compile(r"`([^`\n]+)`")
+
+
+def check_rollback_real(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """
+    An irreversible task must name a real way back.
+
+    Lifted from project-base's plan_validate.sh, which has enforced it since
+    June: "rollback is real, not a stub — no revert path = an un-undoable
+    change." Grillin asks shaping question 5 (*is any step hard to undo?*) and
+    then never checked that anything answered it. Asking a question whose
+    answer nothing verifies is how a plan acquires a reassuring paragraph and
+    no revert path.
+    """
+    if not cfg.get("require_rollback_real", True):
+        return
+    bad, seen = 0, 0
+    for tid, path in sorted(tasks.items()):
+        text = path.read_text(errors="replace")
+        m = RE_REVERSIBLE.search(text)
+        irreversible = bool(m and m.group(1).strip().lower().startswith(("no", "false")))
+        rb = RE_ROLLBACK.search(text)
+        if not irreversible and not rb:
+            continue
+        seen += 1
+        if irreversible and not rb:
+            bad += 1
+            f.fail("rollback", f"{path}:1",
+                   f"{tid} declares itself irreversible and names no **Rollback:**. "
+                   f"An un-undoable change with no revert path is the one shape a "
+                   f"plan cannot recover from.")
+            continue
+        val = rb.group(1).strip() if rb else ""
+        if RE_PLACEHOLDER.match(val):
+            bad += 1
+            f.fail("rollback", f"{path}:{line_of(path, rb.group(0))}",
+                   f"{tid}'s rollback is a placeholder ({val!r}). A stub revert path "
+                   f"reads as covered and is not.")
+        # "just undo it" is three words and passes any is-this-a-sentence test,
+        # which is exactly why an earlier version of this check let it through.
+        # The rule is the same one Done means uses: write it as inline code, or
+        # it is not something another person can run.
+        elif not RE_OWNED_PATH.search(val) and not re.search(r"[/$]|--", val):
+            bad += 1
+            f.fail("rollback", f"{path}:{line_of(path, rb.group(0))}",
+                   f"{tid}'s rollback is prose, not something anyone can run. "
+                   f"Same rule as Done means: if nobody else can execute it, it is "
+                   f"a hope rather than a revert path.")
+
+    # The plan says an irreversible step exists; no task owns one.
+    src = plan / "PLAN.md"
+    if src.is_file():
+        for line in src.read_text(errors="replace").splitlines():
+            if not re.search(r"hard to undo|irreversible", line, re.I):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) >= 3 and re.match(r"\**\s*yes", cells[2], re.I):
+                if not any(RE_REVERSIBLE.search(p.read_text(errors="replace"))
+                           for p in tasks.values()):
+                    bad += 1
+                    f.fail("rollback", f"{src}:{line_of(src, line[:40])}",
+                           "the shaping answers say a step is hard to undo, but no task "
+                           "declares '**Reversible:** no'. The risk was named at phase 0 "
+                           "and then belongs to nobody.")
+                break
+    if seen and not bad:
+        f.ok("rollback", f"{seen} task(s) with a revert path, each runnable")
+    elif not seen and not bad:
+        f.ok("rollback", "no task declares itself irreversible")
+
+
+def _owned_paths(text: str):
+    """Specific paths from '## What you own'. Vague ones are ignored on purpose."""
+    body, in_section, in_fence = [], False, False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence and re.match(r"^#+\s", line):
+            if in_section:
+                break
+            in_section = bool(re.match(r"^#+\s*What you own\b", line, re.I))
+            continue
+        if in_section:
+            body.append(line)
+    out = set()
+    for span in RE_OWNED_PATH.findall("\n".join(body)):
+        s = span.strip().rstrip("/")
+        # Only paths specific enough to collide: a directory or a file with a
+        # suffix. A bare word is a description, and treating it as a path is
+        # how this check would start crying wolf.
+        if "/" in s or re.search(r"\.\w{1,5}$", s):
+            out.add(s)
+    return out
+
+
+def check_paths_disjoint(f: Findings, tasks: dict, cfg: dict):
+    """
+    Two tasks that can run at the same time may not own the same path.
+
+    Grillin has said this in prose since phase 7 — separate worktrees are the
+    easy half, the contended-file list is the hard half — and never checked it.
+    project-base has: "file overlap between slices -> two parallel Executors
+    editing one file race + clobber". Same-file collision is the most-reported
+    failure in every multi-agent post-mortem in the prior art.
+
+    Concurrent means: neither task can reach the other through the dependency
+    graph. Ordering is what makes shared ownership safe, so tasks in sequence
+    are exempt.
+    """
+    if not cfg.get("require_paths_disjoint", True):
+        return
+    blocked_by, owns = {}, {}
+    for tid, path in tasks.items():
+        text = path.read_text(errors="replace")
+        mb = RE_BLOCKED_BY.search(text)
+        blocked_by[tid] = {d for d in (RE_TASK_ID.findall(mb.group(1)) if mb else []) if d in tasks}
+        owns[tid] = _owned_paths(text)
+
+    def reaches(a, b, seen=None):
+        seen = seen or set()
+        if a in seen:
+            return False
+        seen.add(a)
+        return b in blocked_by[a] or any(reaches(d, b, seen) for d in blocked_by[a])
+
+    ids = sorted(tasks)
+    bad = 0
+    for i, a in enumerate(ids):
+        for b in ids[i + 1:]:
+            if reaches(a, b) or reaches(b, a):
+                continue                      # ordered — sharing is safe
+            shared = owns[a] & owns[b]
+            for p in sorted(shared):
+                bad += 1
+                f.fail("paths-disjoint", f"{tasks[a]}:1",
+                       f"{a} and {b} can run at the same time and both own {p!r}. "
+                       f"Two workers editing one path is one conflict, relocated to "
+                       f"merge time where it is most expensive. Give it one owner and "
+                       f"let the other emit a fragment.")
+    if not bad:
+        f.ok("paths-disjoint", "no two concurrent tasks own the same path")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -756,6 +906,8 @@ def main():
     check_confirmed_is_exercised(f, plan, cfg)
     check_frozen_human_contracts(f, tasks, cfg)
     check_instrument_fixture(f, plan, tasks, cfg)
+    check_rollback_real(f, plan, tasks, cfg)
+    check_paths_disjoint(f, tasks, cfg)
     if args.run_gates:
         check_gates_fail_first(f, plan, tasks)
 

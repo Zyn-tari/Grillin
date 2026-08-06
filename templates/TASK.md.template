@@ -19,6 +19,13 @@ it is the progress record, and it is the only one that survives a lost conversat
                               and required; that is exactly why it cannot also be the adversary. -->
 **Reader:** <adversary | health — omit this line entirely on ordinary work tasks>
 
+<!-- REVERSIBILITY — declare it when the answer is no, and then name the way back.
+     Shaping question 5 asks whether any step is hard to undo. It was asked at phase 0
+     and nothing checked that a task ever answered it. If this task cannot be undone,
+     say so and give a command someone else can run — inline code, same rule as
+     Done means. "just undo it" is three words and reverts nothing. -->
+**Reversible:** <yes | no>  ·  **Rollback:** `<command that puts it back>`
+
 <!-- DELIVERY — required on any task whose Owner is a human, once it leaves NOT STARTED.
      A human does not read this directory, so record that the contract actually reached them,
      and freeze it. The hash covers "What you own", "Steps", "Done means" and "Do NOT".

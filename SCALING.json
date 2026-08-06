@@ -868,6 +868,8 @@
     "confirmed-exercised",
     "frozen-contract",
     "instrument",
+    "rollback",
+    "paths-disjoint",
     "gate-fails-first"
   ],
   "gateNotRun": "CLOSED 2026-08-05. Was: nothing in the repository ran the gate. Now three things do — .githooks/pre-commit (skippable only via GRILLIN_SKIP=1, which logs the skip), .github/workflows/gate.yml (not skippable, and it mutation-tests every check so a dead check fails the build), and scripts/install-hooks.sh which sets core.hooksPath because .git/hooks is not versioned. Both calibrate before they gate: known-good must exit 0, known-bad must exit 1.",
@@ -876,5 +878,11 @@
     "ci": ".github/workflows/gate.yml",
     "install": "./scripts/install-hooks.sh",
     "calibration": "known-good fixture exits 0; known-bad example exits 1; a run without --run-gates exits 2 (INCOMPLETE)"
+  },
+  "liftedFromProjectBase": {
+    "what": "Two checks project-base enforced mechanically while Grillin only said them in prose.",
+    "rollback": "plan_validate.sh: 'rollback is real, not a stub -- no revert path = an un-undoable change'. Grillin asked shaping question 5 and never checked that anything answered it.",
+    "pathsDisjoint": "plan_validate.sh: 'file overlap between slices -> two parallel Executors editing one file race + clobber'. Grillin's contended-file list was phase-7 prose and a template.",
+    "note": "The debt runs both ways: project-base is where FLOORS and 'mechanisms over memory' came from."
   }
 }

@@ -216,6 +216,8 @@ Honest accounting. A rule a machine cannot check is a preference.
 | CONFIRMED means exercised, and cites the invocation | **ENFORCED** | `check_confirmed_is_exercised` |
 | A human's contract freezes on delivery | **ENFORCED** | `check_frozen_human_contracts` |
 | Instruments are proven against a known answer | **ENFORCED** | `check_instrument_fixture` |
+| An irreversible task names a runnable way back | **ENFORCED** | `check_rollback_real` — lifted from project-base |
+| Concurrent tasks do not own the same path | **ENFORCED** | `check_paths_disjoint` — lifted from project-base |
 | A run without `--run-gates` cannot report success | **ENFORCED** | exit 2, INCOMPLETE |
 | Re-answer 0b when a premise dies | ADVISORY | — |
 | Repairs go through the converge loop | ADVISORY | — |
