@@ -63,6 +63,9 @@ jobs:
           probe confirmed-no-cmd     confirmed-exercised "printf '\n| F-1 | a thing | CONFIRMED |\n' >> PLAN.md"
           probe human-not-delivered  frozen-contract     "sed -i 's/^\*\*Owner:\*\* worker-a/**Owner:** human/;s/^\*\*Status:\*\* NOT STARTED/**Status:** IN PROGRESS/' tasks/T1/TASK.md"
           probe missing-binary-gate  gate-fails-first    "sed -i 's|test -f findings/T2.md|definitelynotarealbinary --check|' tasks/T2/TASK.md"
+          probe rollback-missing     rollback            "sed -i 's|^\*\*Owner:\*\* worker-a|**Owner:** worker-a\n**Reversible:** no|' tasks/T1/TASK.md"
+          probe rollback-prose       rollback            "sed -i 's|^\*\*Owner:\*\* worker-a|**Owner:** worker-a\n**Reversible:** no\n**Rollback:** just undo it|' tasks/T1/TASK.md"
+          probe paths-collide        paths-disjoint      "sed -i 's|\`findings/T2.md\`|\`findings/T1.md\`|' tasks/T2/TASK.md; sed -i 's|^\*\*Blocked by:\*\* T1|**Blocked by:** —|' tasks/T2/TASK.md; sed -i 's|\*\*Blocks:\*\* T2|**Blocks:** —|' tasks/T1/TASK.md"
           exit $fail
 
       - name: links resolve
