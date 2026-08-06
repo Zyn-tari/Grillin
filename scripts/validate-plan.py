@@ -918,6 +918,17 @@ def main():
 
     fails = sum(1 for r in f.rows if r[0] == "FAIL")
     print()
+    # ── the RESULT line is a PARSED INTERFACE, not just prose ───────────────
+    # External tooling reads it. A learning cache on this machine matches
+    # `RESULT: FAIL — <n> finding(s)` to recover the remaining-defect count, so a
+    # descending 30 -> 4 -> 0 reads as a repair curve rather than a binary
+    # pass/fail. Reword these three lines and that degrades silently: nothing
+    # here fails, the count stops parsing, and the consumer quietly falls back to
+    # the exit code.
+    #
+    # Grillin takes no dependency on any of that and should not. But the wording
+    # is a contract someone else relies on, and an undeclared contract is the
+    # drift class this whole file exists to catch. If you change it, say so.
     if fails:
         print(f"RESULT: FAIL — {fails} finding(s). This plan is not operable as written.")
         return 1
