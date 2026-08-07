@@ -239,10 +239,20 @@ differently on purpose:
 | [`.github/workflows/gate.yml`](.github/workflows/gate.yml) | every push and PR | no |
 | `templates/hooks.json.template` | agent session start | it is a reminder, not a gate |
 
-> **In which repository.** The one that holds your **plans** — which is usually not the
-> one you are planning changes to, and must never be the same one. Grillin runs *on* a
-> plan, from outside it. A product repo has to build, test and ship with Grillin
-> uninstalled, so its commit path, CI and build must never depend on it.
+> **In which repository.** The one that holds your **plans**, and that is not a product
+> repository. Grillin runs *on* a plan, from outside it.
+>
+> **"Beside the code" is not good enough, and this is the correction that matters.** A
+> plan directory at `docs/plans/` is tidy, is outside every source tree, and is still
+> wrong: a plan is working material for the agent layer, not an artefact of the software
+> being planned. It ships with nothing, it is read by nobody on the receiving team, and
+> its presence gives a product repo a reason to know Grillin exists. Keep plans in their
+> own repository, or under your agent's own directory — somewhere the product's build,
+> CI and reviewers never see.
+>
+> Where plan and code genuinely must share a repo, the gate runs by hand or in *your*
+> CI — never in that repo's commit hook. The test does not change: **a product repo has
+> to build, test and ship with Grillin uninstalled.**
 >
 > This paragraph exists because the passage above was persuasive in the wrong direction.
 > An agent read it, correctly understood that the committed hook closes the method's
