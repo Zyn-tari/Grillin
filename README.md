@@ -27,15 +27,40 @@ and cheap to catch — plus one script that reads the plan you produced and fail
 if an orchestrator could not run it:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install.sh -o grillin-install.sh \
+  && sh grillin-install.sh
 grillin <plan-dir> --run-gates
 ```
 
-Then make it run on every commit, in any repo that holds plans:
+> **Why not `curl … | sh`.** Verified, not assumed: against a private repo the pipe
+> form emits `curl: (22) 404` and then **exits 0 having installed nothing** — `curl -f`
+> writes an empty body, `sh` runs an empty script, and the pipeline reports success.
+> The `&&` form above exits **22** instead, and leaves the script on disk so you can
+> read it before running it. A silent no-op that reports success is the exact failure
+> this repository has a whole document about.
+
+Then make it run on every commit, **in the repo that holds your plans**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install-hooks.sh | sh
+cd <your-plans-repo>
+curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install-hooks.sh -o grillin-hooks.sh \
+  && sh grillin-hooks.sh
 ```
+
+> ### Which repo — read this before you run it
+>
+> **Grillin runs *on* a plan, from outside it.** Put the gate on your `PATH`; never
+> put it in the build, the CI, or the commit path of the project you are planning
+> changes to — **that project must be able to build, test and ship with Grillin
+> uninstalled.**
+>
+> **Your plan directory is not part of the software you are planning.** Keep it in
+> its own repository, or somewhere the application's build never sees. If plan and
+> code must share a repo, the gate still runs by hand or in your own CI — not in
+> that repo's commit hook.
+>
+> The test is one line: **if removing Grillin breaks someone's build, it was
+> installed in the wrong place.**
 
 Three of the phases produce no plan text at all — they only produce corrections — and they are the
 highest-value phases in the method.

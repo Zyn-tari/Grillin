@@ -89,9 +89,14 @@ Use it:
   the gate caught 2 defects and the readers caught 50 — so run it, and then
   have somebody who did not write the plan try to break it.
 
-Run it on every commit, in a repo that holds plans:
+Run it on every commit, in THE REPO THAT HOLDS YOUR PLANS:
 
-    curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install-hooks.sh | sh
+    curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install-hooks.sh \
+      -o grillin-hooks.sh && sh grillin-hooks.sh
+
+  Not the project you are planning changes to. Grillin runs ON a plan, from
+  outside it — that project must build, test and ship with Grillin uninstalled.
+  If removing Grillin would break someone's build, it is in the wrong repo.
 
 The method itself is prose and needs nothing installed:
 

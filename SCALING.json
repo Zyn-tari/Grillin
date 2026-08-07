@@ -3,6 +3,13 @@
   "name": "grilling-the-plan",
   "version": "1.0.0",
   "description": "A method for turning a vague ask into an executable plan that survives contact with reality, by attacking every claim in it — including your own — before anyone builds.",
+  "boundary": {
+    "output": "One plan directory: a PLAN.md and a tasks/<ID>/TASK.md per task. Markdown. Nothing else.",
+    "notOutput": "No library, no service, no schema, no class, no module, no build step, and no file inside the project you are planning changes to.",
+    "youAreDoingItWrongIf": "You are creating a type, module, interface or directory named after anything in this file; or the planned project has acquired a dependency on Grillin; or its build, CI or commit path would break with Grillin uninstalled.",
+    "theGate": "scripts/validate-plan.py runs ON the plan directory, from outside it, and belongs on your PATH. It is never vendored into, imported by, or wired into the project being planned.",
+    "whyThisIsFirst": "Read cold, the fields below are shaped like a specification to implement: phases[] with ids and outputs, a taskContract with a required[] array and a layout, a reporterContract that reads as an interface, gateChecks[] that reads as a test list. Every one of those is a noun an engineer builds. This block is the boundary, and it is first so it cannot be missed."
+  },
   "coreRule": "Adversarial effort spent before building is worth many times the same effort spent after. Three phases produce no plan text at all. They are the highest-value phases.",
   "precedenceLadder": [
     {
