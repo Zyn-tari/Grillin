@@ -92,3 +92,6 @@ jobs:
 
       - name: the four surfaces agree
         run: ./scripts/check-drift.py
+
+      - name: every entry surface carries the scoping boundary
+        run: ./scripts/check-boundary.py

@@ -63,6 +63,13 @@ if [ -x "$REPO/scripts/check-drift.py" ]; then
   "$REPO/scripts/check-drift.py" || fail=1
 fi
 
+# Grillin can reach into a user's project through its installers. Every surface
+# a reader enters through must say where the gate belongs — an agent once wired
+# a plan gate into an application's commit path because none of them did.
+if [ -x "$REPO/scripts/check-boundary.py" ]; then
+  "$REPO/scripts/check-boundary.py" || fail=1
+fi
+
 for p in $plans; do
   case "$p" in "$REPO/examples/a-real-first-plan") continue ;; esac   # fails on purpose
   echo "grillin: gating ${p#$REPO/}"

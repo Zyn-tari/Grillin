@@ -239,6 +239,19 @@ differently on purpose:
 | [`.github/workflows/gate.yml`](.github/workflows/gate.yml) | every push and PR | no |
 | `templates/hooks.json.template` | agent session start | it is a reminder, not a gate |
 
+> **In which repository.** The one that holds your **plans** — which is usually not the
+> one you are planning changes to, and must never be the same one. Grillin runs *on* a
+> plan, from outside it. A product repo has to build, test and ship with Grillin
+> uninstalled, so its commit path, CI and build must never depend on it.
+>
+> This paragraph exists because the passage above was persuasive in the wrong direction.
+> An agent read it, correctly understood that the committed hook closes the method's
+> largest open defect, and wired a plan gate into an application's `pre-commit` config —
+> having *first* declined to run `install-hooks.sh` because it spotted that
+> `core.hooksPath` would clobber that project's existing hooks. It was careful about
+> *how* and was never once prompted to ask *whether*. Every caveat in this method pointed
+> at the prose; the one artefact that reaches into someone's project carried none.
+
 Both the hook and CI **calibrate before they gate**: the known-good fixture must exit 0 and the
 known-bad example must exit 1. A validator that passes everything catches nothing, and that failure
 is silent unless something tests for it. CI additionally mutation-tests each check, so one that
