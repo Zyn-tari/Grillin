@@ -29,6 +29,7 @@ SURFACES = {
     "install-hooks.sh":       "the artefact that reaches into a project",
     "install.sh":             "the other installer",
     "SCALING.json":           "what gets handed to an agent",
+    "templates/GRILL-CHECKLIST.md": "the artefact most easily read as a to-do list",
 }
 
 bad = 0

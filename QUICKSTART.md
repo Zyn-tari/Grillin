@@ -98,10 +98,14 @@ End with *"what I did not verify."*
 
 One folder per task. Always, whatever the count.
 
-**And put `tasks/` somewhere the software you are planning never sees.** Its own
-repository is best. Sharing a repo with the code is tolerable only if the build ignores
-it — and even then the gate runs by hand or in your own CI, never in that repo's commit
-hook. **If removing Grillin would break someone's build, it is in the wrong place.**
+**And put `tasks/` somewhere the software you are planning never sees** — its own
+repository, or your agent's own directory. **Not `docs/plans/` in the product repo**:
+that is tidy, is outside every source tree, and is still wrong. A plan is working
+material for the agent layer, not an artefact of the software being planned.
+
+Where plan and code genuinely must share a repo, the gate runs by hand or in *your* CI —
+never in that repo's commit hook. **If removing Grillin would break someone's build, it
+is in the wrong place.**
 
 ```
 tasks/

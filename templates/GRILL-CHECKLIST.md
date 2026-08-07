@@ -2,6 +2,17 @@
 
 Print it. Tick it. A plan that fails these is not ready, regardless of how good it reads.
 
+> **What this is a checklist *for*.** A plan you wrote — a `PLAN.md` and a
+> `tasks/<ID>/TASK.md` per task, in markdown. It is not a backlog, not a set of
+> requirements for software, and **not a list of things to build.** No item below
+> describes a feature, a module or a service. If you find yourself creating a type or a
+> directory named after one of these lines, stop: Grillin runs *on* a plan, from outside
+> it, and the project you are planning changes to must build, test and ship with Grillin
+> uninstalled.
+>
+> This paragraph is here because this file is the artefact in the repository most easily
+> mistaken for a to-do list, and it was the only entry surface with no framing on it.
+
 ## Before you write anything
 
 - [ ] Precedence ladder declared in writing
