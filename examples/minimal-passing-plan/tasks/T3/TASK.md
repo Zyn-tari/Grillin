@@ -1,6 +1,7 @@
 # T3 — Write the summary
 
 **Status:** NOT STARTED
+**Agent:** `implementer` · **Model:** `claude-sonnet-5` · **Effort:** high
 **Owner:** worker-a
 **Blocked by:** T2 · **Blocks:** T4
 

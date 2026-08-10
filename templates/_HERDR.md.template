@@ -83,6 +83,42 @@ distinct label from `idle`.
 
 ---
 
+## 2b · The monitor — state on disk, not in whoever asked
+
+`herdr agent list` is a poll and `herdr agent wait` is a block. Both put the fleet's state
+inside whichever process happened to ask, and clearing that process loses it — the exact cost
+principle 14 exists to remove. herdr has no push events, so the only way to make lifecycle
+durable is to write it down.
+
+[`herdr-monitor.sh`](herdr-monitor.sh.template) runs beside the fleet and publishes:
+
+```
+.herdr/state.json         what is true now, republished atomically on every change
+.herdr/transitions.jsonl  append-only, one line per CHANGE, sequence-numbered
+```
+
+```bash
+./herdr-monitor.sh watch &            # writes state, pings on transitions
+./herdr-monitor.sh state              # reads DISK — works with herdr unreachable
+./herdr-monitor.sh since 42           # every transition after a sequence number
+./herdr-monitor.sh wait t14-search done 600
+```
+
+**It writes, it never drives.** It prompts nobody, closes nothing and starts no agent — a
+monitor that acts is a second orchestrator, and two orchestrators on one fleet is a collision
+nobody sees coming.
+
+**Transitions, not polls.** `working → blocked` is news; `working → working` is not. A ping per
+poll is a ping nobody reads.
+
+**`since <seq>` is what makes it resumable.** An orchestrator that was cleared, compacted or
+killed asks for everything after the last sequence it saw. It does not replay the fleet's whole
+history and it does not start again at task one.
+
+**And it does not repeal §2.** `idle` and `unknown` are still not evidence of completion — the
+monitor records them faithfully and `state.json` says so in a `note` field. Writing a false
+idle to disk makes it durable, not true.
+
 ## 3 · Submitting work
 
 ```bash

@@ -6,7 +6,12 @@
 **Type:** BUILD | REFACTOR | RECONSIDER | ASK | VERIFY | LOOP
 **Status:** NOT STARTED | IN PROGRESS | BLOCKED | DONE — *update this line in place as you go;
 it is the progress record, and it is the only one that survives a lost conversation*
-**Agent:** `<persona>` · **Model:** <cheap | mid | top> · **Effort:** <default | high>
+<!-- MODEL AND EFFORT — a persona is a description of responsibility; the model and the
+     effort are what it is actually made of. Both come from ../_ROSTER.md, which carries the
+     reason for each pairing. Real model identifiers, never tier words: an orchestrator
+     cannot dispatch "mid". Effort is never below `high` — the misses that cost most in this
+     method's history were on work that had been priced as routine. -->
+**Agent:** `<persona — must appear in ../_ROSTER.md>` · **Model:** `<claude-opus-5 | claude-sonnet-5>` · **Effort:** <high | xhigh | max>
 **Blocked by:** <ids> · **Blocks:** <ids>
 **Mandatory downstream:** <adversarial passes — TWO, the second with fresh context, on money/authz? integrator?>
 
@@ -34,7 +39,7 @@ it is the progress record, and it is the only one that survives a lost conversat
        printf '%s' "$(sed -n '/^## What you own/,$p' TASK.md)" | sha256sum   # see the script -->
 **Delivered:** <YYYY-MM-DD> · contract sha256:<first 12 hex>
 
-Rules: [`../_RULES.md`](../_RULES.md)
+Rules: [`../_RULES.md`](../_RULES.md) · Roster: [`../_ROSTER.md`](../_ROSTER.md)
 
 **Skills — invoke ALL of these before your first tool call, in this order:** `<skill>` · `<skill>`
 They are your starting context. Reading them after you begin is worth a fraction of reading them

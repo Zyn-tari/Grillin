@@ -112,13 +112,15 @@ After that, in roughly the order you need them:
 | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) | **Print this.** Tick it against any plan before handing it over. |
 | [`templates/TASK.md.template`](templates/TASK.md.template) | Starting point for a task contract. Carries the `Reader:` and `Delivered:` lines the gate checks. |
 | [`templates/_RULES.md.template`](templates/_RULES.md.template) | Starting point for the shared agent contract. |
+| [`templates/_ROSTER.md.template`](templates/_ROSTER.md.template) | **Which model runs which persona, at what effort, and why.** Real model identifiers, never tier words; effort never below `high`. |
+| [`templates/herdr-monitor.sh.template`](templates/herdr-monitor.sh.template) | Fleet state on disk — `state.json` plus a sequence-numbered transition log. Pings on change, and a cleared orchestrator resumes from a sequence number. |
 | [`templates/_HERDR.md.template`](templates/_HERDR.md.template) | Rules for the **secondary** substrate — named agents in a managed terminal session. |
 | [`templates/_AWARENESS.md.template`](templates/_AWARENESS.md.template) | Reminders, not gates — putting the frame back when a worker has narrowed onto one task. |
 | [`templates/awareness.sh.template`](templates/awareness.sh.template) | The state reporter the reminders call. Never touches the plan; always exits 0. |
 | [`index.html`](index.html) | Visual map of the phases. **Download and open locally** — GitHub renders it as source. |
 | [`install.sh`](install.sh) · [`install-hooks.sh`](install-hooks.sh) | One-line install, and the hook that makes the gate run on every commit. |
 | [`scripts/check-drift.py`](scripts/check-drift.py) | The surfaces publish the same facts four times. This fails when they disagree — it has already fired twice for real. |
-| **[`scripts/validate-plan.py`](scripts/validate-plan.py)** | **The gate.** Thirteen checks. Zero deps, fail-closed, validates its own config, and proven against [`examples/minimal-passing-plan`](examples/minimal-passing-plan) — a fixture with a known answer, because the gate is an instrument too. |
+| **[`scripts/validate-plan.py`](scripts/validate-plan.py)** | **The gate.** Sixteen checks. Zero deps, fail-closed, validates its own config, and proven against [`examples/minimal-passing-plan`](examples/minimal-passing-plan) — a fixture with a known answer, because the gate is an instrument too. |
 | [`templates/hooks.json.template`](templates/hooks.json.template) | The wiring. Start with the pre-compaction hook — the rest can wait. |
 | [`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template) | Phase 7's artefact — waves, worktrees, and the contended-file list with owners. |
 

@@ -1,0 +1,98 @@
+# Roster — which model runs which persona, and at what effort
+
+One copy. Every `TASK.md` names a persona from this file; if a task and this file disagree,
+**this file wins and one of them needs fixing.**
+
+A persona is a description of what someone is responsible for. It is not a capability, and
+writing one does not confer one. **The model and the effort are what the persona is actually
+made of** — so they are declared here, per persona, with the reason, and the reason is the part
+that survives a model rename.
+
+---
+
+## 0 · The floor, and why there is one
+
+**Effort is never below `high`.** Not on recon, not on a sweep, not on "just a count."
+
+The tempting saving is on the cheap-looking work, and that is exactly where it has cost most.
+Two examples from this method's own history, both on tasks that looked mechanical:
+
+- A recon pass reported `app/src/entities/*.js` as dead modules. They were live re-export shims
+  with **34 importers**; deleting them would have broken the build. A re-export does not look
+  like usage textually, and the pass that missed it was the cheapest one in the round.
+- A capability was recorded **CONFIRMED** because its description string appeared in a compiled
+  binary. The tool could not do the thing. Reading a string is not calling a function, and
+  noticing the difference is not free.
+
+Neither was a knowledge failure. Both were attention failures on work that had been priced as
+routine. **The tier buys attention, and attention is what these tasks needed.**
+
+`low` and `medium` do not appear in this file. If a job genuinely does not deserve `high`, it
+probably does not deserve an agent — write the shell command instead.
+
+---
+
+## 1 · The roster
+
+Fill in the real personas for this plan. The archetypes below are a starting point, not a menu
+to copy wholesale.
+
+| Persona | Responsible for | Model | Effort | Why this pairing |
+|---|---|---|---|---|
+| `adversary` | judging whether the **result is true**; wrote none of it | `claude-opus-5` | `xhigh` | The highest-yield role in the method — on the one job measured end to end, the readers caught 50 defects to the gate's 2. It is looking for what nobody thought to check, which is the hardest thing on this list. |
+| `security` · `money` · `authz` | anything that moves money, grants access, or cannot be undone | `claude-opus-5` | `max` | The one place where the cost of a miss is unbounded. `_RULES.md` already demands **two** passes here; run the second at `max` with fresh context and no sight of the first. |
+| `architect` | shape, seams, the decisions the rest inherit | `claude-opus-5` | `xhigh` | Every later task is priced by this one. A wrong seam is not a bug, it is a month. |
+| `integrator` | applies fragments, owns the contended files, writes **no** feature code | `claude-opus-5` | `high` | Holds the whole graph in mind and merges work it did not write. Bounded, but the blast radius of a bad merge is the plan. |
+| `health` | whether the **rules** are being followed, in rounds | `claude-sonnet-5` | `xhigh` | Process enforcement across a lot of material. Breadth over depth — but `xhigh` because it is reading for what is *absent*, and absence is the expensive thing to see. |
+| `recon` · `inventory` | counting what exists; "21 of 49", never "several" | `claude-sonnet-5` | `high` | See §0. The dead-modules miss was a recon miss. Cheap-looking, load-bearing. |
+| `implementer` | bounded work where the decisions are already made | `claude-sonnet-5` | `high` | The contract is written and the traps are named. Effort still buys the reading of the contract. |
+| `instrument` | building a thing that measures, before anything trusts it | `claude-opus-5` | `xhigh` | A wrong ruler authorises every measurement downstream. One shattered a gradient into 24 near-blacks and reported "no accent detectable" — every number true, the conclusion worthless. |
+| `presenter` | rendering status for a human; may re-derive **nothing** | `claude-sonnet-5` | `high` | Narrow contract, narrow surface. Its danger is not difficulty, it is drift — see `_SMOKIN.md` §4. |
+
+**The `Why` column is the load-bearing one.** Model names change and tiers get renamed; the
+reason a task needs attention does not. If you cannot write the reason, you have not decided
+the pairing — you have guessed it.
+
+---
+
+## 2 · How a task declares it
+
+In `tasks/<ID>/TASK.md`, on the header line the validator already parses:
+
+```
+**Agent:** `adversary` · **Model:** `claude-opus-5` · **Effort:** xhigh
+```
+
+Three rules, and `check_persona_model` enforces all three:
+
+1. **The model is a real identifier**, not a tier word. `top` is not a model; `claude-opus-5` is.
+   An orchestrator cannot dispatch `mid`.
+2. **The effort is one of `high` · `xhigh` · `max`.** §0.
+3. **The persona appears in this file.** A persona invented in a task file is a persona nobody
+   priced, and it is how the roster quietly stops describing the fleet.
+
+---
+
+## 3 · Declaring it out loud
+
+`_RULES.md` §2 says to publish an agent→model table when you fan out, because **the requester
+cannot see a subagent's tier and must not have to ask.** This file is that table. Keep it beside
+the plan, not in a conversation.
+
+State the onward-delegation policy here too, per persona: either *"does NOT spawn sub-agents"*
+or the tier its sub-agents must use. An agent that spawns its own and was told nothing picks
+their models itself, and the roster stops being true the moment it does.
+
+---
+
+## 4 · Do NOT
+
+- Do NOT set an effort below `high`. If that feels wasteful, the task is probably a shell
+  command wearing a persona.
+- Do NOT write a tier word where a model identifier belongs.
+- Do NOT invent a persona in a task file. Add it here first, with its reason.
+- Do NOT give the adversary the same model *and* the same context as the work it judges. The
+  model is the cheaper half of that rule; the ownership rule in `OPERATING-THE-PLAN.md` §7 is
+  the half that is checked.
+- Do NOT let a second adversarial pass reuse the first one's tier, lens **and** context. A second
+  identical sweep re-finds what the first found and bills you twice for it.

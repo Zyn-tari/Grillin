@@ -1,6 +1,7 @@
 # T2 — Write the findings
 
 **Status:** NOT STARTED
+**Agent:** `implementer` · **Model:** `claude-sonnet-5` · **Effort:** high
 **Owner:** worker-b
 **Blocked by:** T1 · **Blocks:** T3
 

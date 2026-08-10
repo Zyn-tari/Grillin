@@ -60,6 +60,7 @@ FLOORS = {
     # lifted from project-base, which enforced both before Grillin existed
     "require_rollback_real": True,
     "require_paths_disjoint": True,
+    "require_persona_model": True,
 }
 VALID_STATUS = {"NOT STARTED", "IN PROGRESS", "BLOCKED", "DONE"}
 
@@ -715,6 +716,15 @@ RE_REVERSIBLE = re.compile(r"\*\*Reversible:\*\*\s*([^·\n]*?)(?=\*\*|·|$)", re
 RE_ROLLBACK = re.compile(r"\*\*Rollback:\*\*\s*(.+?)$", re.M | re.I)
 RE_PLACEHOLDER = re.compile(r"^\s*(TODO|TBD|N/?A|none|—|-|\?+|<[^>]*>)\s*$", re.I)
 RE_OWNED_PATH = re.compile(r"`([^`\n]+)`")
+RE_MODEL = re.compile(r"\*\*Model:\*\*\s*`?([^`·\n]+?)`?\s*(?=\*\*|·|$)", re.M | re.I)
+RE_EFFORT = re.compile(r"\*\*Effort:\*\*\s*([a-z]+)", re.M | re.I)
+RE_PERSONA = re.compile(r"\*\*(?:Agent|Persona):\*\*\s*`?([^`·\n]+?)`?\s*(?=\*\*|·|$)", re.M | re.I)
+# Effort is never below `high`. The misses that cost most in this method's
+# history were on work priced as routine — a recon pass that called 34 live
+# re-export shims dead modules, and a CONFIRMED read out of a binary's strings.
+# Neither was a knowledge failure; both were attention failures.
+VALID_EFFORT = {"high", "xhigh", "max"}
+TIER_WORDS = {"cheap", "mid", "top", "low", "medium", "default", "fast", "smart"}
 
 
 def check_rollback_real(f: Findings, plan: Path, tasks: dict, cfg: dict):
@@ -858,6 +868,83 @@ def check_paths_disjoint(f: Findings, tasks: dict, cfg: dict):
         f.ok("paths-disjoint", "no two concurrent tasks own the same path")
 
 
+def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """
+    Every task names a real model, an effort at or above `high`, and a persona
+    the roster knows.
+
+    A persona is a description of what someone is responsible for. It is not a
+    capability, and writing one does not confer one — the model and the effort
+    are what the persona is actually made of. Leaving them as tier words means
+    the pairing was never decided, only gestured at, and an orchestrator cannot
+    dispatch `mid`.
+    """
+    if not cfg.get("require_persona_model", True):
+        return
+
+    roster, roster_path = set(), None
+    for cand in (plan / "tasks" / "_ROSTER.md", plan / "_ROSTER.md"):
+        if cand.is_file():
+            roster_path = cand
+            for line in cand.read_text(errors="replace").splitlines():
+                if line.lstrip().startswith("|"):
+                    cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                    if cells:
+                        roster |= set(RE_CODE_SPAN.findall(cells[0]))
+            break
+
+    bad = 0
+    for tid, path in sorted(tasks.items()):
+        text = path.read_text(errors="replace")
+
+        mm = RE_MODEL.search(text)
+        if not mm:
+            bad += 1
+            f.fail("persona-model", f"{path}:1",
+                   f"{tid} names no **Model:** — the requester cannot see a subagent's "
+                   f"tier and must not have to ask for it")
+        else:
+            model = mm.group(1).strip()
+            if model.lower() in TIER_WORDS:
+                bad += 1
+                f.fail("persona-model", f"{path}:{line_of(path, mm.group(0))}",
+                       f"{tid}'s model is the tier word {model!r}, not an identifier. "
+                       f"An orchestrator cannot dispatch a tier — name the model, e.g. "
+                       f"`claude-opus-5`.")
+            elif "<" in model or ">" in model:
+                bad += 1
+                f.fail("persona-model", f"{path}:{line_of(path, mm.group(0))}",
+                       f"{tid}'s model is still the template placeholder")
+
+        me = RE_EFFORT.search(text)
+        if not me:
+            bad += 1
+            f.fail("persona-model", f"{path}:1", f"{tid} names no **Effort:**")
+        else:
+            eff = me.group(1).strip().lower()
+            if eff not in VALID_EFFORT:
+                bad += 1
+                f.fail("persona-model", f"{path}:{line_of(path, me.group(0))}",
+                       f"{tid}'s effort is {eff!r}; allowed: {sorted(VALID_EFFORT)}. "
+                       f"The saving looks free on routine work and that is exactly where "
+                       f"it has cost most — see _ROSTER.md §0.")
+
+        mp = RE_PERSONA.search(text)
+        if mp and roster:
+            persona = mp.group(1).strip()
+            if "<" not in persona and persona not in roster:
+                bad += 1
+                f.fail("persona-model", f"{path}:{line_of(path, mp.group(0))}",
+                       f"{tid} names persona {persona!r}, which is not in "
+                       f"{roster_path.name}. A persona invented in a task file is one "
+                       f"nobody priced — add it to the roster with its reason first.")
+
+    if not bad:
+        f.ok("persona-model",
+             f"every task names a real model and an effort at or above high"
+             + (f", from {len(roster)} rostered personas" if roster else ""))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -908,6 +995,7 @@ def main():
     check_instrument_fixture(f, plan, tasks, cfg)
     check_rollback_real(f, plan, tasks, cfg)
     check_paths_disjoint(f, tasks, cfg)
+    check_persona_model(f, plan, tasks, cfg)
     if args.run_gates:
         check_gates_fail_first(f, plan, tasks)
 

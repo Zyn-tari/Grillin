@@ -502,7 +502,9 @@
       "loopWithCap",
       "doneMeansEvidence",
       "doNotList",
-      "outputContract"
+      "outputContract",
+      "model",
+      "effort"
     ],
     "outputs": {
       "FINDINGS.md": "always — what it learned, cited, CONFIRMED vs SUSPECTED, ends with what I did not test",
@@ -585,7 +587,22 @@
         "a pane per agent",
         "orchestration is written, not scripted",
         "visibility spends orchestrator tokens"
-      ]
+      ],
+      "monitor": {
+        "artefact": "templates/herdr-monitor.sh",
+        "why": "herdr agent list is a poll and herdr agent wait is a block; both hold the fleet's state in whichever process asked. herdr has no push events, so durability means writing it down.",
+        "publishes": [
+          ".herdr/state.json — current truth, republished atomically on change",
+          ".herdr/transitions.jsonl — append-only, sequence-numbered, one line per CHANGE"
+        ],
+        "rules": [
+          "it writes and never drives — a monitor that acts is a second orchestrator",
+          "transitions only; a ping per poll is a ping nobody reads",
+          "since <seq> makes it resumable without replaying the whole history",
+          "stale is a state — silence that resembles success is the worst outcome",
+          "it does not repeal the rule that idle and unknown are not evidence of completion"
+        ]
+      }
     },
     "measure": [
       "effective parallelism on both, not the advertised cap",
@@ -877,6 +894,7 @@
     "instrument",
     "rollback",
     "paths-disjoint",
+    "persona-model",
     "gate-fails-first"
   ],
   "gateNotRun": "CLOSED 2026-08-05. Was: nothing in the repository ran the gate. Now three things do — .githooks/pre-commit (skippable only via GRILLIN_SKIP=1, which logs the skip), .github/workflows/gate.yml (not skippable, and it mutation-tests every check so a dead check fails the build), and scripts/install-hooks.sh which sets core.hooksPath because .git/hooks is not versioned. Both calibrate before they gate: known-good must exit 0, known-bad must exit 1.",
@@ -891,5 +909,51 @@
     "rollback": "plan_validate.sh: 'rollback is real, not a stub -- no revert path = an un-undoable change'. Grillin asked shaping question 5 and never checked that anything answered it.",
     "pathsDisjoint": "plan_validate.sh: 'file overlap between slices -> two parallel Executors editing one file race + clobber'. Grillin's contended-file list was phase-7 prose and a template.",
     "note": "The debt runs both ways: project-base is where FLOORS and 'mechanisms over memory' came from."
+  },
+  "roster": {
+    "artefact": "templates/_ROSTER.md",
+    "why": "A persona is a description of responsibility. It is not a capability, and writing one does not confer one — the model and the effort are what the persona is actually made of.",
+    "effortFloor": "high. low/medium/default do not appear. The misses that cost most were on work priced as routine: a recon pass that called 34 live re-export shims dead modules, and a CONFIRMED recorded from a description string in a compiled binary. Neither was a knowledge failure; both were attention failures.",
+    "modelsNotTiers": "Real identifiers, never tier words. An orchestrator cannot dispatch `mid`.",
+    "pairings": {
+      "adversary": {
+        "model": "claude-opus-5",
+        "effort": "xhigh"
+      },
+      "security/money/authz": {
+        "model": "claude-opus-5",
+        "effort": "max"
+      },
+      "architect": {
+        "model": "claude-opus-5",
+        "effort": "xhigh"
+      },
+      "integrator": {
+        "model": "claude-opus-5",
+        "effort": "high"
+      },
+      "instrument": {
+        "model": "claude-opus-5",
+        "effort": "xhigh"
+      },
+      "health": {
+        "model": "claude-sonnet-5",
+        "effort": "xhigh"
+      },
+      "recon/inventory": {
+        "model": "claude-sonnet-5",
+        "effort": "high"
+      },
+      "implementer": {
+        "model": "claude-sonnet-5",
+        "effort": "high"
+      },
+      "presenter": {
+        "model": "claude-sonnet-5",
+        "effort": "high"
+      }
+    },
+    "theWhyColumnIsLoadBearing": "Model names change and tiers get renamed; the reason a task needs attention does not. If you cannot write the reason, you have not decided the pairing.",
+    "enforced": "check_persona_model — real identifier, effort in {high,xhigh,max}, persona present in the roster"
   }
 }
