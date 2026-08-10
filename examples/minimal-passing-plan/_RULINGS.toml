@@ -1,0 +1,19 @@
+# The fixture's judgement layer — Smokin's delegation node, opted into.
+#
+# It is here so the known-good run exercises `check_rulings`'s PASS path. A check
+# whose success branch nothing runs is a check that can rot green.
+#
+# Note what makes this legal: `judge` is in _ROSTER.md and owns no task. A ruling
+# handed to `recon`, `implementer` or `adversary` would be asking a persona to
+# certify work it wrote, and the gate rejects that.
+
+[policy]
+uncovered = "halt"
+
+[[ruling]]
+class    = "receipt-trust"
+when     = "verdict.passed and receipt.claim == 'done'"
+persona  = "judge"
+evidence = ["task.contract", "receipt", "verdict"]
+outcomes = ["accept", "reject", "insufficient-evidence"]
+default  = "halt"

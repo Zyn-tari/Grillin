@@ -895,6 +895,7 @@
     "rollback",
     "paths-disjoint",
     "persona-model",
+    "rulings",
     "gate-fails-first"
   ],
   "gateNotRun": "CLOSED 2026-08-05. Was: nothing in the repository ran the gate. Now three things do — .githooks/pre-commit (skippable only via GRILLIN_SKIP=1, which logs the skip), .github/workflows/gate.yml (not skippable, and it mutation-tests every check so a dead check fails the build), and scripts/install-hooks.sh which sets core.hooksPath because .git/hooks is not versioned. Both calibrate before they gate: known-good must exit 0, known-bad must exit 1.",

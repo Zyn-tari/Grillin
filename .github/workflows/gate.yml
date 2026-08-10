@@ -69,6 +69,13 @@ jobs:
           probe effort-too-low       persona-model       "sed -i 's/\*\*Effort:\*\* high/**Effort:** medium/' tasks/T1/TASK.md"
           probe model-is-tier-word   persona-model       "sed -i 's/\`claude-sonnet-5\`/\`top\`/' tasks/T1/TASK.md"
           probe persona-not-rostered persona-model       "sed -i 's/\`recon\`/\`freelancer\`/' tasks/T1/TASK.md"
+          # The delegation node's config. Opt-in by file, so each probe writes one.
+          RUL='[[ruling]]\nclass = \"receipt-trust\"\nwhen = \"verdict.passed\"\npersona = \"judge\"\nevidence = [\"receipt\"]\noutcomes = [\"accept\", \"reject\", \"insufficient-evidence\"]\ndefault = \"halt\"\n'
+          probe ruling-soft-default  rulings             "printf '$RUL' | sed 's/\"halt\"/\"accept\"/' > _RULINGS.toml"
+          probe ruling-no-out        rulings             "printf '$RUL' | sed 's/, \"insufficient-evidence\"//' > _RULINGS.toml"
+          probe ruling-judges-self   rulings             "printf '$RUL' | sed 's/\"judge\"/\"recon\"/' > _RULINGS.toml"
+          probe ruling-unrostered    rulings             "printf '$RUL' | sed 's/\"judge\"/\"nobody\"/' > _RULINGS.toml"
+          probe ruling-unparseable   rulings             "printf '[[ruling]\\nclass = ' > _RULINGS.toml"
           exit $fail
 
       - name: links resolve

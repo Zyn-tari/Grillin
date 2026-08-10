@@ -999,6 +999,121 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
              + (f"; {len(seen)} persona(s) consistent with the roster" if seen else ""))
 
 
+def check_rulings(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """
+    If the plan opts into Smokin's delegation node, its `_RULINGS.toml` declares
+    who may be asked to judge, and what they may answer.
+
+    SCOPE, and the boundary matters. Smokin's own loader is authoritative for
+    evaluation semantics — the `when` grammar, the evidence resolver, what
+    happens at run time. This checks only what a PLAN validator can settle
+    without running anything: that the judges are people the roster priced, that
+    no judge is being asked to certify its own work, and that the two settings
+    which can silently disable the whole layer are not set that way. The
+    duplication is deliberate and bounded; a plan should not have to be executed
+    before somebody can tell it is not operable.
+    """
+    cfgf = plan / "_RULINGS.toml"
+    if not cfgf.is_file():
+        return                                    # opt-in by file; absence is not a defect
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        f.fail("rulings", f"{cfgf}:1",
+               "this plan declares _RULINGS.toml but python is older than 3.11, so nothing "
+               "here can read it. A config nobody can parse is a config nobody is applying.")
+        return
+    try:
+        raw = tomllib.loads(cfgf.read_text(errors="replace"))
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        f.fail("rulings", f"{cfgf}:1",
+               f"_RULINGS.toml does not parse ({e}). Smokin refuses to make ANY ruling in a "
+               f"plan whose config is broken, so this silently turns the judgement layer off.")
+        return
+
+    roster = {}
+    for cand in (plan / "tasks" / "_ROSTER.md", plan / "_ROSTER.md"):
+        if cand.is_file():
+            for line in cand.read_text(errors="replace").splitlines():
+                if line.lstrip().startswith("|"):
+                    cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                    for n in RE_CODE_SPAN.findall(cells[0] if cells else ""):
+                        roster[n] = cand.name
+            break
+
+    # Which persona OWNS each task — a judge must not be asked to rule on work
+    # its own persona did. Principle 8, one level up from the adversary check.
+    owners = {}
+    for tid, path in tasks.items():
+        mp = RE_PERSONA.search(path.read_text(errors="replace"))
+        if mp and "<" not in mp.group(1):
+            owners.setdefault(mp.group(1).strip(), []).append(tid)
+
+    bad, declared = 0, raw.get("ruling")
+    if not isinstance(declared, list) or not declared:
+        f.fail("rulings", f"{cfgf}:1",
+               "_RULINGS.toml exists and declares no [[ruling]]. Smokin treats that as a "
+               "load error and halts. Either declare a class or delete the file.")
+        return
+
+    pol = str((raw.get("policy") or {}).get("uncovered", "halt")).lower()
+    if pol not in ("halt", "accept"):
+        bad += 1
+        f.fail("rulings", f"{cfgf}:1",
+               f"policy.uncovered is {pol!r}; it must be 'halt' or 'accept'.")
+
+    for i, r in enumerate(declared):
+        if not isinstance(r, dict):
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1", f"ruling[{i}] is not a table")
+            continue
+        cls = (r.get("class") or f"[{i}]").strip()
+        persona = (r.get("persona") or "").strip()
+        if not persona:
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1", f"ruling {cls!r} names no persona")
+        elif roster and persona not in roster:
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1",
+                   f"ruling {cls!r} names judge persona {persona!r}, which is not in "
+                   f"{next(iter(roster.values()))}. Its model and effort come from the "
+                   f"roster, so an unrostered judge is a judge running at nothing.")
+        elif persona in owners:
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1",
+                   f"ruling {cls!r} asks {persona!r} to judge, and {persona!r} owns "
+                   f"{', '.join(sorted(owners[persona]))}. Never certify your own work — "
+                   f"give the ruling to a persona that wrote none of it.")
+
+        default = str(r.get("default", "halt")).lower()
+        if default != "halt":
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1",
+                   f"ruling {cls!r} sets default = {default!r}. It must be 'halt'. A judge "
+                   f"that cannot be reached, resolving to anything else, certifies work "
+                   f"nobody read — and it does it silently.")
+
+        outs = r.get("outcomes")
+        if not isinstance(outs, list) or not outs:
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1", f"ruling {cls!r} declares no outcomes")
+        elif "insufficient-evidence" not in [str(o).strip() for o in outs]:
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1",
+                   f"ruling {cls!r} gives the judge no way to say 'I cannot tell'. Add "
+                   f"'insufficient-evidence' — a judge without it will answer something else.")
+
+        ev = r.get("evidence")
+        if not isinstance(ev, list) or not ev:
+            bad += 1
+            f.fail("rulings", f"{cfgf}:1",
+                   f"ruling {cls!r} declares no evidence. A judge handed nothing rules on nothing.")
+
+    if not bad:
+        f.ok("rulings", f"{len(declared)} judgement class(es) declared; every judge is "
+                        f"rostered, wrote none of the work, and halts when unreachable")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1050,6 +1165,7 @@ def main():
     check_rollback_real(f, plan, tasks, cfg)
     check_paths_disjoint(f, tasks, cfg)
     check_persona_model(f, plan, tasks, cfg)
+    check_rulings(f, plan, tasks, cfg)
     if args.run_gates:
         check_gates_fail_first(f, plan, tasks)
 
