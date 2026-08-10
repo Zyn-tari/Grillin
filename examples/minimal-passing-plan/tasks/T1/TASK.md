@@ -1,7 +1,7 @@
 # T1 — Write the inventory
 
 **Status:** NOT STARTED
-**Agent:** `recon` · **Model:** `claude-sonnet-5` · **Effort:** high
+**Agent:** `recon` · **Model:** `claude-opus-5` · **Effort:** high
 **Owner:** worker-a
 **Blocked by:** — · **Blocks:** T2
 
