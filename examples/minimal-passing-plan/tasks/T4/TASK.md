@@ -1,6 +1,7 @@
 # T4 — Attack all of it
 
 **Status:** NOT STARTED
+**Agent:** `adversary` · **Model:** `claude-opus-5` · **Effort:** xhigh
 **Owner:** reviewer
 **Blocked by:** T3 · **Blocks:** —
 **Reader:** adversary

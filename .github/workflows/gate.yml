@@ -66,6 +66,9 @@ jobs:
           probe rollback-missing     rollback            "sed -i 's|^\*\*Owner:\*\* worker-a|**Owner:** worker-a\n**Reversible:** no|' tasks/T1/TASK.md"
           probe rollback-prose       rollback            "sed -i 's|^\*\*Owner:\*\* worker-a|**Owner:** worker-a\n**Reversible:** no\n**Rollback:** just undo it|' tasks/T1/TASK.md"
           probe paths-collide        paths-disjoint      "sed -i 's|\`findings/T2.md\`|\`findings/T1.md\`|' tasks/T2/TASK.md; sed -i 's|^\*\*Blocked by:\*\* T1|**Blocked by:** —|' tasks/T2/TASK.md; sed -i 's|\*\*Blocks:\*\* T2|**Blocks:** —|' tasks/T1/TASK.md"
+          probe effort-too-low       persona-model       "sed -i 's/\*\*Effort:\*\* high/**Effort:** medium/' tasks/T1/TASK.md"
+          probe model-is-tier-word   persona-model       "sed -i 's/\`claude-sonnet-5\`/\`top\`/' tasks/T1/TASK.md"
+          probe persona-not-rostered persona-model       "sed -i 's/\`recon\`/\`freelancer\`/' tasks/T1/TASK.md"
           exit $fail
 
       - name: links resolve

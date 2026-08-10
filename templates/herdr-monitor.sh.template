@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# herdr-monitor — the fleet's state, on disk, as a stream of transitions.
+#
+#   ./herdr-monitor.sh watch            # run it; writes state and pings on change
+#   ./herdr-monitor.sh state            # what is true right now (no herdr call)
+#   ./herdr-monitor.sh wait <role> done # block until a role reaches a state
+#   ./herdr-monitor.sh since <seq>      # every transition after a sequence number
+#
+# WHY THIS EXISTS. `_HERDR.md` §2 says read state, never infer it — and then the
+# only ways to read it are `herdr agent list` (a poll) and `herdr agent wait`
+# (a block). Both put the fleet's state inside whichever process happened to ask.
+# Clear that process and the state is gone, which is the exact cost principle 14
+# exists to remove. herdr has no push events; its whole surface is blocking waits
+# and a UI toast, so a monitor is the only way to turn lifecycle into something
+# durable.
+#
+# THE CONTRACT, and every clause is a defect that has already happened somewhere:
+#
+#   · IT WRITES, IT NEVER DRIVES. This process prompts nobody, closes nothing,
+#     and starts no agent. A monitor that acts is a second orchestrator, and two
+#     orchestrators on one fleet is the collision nobody sees coming.
+#   · TRANSITIONS ONLY. A ping per poll is a ping nobody reads. The event is the
+#     CHANGE — working→blocked is news; working→working is not.
+#   · `unknown` IS NOT A RESULT. herdr reports two bare login shells as idle
+#     `claude` agents on a real machine. A false idle is indistinguishable from a
+#     finished worker, so `unknown` and `idle` are recorded and never celebrated.
+#   · STALE IS A STATE. If herdr stops answering, the file says so with a
+#     timestamp. Silence that resembles success is the worst available outcome.
+#   · PUBLISH BY rename(2). A reader must never see half a snapshot.
+set -uo pipefail
+
+DIR="${HERDR_MONITOR_DIR:-.herdr}"
+STATE="$DIR/state.json"          # what is true now — overwritten each change
+LOG="$DIR/transitions.jsonl"     # append-only, one line per change
+SEQ="$DIR/seq"
+INTERVAL="${HERDR_MONITOR_INTERVAL:-3}"
+STALE_AFTER="${HERDR_MONITOR_STALE:-30}"
+
+mkdir -p "$DIR"
+[ -f "$SEQ" ] || echo 0 > "$SEQ"
+
+now()  { date -u +%FT%TZ; }
+epoch() { date +%s; }
+
+# Snapshot herdr into `role<TAB>state` lines. Empty output means herdr is not
+# answering — which is itself information, and is never confused with an empty
+# fleet.
+snapshot() {
+  command -v herdr >/dev/null 2>&1 || return 1
+  [ "${HERDR_ENV:-}" = "1" ] || return 1
+  herdr agent list 2>/dev/null | python3 -c '
+import json,sys
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(1)
+rows = (d.get("result") or {}).get("agents") or d.get("agents") or []
+for a in rows:
+    name = a.get("agent_name") or a.get("name") or a.get("pane_id") or "?"
+    st   = a.get("agent_status") or a.get("state") or "unknown"
+    pane = a.get("pane_id") or ""
+    print(f"{name}\t{st}\t{pane}")
+' 2>/dev/null
+}
+
+publish() { # stdin -> path, atomically. A reader never sees a partial file.
+  local target="$1" tmp="$1.$$.tmp"
+  cat > "$tmp" && mv -f "$tmp" "$target"
+}
+
+emit() { # role old new pane
+  local n role="$1" old="$2" new="$3" pane="${4:-}"
+  n=$(( $(cat "$SEQ" 2>/dev/null || echo 0) + 1 ))
+  echo "$n" > "$SEQ"
+  printf '{"seq":%s,"at":"%s","role":"%s","from":"%s","to":"%s","pane":"%s"}\n' \
+    "$n" "$(now)" "$role" "$old" "$new" "$pane" >> "$LOG"
+  # The ping. stderr on purpose: stdout is the state stream, and a hook that
+  # pollutes stdout corrupts whatever is parsing it.
+  printf '[herdr] %-16s %s -> %s\n' "$role" "$old" "$new" >&2
+  if [ -n "${HERDR_MONITOR_ON_CHANGE:-}" ]; then
+    HERDR_ROLE="$role" HERDR_FROM="$old" HERDR_TO="$new" HERDR_PANE="$pane" \
+      sh -c "$HERDR_MONITOR_ON_CHANGE" >/dev/null 2>&1 || true
+  fi
+}
+
+write_state() { # takes the raw snapshot on stdin
+  local raw="$1" ok="$2"
+  python3 - "$raw" "$ok" "$(now)" "$(cat "$SEQ")" <<'PY' | publish "$STATE"
+import json, sys
+raw, ok, at, seq = sys.argv[1], sys.argv[2] == "1", sys.argv[3], int(sys.argv[4])
+agents = []
+for line in raw.splitlines():
+    if not line.strip():
+        continue
+    parts = line.split("\t")
+    if len(parts) >= 2:
+        agents.append({"role": parts[0], "state": parts[1],
+                       "pane": parts[2] if len(parts) > 2 else ""})
+out = {
+    "schema": "herdr.monitor/1", "at": at, "seq": seq,
+    "reachable": ok,
+    "agents": agents,
+    "counts": {s: sum(1 for a in agents if a["state"] == s)
+               for s in ("working", "idle", "done", "blocked", "unknown")},
+    # Stated, not implied: these two are claims about the screen, not about work.
+    "note": ("blocked is the one state programmatic fan-out cannot see, and is why "
+             "this file exists. idle and unknown are NOT evidence of completion - "
+             "herdr has reported bare login shells as idle agents."),
+}
+if not ok:
+    out["stale"] = True
+    out["staleWhy"] = "herdr did not answer; the agents list below is the last one seen"
+json.dump(out, sys.stdout, indent=1)
+print()
+PY
+}
+
+cmd_watch() {
+  local prev="" raw ok last_ok
+  last_ok=$(epoch)
+  echo "[herdr] monitor up · dir=$DIR · interval=${INTERVAL}s" >&2
+  trap 'echo "[herdr] monitor down" >&2; exit 0' INT TERM HUP
+  while :; do
+    if raw=$(snapshot) && [ -n "$raw" ]; then
+      ok=1; last_ok=$(epoch)
+    else
+      ok=0; raw="${prev}"
+      if [ $(( $(epoch) - last_ok )) -ge "$STALE_AFTER" ]; then
+        printf '[herdr] STALE — no answer for %ss\n' "$(( $(epoch) - last_ok ))" >&2
+      fi
+    fi
+
+    if [ "$raw" != "$prev" ]; then
+      # Diff by role, so a fleet that grows or shrinks is reported as such.
+      while IFS=$'\t' read -r role state pane; do
+        [ -z "$role" ] && continue
+        old=$(printf '%s\n' "$prev" | awk -F'\t' -v r="$role" '$1==r{print $2}' | head -1)
+        [ "$old" = "$state" ] && continue
+        emit "$role" "${old:-absent}" "$state" "$pane"
+      done <<< "$raw"
+      while IFS=$'\t' read -r role _ _; do
+        [ -z "$role" ] && continue
+        printf '%s\n' "$raw" | awk -F'\t' -v r="$role" '$1==r{f=1} END{exit !f}' \
+          || emit "$role" "present" "gone" ""
+      done <<< "$prev"
+      prev="$raw"
+    fi
+    write_state "$raw" "$ok"
+    sleep "$INTERVAL"
+  done
+}
+
+cmd_state() { [ -f "$STATE" ] && cat "$STATE" || { echo "no state yet — is the monitor running?" >&2; exit 1; }; }
+
+cmd_since() { # every transition after a sequence number
+  local from="${1:-0}"
+  [ -f "$LOG" ] || return 0
+  python3 -c '
+import json,sys
+lo = int(sys.argv[1])
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    try: r = json.loads(line)
+    except Exception: continue
+    if r.get("seq", 0) > lo: print(json.dumps(r))
+' "$from" < "$LOG"
+}
+
+cmd_wait() { # role state [timeout-seconds] — reads DISK, never herdr
+  local role="${1:?role}" want="${2:?state}" limit="${3:-600}" waited=0
+  while [ "$waited" -lt "$limit" ]; do
+    if [ -f "$STATE" ]; then
+      python3 -c '
+import json,sys
+d = json.load(open(sys.argv[1]))
+sys.exit(0 if any(a["role"]==sys.argv[2] and a["state"]==sys.argv[3] for a in d["agents"]) else 1)
+' "$STATE" "$role" "$want" && { echo "$role reached $want"; return 0; }
+    fi
+    sleep 1; waited=$((waited + 1))
+  done
+  echo "timed out after ${limit}s waiting for $role -> $want" >&2
+  return 1
+}
+
+case "${1:-watch}" in
+  watch) cmd_watch ;;
+  state) cmd_state ;;
+  since) shift; cmd_since "$@" ;;
+  wait)  shift; cmd_wait "$@" ;;
+  *) echo "usage: $0 {watch|state|since <seq>|wait <role> <state> [timeout]}" >&2; exit 2 ;;
+esac

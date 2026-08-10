@@ -49,10 +49,17 @@ to inform.
 
 ## 2 · Model tiers
 
-- **Cheap** — recon, inventory, sweeps, drift checks.
-- **Mid** — bounded, fully-specified implementation where the decisions are already made.
-- **Top** (high effort) — safety-critical paths, authz, schema, architecture, and **every
-  adversarial pass**.
+**The pairing per persona lives in [`_ROSTER.md`](_ROSTER.md), with the reason.** Tier words
+are not models — an orchestrator cannot dispatch `mid`. Name the identifier.
+
+- **Recon, inventory, sweeps, drift checks** — `claude-sonnet-5` at `high`. Not lower: the
+  worst misses in this method's history were on work priced as routine.
+- **Bounded implementation, decisions already made** — `claude-sonnet-5` at `high`.
+- **Architecture, integration, instruments, and every adversarial pass** — `claude-opus-5` at
+  `xhigh`; `max` for anything that moves money, grants access, or cannot be undone.
+
+**Effort is never below `high`.** If that feels wasteful, the task is probably a shell command
+wearing a persona.
 
 **Two adversarial passes on anything that moves money or grants access**, the second with fresh
 context and no sight of the first. One independent pass is a filter, not a proof.
