@@ -940,10 +940,6 @@
         "model": "claude-sonnet-5",
         "effort": "xhigh"
       },
-      "recon/inventory": {
-        "model": "claude-sonnet-5",
-        "effort": "high"
-      },
       "implementer": {
         "model": "claude-sonnet-5",
         "effort": "high"
@@ -951,9 +947,40 @@
       "presenter": {
         "model": "claude-sonnet-5",
         "effort": "high"
+      },
+      "inventory": {
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "note": "counting only; if it can be a shell pipeline, write that instead"
+      },
+      "recon": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "note": "interpreting, not counting — the dead-modules miss was a reasoning failure"
       }
     },
     "theWhyColumnIsLoadBearing": "Model names change and tiers get renamed; the reason a task needs attention does not. If you cannot write the reason, you have not decided the pairing.",
-    "enforced": "check_persona_model — real identifier, effort in {high,xhigh,max}, persona present in the roster"
+    "enforced": "check_persona_model — real identifier, effort in {high,xhigh,max}, persona present in the roster",
+    "consistency": "One persona is one pairing across the whole plan, and the roster wins where a task disagrees. Two prices for one role means the roster no longer describes the fleet, and it is how a tier drifts down one task at a time. ENFORCED by check_persona_model.",
+    "publishedGuidance": {
+      "ladder": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "apiDefault": "high",
+      "xhigh": "starting point for coding and agentic work; the default in Claude Code",
+      "high": "starting point for other intelligence-sensitive work",
+      "max": "when correctness matters more than cost; can overthink and show diminishing returns",
+      "lowMedium": "routine work. On claude-opus-5 these are unusually strong — sweeping down is the recommended second step, not a fallback",
+      "source": "Anthropic model reference, read rather than recalled"
+    },
+    "floorHasACost": "A floor of high buys insurance against misclassifying a task as routine, and pays for it in tokens on the tasks that genuinely were. Deliberate here, because a wrong '21 of 49' costs more than the tokens — but a plan that has MEASURED its recon accuracy has earned the right to lower it.",
+    "opus5Behaviours": {
+      "selfVerifies": "claude-opus-5 verifies its own work unprompted, and telling it to self-verify causes over-verification. This does NOT repeal principle 8: an adversary who did not write the work is a different mechanism from an author re-reading their own.",
+      "delegatesReadily": "It reaches for subagents readily, which is why _RULES.md section 2's explicit onward-delegation policy is load-bearing rather than boilerplate."
+    }
   }
 }

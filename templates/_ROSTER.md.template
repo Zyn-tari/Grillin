@@ -30,6 +30,18 @@ routine. **The tier buys attention, and attention is what these tasks needed.**
 `low` and `medium` do not appear in this file. If a job genuinely does not deserve `high`, it
 probably does not deserve an agent — write the shell command instead.
 
+**The floor is about misclassification, not about attention being purchasable.** Both failures above
+happened because the task was *priced* as routine, not because the model was set too low for what it
+was told to do. A floor is the cheap insurance against a classification you got wrong; it is not a
+claim that spending more always buys more.
+
+> **And it is not free — this is the honest cost.** Anthropic's own guidance for `claude-opus-5` says
+> `low` and `medium` "punch well above their weight," and that at higher effort on routine work the
+> model can gather context and deliberate beyond what the task needs. So a floor of `high` buys
+> insurance against misclassification and pays for it in tokens on the tasks that were genuinely
+> simple. That trade is deliberate here — a wrong "21 of 49" costs more than the tokens — but a plan
+> that has *measured* its own recon accuracy has earned the right to lower it. Measure, then move it.
+
 ---
 
 ## 1 · The roster
@@ -44,10 +56,33 @@ to copy wholesale.
 | `architect` | shape, seams, the decisions the rest inherit | `claude-opus-5` | `xhigh` | Every later task is priced by this one. A wrong seam is not a bug, it is a month. |
 | `integrator` | applies fragments, owns the contended files, writes **no** feature code | `claude-opus-5` | `high` | Holds the whole graph in mind and merges work it did not write. Bounded, but the blast radius of a bad merge is the plan. |
 | `health` | whether the **rules** are being followed, in rounds | `claude-sonnet-5` | `xhigh` | Process enforcement across a lot of material. Breadth over depth — but `xhigh` because it is reading for what is *absent*, and absence is the expensive thing to see. |
-| `recon` · `inventory` | counting what exists; "21 of 49", never "several" | `claude-sonnet-5` | `high` | See §0. The dead-modules miss was a recon miss. Cheap-looking, load-bearing. |
+| `inventory` | **counting** what exists — files, colours, call sites. Enumeration only | `claude-sonnet-5` | `high` | Mechanical. If it can be a `grep \| sort \| uniq -c`, write that instead and skip the agent. |
+| `recon` | **interpreting** what exists — is this dead? what depends on it? what does this mean? | `claude-opus-5` | `high` | Split out from `inventory` after re-reading the evidence: the dead-modules miss was a **reasoning** failure, not a thoroughness one. The agent saw the files, saw no direct imports, concluded dead — and a re-export is a usage pattern that does not look like usage textually. That inference is the job, and it is not cheap work wearing a cheap label. |
 | `implementer` | bounded work where the decisions are already made | `claude-sonnet-5` | `high` | The contract is written and the traps are named. Effort still buys the reading of the contract. |
 | `instrument` | building a thing that measures, before anything trusts it | `claude-opus-5` | `xhigh` | A wrong ruler authorises every measurement downstream. One shattered a gradient into 24 near-blacks and reported "no accent detectable" — every number true, the conclusion worthless. |
 | `presenter` | rendering status for a human; may re-derive **nothing** | `claude-sonnet-5` | `high` | Narrow contract, narrow surface. Its danger is not difficulty, it is drift — see `_SMOKIN.md` §4. |
+
+### The published guidance these pairings are built on
+
+Checked against Anthropic's model reference rather than recalled — the ladder is
+`low · medium · high · xhigh · max`, and the API default is `high`.
+
+| | |
+|---|---|
+| **`xhigh`** | the starting point for **coding and agentic** work; the default in Claude Code |
+| **`high`** | the starting point for other intelligence-sensitive work, and the API default |
+| **`max`** | when correctness matters more than cost; can show diminishing returns and overthink |
+| **`medium` / `low`** | routine work — and on `claude-opus-5` these are unusually strong. Sweeping down is the recommended second step, not a fallback |
+
+Two documented behaviours worth knowing, because they change how you write a task rather than which
+model you pick:
+
+- **`claude-opus-5` verifies its own work without being told**, and instructions telling it to
+  self-verify now cause *over*-verification. This does **not** repeal principle 8 — an adversary who
+  did not write the work is a different mechanism from an author re-reading their own. Keep the
+  adversary; drop redundant "double-check yourself" lines from ordinary task contracts.
+- **It reaches for subagents readily.** `_RULES.md` §2 already requires an explicit onward-delegation
+  policy per task. That requirement is load-bearing here, not boilerplate.
 
 **The `Why` column is the load-bearing one.** Model names change and tiers get renamed; the
 reason a task needs attention does not. If you cannot write the reason, you have not decided

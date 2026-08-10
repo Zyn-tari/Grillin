@@ -939,10 +939,64 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
                        f"{roster_path.name}. A persona invented in a task file is one "
                        f"nobody priced — add it to the roster with its reason first.")
 
+    # ── the same persona is the same pairing, everywhere ────────────────────
+    # A persona is a role, and a role has one price. Two tasks naming `recon`
+    # at different models are not one role — they are two roles sharing a name,
+    # and the roster stops describing the fleet the moment that is true. This is
+    # also how a tier silently drifts downward: one task gets lowered "just for
+    # this one", nothing rejects it, and the next author copies that task.
+    seen: dict = {}
+    for tid, path in sorted(tasks.items()):
+        text = path.read_text(errors="replace")
+        mp, mm, me = (RE_PERSONA.search(text), RE_MODEL.search(text),
+                      RE_EFFORT.search(text))
+        if not (mp and mm and me):
+            continue
+        persona = mp.group(1).strip()
+        if "<" in persona:
+            continue
+        pairing = (mm.group(1).strip(), me.group(1).strip().lower())
+        if persona in seen and seen[persona][0] != pairing:
+            other, otherp = seen[persona][1], seen[persona][0]
+            bad += 1
+            f.fail("persona-model", f"{path}:1",
+                   f"persona {persona!r} runs as {pairing[0]}/{pairing[1]} in {tid} but "
+                   f"{otherp[0]}/{otherp[1]} in {other}. One persona is one pairing — "
+                   f"two prices for one role means the roster no longer describes the "
+                   f"fleet, and it is how a tier drifts down one task at a time.")
+        seen.setdefault(persona, (pairing, tid))
+
+    # And what the roster says is what the tasks must do.
+    if roster_path:
+        declared = {}
+        for line in roster_path.read_text(errors="replace").splitlines():
+            if not line.lstrip().startswith("|"):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) < 4:
+                continue
+            names = RE_CODE_SPAN.findall(cells[0])
+            models = [c for c in RE_CODE_SPAN.findall(cells[-3] if len(cells) > 4 else cells[2])
+                      if c.startswith("claude-")]
+            efforts = [c.lower() for c in
+                       RE_CODE_SPAN.findall(cells[-2]) + [cells[-2].strip()]
+                       if c.lower() in VALID_EFFORT]
+            if names and models and efforts:
+                for n in names:
+                    declared[n] = (models[0], efforts[0])
+        for persona, (pairing, tid) in sorted(seen.items()):
+            want = declared.get(persona)
+            if want and want != pairing:
+                bad += 1
+                f.fail("persona-model", f"{tasks[tid]}:1",
+                       f"{tid} runs {persona!r} as {pairing[0]}/{pairing[1]}; the roster "
+                       f"says {want[0]}/{want[1]}. The roster wins — it is where the "
+                       f"reason for the pairing is written.")
+
     if not bad:
         f.ok("persona-model",
              f"every task names a real model and an effort at or above high"
-             + (f", from {len(roster)} rostered personas" if roster else ""))
+             + (f"; {len(seen)} persona(s) consistent with the roster" if seen else ""))
 
 
 def main():
