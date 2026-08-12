@@ -570,7 +570,10 @@ def check_adversary(f: Findings, tasks: dict, cfg: dict):
                    f"task an owner that appears nowhere else in the plan.")
     if not bad:
         f.ok("adversary",
-             f"{sorted(adversaries)} staffed as adversarial, owned by nobody else in the plan")
+             f"{sorted(adversaries)} is declared adversarial and its owner is named on no "
+             f"other task. This checks the DECLARATION only \u2014 nothing here can tell who "
+             f"actually RAN it, and in a one-agent setup the separation is fictional. "
+             f"`smokin verify` says so out loud; `smokin tick` enforces it where it can.")
 
 
 def check_confirmed_is_exercised(f: Findings, plan: Path, cfg: dict):
@@ -999,6 +1002,57 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
              + (f"; {len(seen)} persona(s) consistent with the roster" if seen else ""))
 
 
+RE_SIZE = re.compile(r"^\*\*Size:\*\*\s*([A-Za-z]{1,2})\b", re.M)
+# Published in three places now — here, SCALING.json's scaling[].tasks, and
+# Smokin's Plan.size(). check-drift.py compares the first two, because a number
+# published three times is a number that eventually disagrees with itself.
+BANDS = [("XS", 1, 3), ("S", 4, 10), ("M", 11, 25), ("L", 26, 60), ("XL", 61, 999999)]
+
+
+def check_size_declared(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """A size band nobody enforces is advice.
+
+    Found in a watched trial: the user told his agent "this is a small job,
+    1-3 tasks, use the short path" and got five tasks with rollback commands and
+    a baseline-snapshot task. The bands live in prose a reader sees and the
+    plan-WRITING agent is never obliged to obey. So the plan declares its band,
+    and the count has to match it.
+
+    This is itself a declaration check — an agent can write `**Size:** M` and
+    produce twenty tasks legitimately. It closes the drift observed (a stated
+    band silently exceeded), not the deeper problem of a plan being the wrong
+    size to begin with.
+    """
+    p = plan / "PLAN.md"
+    if not p.is_file():
+        return          # check_plan_source_of_truth owns that failure; two
+                        # checks reporting one defect is noise
+    m = RE_SIZE.search(p.read_text(errors="replace"))
+    n = len(tasks)
+    if not m:
+        f.fail("size-declared", f"{p}:1",
+               "PLAN.md declares no **Size:**. A plan that never says how big it is cannot "
+               "be held to it, and the bands stay advice until it does. Add one of "
+               f"{[b[0] for b in BANDS]}.")
+        return
+    want = m.group(1).upper()
+    band = next((b for b in BANDS if b[0] == want), None)
+    if band is None:
+        f.fail("size-declared", f"{p}:{line_of(p, m.group(0))}",
+               f"Size {want!r} is not one of {[b[0] for b in BANDS]}")
+        return
+    _, lo, hi = band
+    if not (lo <= n <= hi):
+        shown = f"{lo}-{hi}" if hi < 999999 else f"{lo}+"
+        f.fail("size-declared", f"{p}:{line_of(p, m.group(0))}",
+               f"PLAN.md declares Size: {want} ({shown} tasks); this plan has {n}. Either it "
+               f"grew past what you scoped — say so and re-scope — or the declaration is "
+               f"stale. A band nobody enforces is advice, and this is the drift that turned "
+               f"a stated \"1-3 tasks, short path\" into 5 with rollback plans.")
+        return
+    f.ok("size-declared", f"declared {want} and holds {n} task(s), inside the band")
+
+
 RE_CMP = re.compile(r"\b(diff|cmp|sha\d*sum|md5sum|git\s+diff|comm)\b")
 RE_PATHISH = re.compile(r"[\w./~-]*/[\w./-]+")
 
@@ -1217,6 +1271,7 @@ def main():
     check_rollback_real(f, plan, tasks, cfg)
     check_paths_disjoint(f, tasks, cfg)
     check_persona_model(f, plan, tasks, cfg)
+    check_size_declared(f, plan, tasks, cfg)
     check_done_self_reference(f, plan, tasks, cfg)
     check_rulings(f, plan, tasks, cfg)
     if args.run_gates:

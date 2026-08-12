@@ -76,8 +76,11 @@ jobs:
           probe ruling-judges-self   rulings             "printf '$RUL' | sed 's/\"judge\"/\"recon\"/' > _RULINGS.toml"
           probe ruling-unrostered    rulings             "printf '$RUL' | sed 's/\"judge\"/\"nobody\"/' > _RULINGS.toml"
           probe ruling-unparseable   rulings             "printf '[[ruling]\\nclass = ' > _RULINGS.toml"
-          # Found by a first-time user on her own plan: a task graded against a
-          # baseline inside its own folder passes whether or not the work happened.
+          # A stated size band nobody enforced became 5 tasks in a watched trial.
+          probe size-missing         size-declared       "sed -i '/^\*\*Size:\*\*/d' PLAN.md"
+          probe size-out-of-band     size-declared       "sed -i 's|^\*\*Size:\*\* S|**Size:** XS|' PLAN.md"
+          # A task graded against a baseline inside its own folder passes whether
+          # or not the work happened. Found by a first-time user on her own plan.
           probe done-self-ref        done-self-reference "sed -i 's|test -f findings/T2.md|python3 x.py | diff -u tasks/T2/baseline.txt -|' tasks/T2/TASK.md"
           exit $fail
 

@@ -213,7 +213,7 @@
     },
     {
       "size": "M",
-      "tasks": "10-25",
+      "tasks": "11-25",
       "planningEffort": "1-2 days",
       "phasesOn": [
         0,
@@ -246,7 +246,7 @@
     },
     {
       "size": "L",
-      "tasks": "25-60",
+      "tasks": "26-60",
       "planningEffort": "2-4 days",
       "phasesOn": [
         0,
@@ -275,7 +275,7 @@
     },
     {
       "size": "XL",
-      "tasks": "60+",
+      "tasks": "61+",
       "planningEffort": "1 week+",
       "phasesOn": [
         0,
@@ -895,6 +895,7 @@
     "rollback",
     "paths-disjoint",
     "persona-model",
+    "size-declared",
     "done-self-reference",
     "rulings",
     "gate-fails-first"

@@ -1,5 +1,7 @@
 # Minimal passing plan — the gate's own fixture
 
+**Size:** S
+
 This is the smallest plan that passes `validate-plan.py --run-gates` cleanly, and it exists so the
 gate can be proven against a known answer before anyone trusts it on their work. Its counterpart,
 [`../a-real-first-plan`](../a-real-first-plan), is a real plan that fails with 30+ findings. One of

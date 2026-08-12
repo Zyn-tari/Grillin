@@ -110,6 +110,31 @@ def main() -> int:
         if extra:
             bad.append(f"the validator emits checks SCALING.json does not list: {sorted(extra)}")
 
+    # ── the size bands ──────────────────────────────────────────────────────
+    # Published in three places: BANDS in validate-plan.py, scaling[].tasks in
+    # SCALING.json, and Plan.size() in Smokin. The first two live in this repo,
+    # so the first two get compared. A band table that drifts turns
+    # `size-declared` into a check that enforces a number nobody agreed on.
+    m = re.search(r"^BANDS\s*=\s*\[(.*?)\]", v, re.M | re.S)
+    if m:
+        gate = {n: (int(a), int(b)) for n, a, b in
+                re.findall(r'\("([A-Z]{1,2})",\s*(\d+),\s*(\d+)\)', m.group(1))}
+        for row in spec.get("scaling", []):
+            size, rng = row.get("size"), str(row.get("tasks", ""))
+            if size not in gate:
+                bad.append(f"SCALING.json declares size {size!r}; the gate's BANDS has no such band")
+                continue
+            r = re.match(r"(\d+)\s*[-–]\s*(\d+)", rng) or re.match(r"(\d+)\s*\+", rng)
+            if not r:
+                continue
+            lo = int(r.group(1))
+            hi = int(r.group(2)) if r.lastindex and r.lastindex > 1 else gate[size][1]
+            if (lo, hi) != gate[size]:
+                bad.append(f"size {size}: SCALING.json says {rng!r}, the gate's BANDS says "
+                           f"{gate[size][0]}-{gate[size][1]}")
+    else:
+        bad.append("validate-plan.py has no BANDS table — size-declared cannot be drift-checked")
+
     if bad:
         print("DRIFT — the surfaces disagree:\n")
         for b in bad:
