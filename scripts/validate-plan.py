@@ -999,6 +999,58 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
              + (f"; {len(seen)} persona(s) consistent with the roster" if seen else ""))
 
 
+RE_CMP = re.compile(r"\b(diff|cmp|sha\d*sum|md5sum|git\s+diff|comm)\b")
+RE_PATHISH = re.compile(r"[\w./~-]*/[\w./-]+")
+
+
+def check_done_self_reference(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """
+    A task must not be graded against a fixture it produced itself.
+
+    Found by a first-time user, on her own plan, an hour after reading about the
+    method. Her refactor task's done-command was:
+
+        python3 summarize.py sample.log | diff -u tasks/T2/baseline.txt -
+
+    which is a good instinct — freeze the behaviour, then prove the refactor did
+    not change it. But the baseline lives inside the task's OWN folder and the
+    task is what produces it. So the check asserts equivalence to a snapshot the
+    task took of itself, and it passes whether or not the refactor ever happened.
+    Revert the work, re-run the gate, still green.
+
+    `check_gates_fail_first` cannot catch this. It skips DONE tasks, and while the
+    task is unstarted the baseline does not exist yet, so the command fails for
+    the wrong reason and looks correct. The hole only opens once the work is done
+    — which is precisely when principle 14 says a fresh session must be able to
+    reconstruct the truth from the repository.
+
+    This is principle 8 one level down: never certify your own work, where "your
+    own work" includes the ruler you measured it with.
+    """
+    if not cfg.get("require_done_command", True):
+        return
+    bad = 0
+    for tid, path in sorted(tasks.items()):
+        cmd = done_command(path)
+        if not cmd or not RE_CMP.search(cmd):
+            continue
+        own = f"tasks/{tid}/"
+        hits = [p for p in RE_PATHISH.findall(cmd) if own in p.replace("./", "")]
+        if not hits:
+            continue
+        bad += 1
+        f.fail("done-self-reference", f"{path}:1",
+               f"{tid}'s done-command compares against {hits[0]!r}, a fixture inside "
+               f"{tid}'s own folder — so {tid} is graded against a snapshot it took of "
+               f"itself, and passes whether or not the work happened. Revert the change "
+               f"and it is still green. Add a clause that is FALSE before the work (assert "
+               f"the new function, file or flag exists), or move the fixture out of this "
+               f"task's ownership and say who produced it.")
+    if not bad:
+        f.ok("done-self-reference",
+             "no task is graded against a fixture it produces itself")
+
+
 def check_rulings(f: Findings, plan: Path, tasks: dict, cfg: dict):
     """
     If the plan opts into Smokin's delegation node, its `_RULINGS.toml` declares
@@ -1165,6 +1217,7 @@ def main():
     check_rollback_real(f, plan, tasks, cfg)
     check_paths_disjoint(f, tasks, cfg)
     check_persona_model(f, plan, tasks, cfg)
+    check_done_self_reference(f, plan, tasks, cfg)
     check_rulings(f, plan, tasks, cfg)
     if args.run_gates:
         check_gates_fail_first(f, plan, tasks)

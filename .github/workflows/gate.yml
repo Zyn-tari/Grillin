@@ -76,6 +76,9 @@ jobs:
           probe ruling-judges-self   rulings             "printf '$RUL' | sed 's/\"judge\"/\"recon\"/' > _RULINGS.toml"
           probe ruling-unrostered    rulings             "printf '$RUL' | sed 's/\"judge\"/\"nobody\"/' > _RULINGS.toml"
           probe ruling-unparseable   rulings             "printf '[[ruling]\\nclass = ' > _RULINGS.toml"
+          # Found by a first-time user on her own plan: a task graded against a
+          # baseline inside its own folder passes whether or not the work happened.
+          probe done-self-ref        done-self-reference "sed -i 's|test -f findings/T2.md|python3 x.py | diff -u tasks/T2/baseline.txt -|' tasks/T2/TASK.md"
           exit $fail
 
       - name: links resolve
