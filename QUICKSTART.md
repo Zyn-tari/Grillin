@@ -118,6 +118,11 @@ A first-time user paraphrased these fields instead of using the file. The result
 correct to a human and did not match what the gate parses, and that one substitution
 caused most of her first run's findings. The gate reads fields, not intent.
 
+Your `PLAN.md` must also declare **Size:** — one of `XS` (1-3 tasks), `S` (4-10),
+`M` (11-25), `L` (26-60), `XL` (61+). The gate fails if the count leaves the band,
+because a size nobody enforces is advice: in a watched trial a user asked for
+"1-3 tasks, short path" and got 5 with rollback plans.
+
 `TASK.md` needs six things, and an orchestrator will fail without them:
 
 ~~~~markdown
