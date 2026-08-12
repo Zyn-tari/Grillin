@@ -895,6 +895,7 @@
     "rollback",
     "paths-disjoint",
     "persona-model",
+    "done-self-reference",
     "rulings",
     "gate-fails-first"
   ],

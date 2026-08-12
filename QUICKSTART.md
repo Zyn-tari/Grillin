@@ -113,6 +113,11 @@ tasks/
     TASK.md      ← the contract
 ```
 
+**Copy `templates/TASK.md.template` — do not describe its shape to an agent in prose.**
+A first-time user paraphrased these fields instead of using the file. The result looked
+correct to a human and did not match what the gate parses, and that one substitution
+caused most of her first run's findings. The gate reads fields, not intent.
+
 `TASK.md` needs six things, and an orchestrator will fail without them:
 
 ~~~~markdown
@@ -120,6 +125,7 @@ tasks/
 
 **Status:** NOT STARTED
 **Owner:** <who or what does this>
+**Agent:** `<persona>` · **Model:** `<claude-opus-5 | claude-sonnet-5>` · **Effort:** <high | xhigh | max>
 **Blocked by:** — · **Blocks:** T2
 
 ## What you own
