@@ -97,12 +97,16 @@ gate and ignore those — they are the execution scaffolding, not the planning m
 
 ## Start here
 
-**New? → [`QUICKSTART.md`](QUICKSTART.md).** Twenty minutes, six steps, in order.
+**New to Claude Code itself? → [`WORKING-WITH-CLAUDE-CODE.md`](WORKING-WITH-CLAUDE-CODE.md).**
+Habits before method — what actually goes wrong, and the six habits that fix it. No Grillin required.
+
+**Ready to plan a real job? → [`QUICKSTART.md`](QUICKSTART.md).** Twenty minutes, six steps, in order.
 
 After that, in roughly the order you need them:
 
 | File | What it is |
 |---|---|
+| [`WORKING-WITH-CLAUDE-CODE.md`](WORKING-WITH-CLAUDE-CODE.md) | **Before any of this.** For someone new to Claude Code who wants to work better with it. Assumes you can program; assumes nothing about agents. |
 | **[`QUICKSTART.md`](QUICKSTART.md)** | **Start here.** What to actually do, in order, with the times. |
 | [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The reasoning behind it. Eleven phases, sixteen principles, the scaling model, anti-patterns. |
 | **[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md)** | **The other half.** Being inside a plan after it turns out to be wrong — re-entry, amendments, frozen contracts, validating the instrument, and how to build a reader. Every rule traces to a defect a real run produced. |
