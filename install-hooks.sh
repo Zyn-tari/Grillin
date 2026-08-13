@@ -73,11 +73,20 @@ command -v "\$GATE" >/dev/null 2>&1 || [ -x "\$GATE" ] || {
 plans=""
 while IFS= read -r f; do
   d="\$REPO/\$f"
-  while [ "\$d" != "\$REPO" ] && [ "\$d" != "/" ]; do
+  # Test \$d BEFORE deciding to stop, so the repository root is itself a
+  # candidate plan directory. Written as a while-true with the stop condition at
+  # the bottom because the obvious form —
+  #     while [ "\$d" != "\$REPO" ] && [ "\$d" != "/" ]
+  # — never tests \$REPO, and a plan whose directory IS the repo root therefore
+  # matched nothing, left \$plans empty, and exited 0 having checked nothing.
+  # An installed gate reporting success is worse than no gate: the green is
+  # load-bearing. Reported 2026-08-13; see tests/test-hook-gates-root-plan.sh.
+  while :; do
     if compgen -G "\$d/tasks/*/TASK.md" > /dev/null 2>&1; then
       case " \$plans " in *" \$d "*) ;; *) plans="\$plans \$d" ;; esac
       break
     fi
+    case "\$d" in "\$REPO"|"/") break ;; esac
     d="\$(dirname "\$d")"
   done
 done < <(git diff --cached --name-only --diff-filter=ACMR)

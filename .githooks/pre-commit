@@ -32,11 +32,20 @@ fi
 plans=""
 while IFS= read -r f; do
   d="$REPO/$f"
-  while [ "$d" != "$REPO" ] && [ "$d" != "/" ]; do
+  # Test $d BEFORE deciding to stop, so the repository root is itself a
+  # candidate plan directory. The obvious form —
+  #     while [ "$d" != "$REPO" ] && [ "$d" != "/" ]
+  # — never tests $REPO, so a plan whose directory IS the repo root matched
+  # nothing, left $plans empty, and this hook exited 0 having checked nothing.
+  # An installed gate that reports success is worse than no gate, because the
+  # green is load-bearing. Reported 2026-08-13 against a real repo;
+  # tests/test-hook-gates-root-plan.sh is the regression.
+  while :; do
     if compgen -G "$d/tasks/*/TASK.md" > /dev/null 2>&1; then
       case " $plans " in *" $d "*) ;; *) plans="$plans $d" ;; esac
       break
     fi
+    case "$d" in "$REPO"|"/") break ;; esac
     d="$(dirname "$d")"
   done
 done < <(git diff --cached --name-only --diff-filter=ACMR)
