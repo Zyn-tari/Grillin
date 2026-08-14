@@ -76,6 +76,11 @@ jobs:
           probe ruling-judges-self   rulings             "printf '$RUL' | sed 's/\"judge\"/\"recon\"/' > _RULINGS.toml"
           probe ruling-unrostered    rulings             "printf '$RUL' | sed 's/\"judge\"/\"nobody\"/' > _RULINGS.toml"
           probe ruling-unparseable   rulings             "printf '[[ruling]\\nclass = ' > _RULINGS.toml"
+          # The OTHER reader role. An agent briefed from QUICKSTART alone staffed
+          # the adversary and left this one out; it caught ~20 on the reference run.
+          probe health-missing       health-checker      "rm -rf tasks/T5"
+          probe adv-no-context       adversary-context   "sed -i '/^\*\*Context:\*\*/d' tasks/T4/TASK.md"
+          probe adv-is-subagent      adversary-context   "sed -i 's|^\*\*Context:\*\* fresh.*|**Context:** a subagent of the orchestrator|' tasks/T4/TASK.md"
           # A stated size band nobody enforced became 5 tasks in a watched trial.
           probe size-missing         size-declared       "sed -i '/^\*\*Size:\*\*/d' PLAN.md"
           probe size-out-of-band     size-declared       "sed -i 's|^\*\*Size:\*\* S|**Size:** XS|' PLAN.md"

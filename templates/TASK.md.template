@@ -16,13 +16,16 @@ it is the progress record, and it is the only one that survives a lost conversat
 **Mandatory downstream:** <adversarial passes — TWO, the second with fresh context, on money/authz? integrator?>
 
 <!-- READER — only on the two reading roles. See OPERATING-THE-PLAN.md §7.
-     **Reader:** adversary  → judges whether the RESULT is true. Its Owner must appear nowhere
+**Reader:** adversary  → judges whether the RESULT is true. Its Owner must appear nowhere
                               else in the plan; the gate fails the plan if it does. It reads the
                               deliverable and its evidence, NOT the plan's reasoning. It reports,
                               it does not repair.
      **Reader:** health     → judges whether the RULES were followed. Contamination is expected
                               and required; that is exactly why it cannot also be the adversary. -->
 **Reader:** <adversary | health — omit this line entirely on ordinary work tasks>
+**Context:** <adversary ONLY: "fresh — not a subagent of the orchestrator, not a continued
+             session". §7. The gate requires this line and cannot verify it: nothing readable
+             from a file can tell how the task was really started.>
 
 <!-- REVERSIBILITY — declare it when the answer is no, and then name the way back.
      Shaping question 5 asks whether any step is hard to undo. It was asked at phase 0

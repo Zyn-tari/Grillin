@@ -889,6 +889,8 @@
     "graph",
     "plan-truth",
     "adversary",
+    "adversary-context",
+    "health-checker",
     "confirmed-exercised",
     "frozen-contract",
     "instrument",

@@ -28,6 +28,7 @@ nothing, and its whole purpose is to exercise every check exactly once.
 | T2 | Write the findings | worker-b | T1 |
 | T3 | Write the summary | worker-a | T2 |
 | T4 | Attack all of it | reviewer | T3 |
+| T5 | Are the rules being followed? | worker-a | — |
 
 T4 is the adversarial pass. Its owner appears nowhere else in this table, which is the point:
 an adversary that also produced some of the work is judging itself.

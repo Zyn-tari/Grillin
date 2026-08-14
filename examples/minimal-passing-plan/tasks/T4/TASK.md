@@ -5,6 +5,7 @@
 **Owner:** reviewer
 **Blocked by:** T3 · **Blocks:** —
 **Reader:** adversary
+**Context:** fresh — not a subagent of the orchestrator, not a continued session
 
 ## What you own
 `findings/T4.md` — nothing else.
