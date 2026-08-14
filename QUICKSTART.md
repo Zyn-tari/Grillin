@@ -1,7 +1,12 @@
 # Your first twenty minutes
 
 You have a vague ask and you want a plan an orchestrator can run. Start here, in order.
-Nothing else in this repo is required reading before you begin.
+Nothing else in this repo is required reading before you begin **building** a plan.
+
+**Before anyone RUNS one, [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) is required** — see
+§7. An operator briefed from this file alone told their orchestrator to make the adversary a
+subagent, which the method forbids, and staffed one reader role where there are two. Neither
+mistake is visible from here.
 
 > **What this is.** A planning add-on. You use it to *build* a plan; an orchestrator agent
 > then reads that plan and operates it. It is not a checklist you perform.
@@ -196,11 +201,36 @@ you a question.
 
 ---
 
+---
+
+## 7 · You are not finished — the other half starts now
+
+A green gate means the plan is **operable**. Everything above is how to *build* a
+plan. **None of it is how to run one**, and the rules that govern running one are
+not optional — they are the half where the expensive mistakes live.
+
+**Read [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) before anyone starts work.**
+Four things in it are commonly got wrong by people who never opened it, and
+every one of these was got wrong by a real operator working from this file alone:
+
+| | |
+|---|---|
+| **There are TWO reader roles, not one** | A **health checker** runs continuously, in rounds, asking *are the rules being followed?* — contamination is required. An **adversary** runs once, at the end, asking *is the result true?* — contamination is disqualifying. On the reference run the health checker caught ~20 defects. Staffing only the adversary leaves that on the table. |
+| **The adversary may not be a subagent** | Not a subagent of the orchestrator, not a continued session. It needs **fresh context** or it is reviewing its own reasoning. §7. |
+| **A green gate is the floor, and it is low** | On the run measured end to end the gate caught **2** defects and the readers caught **50**. The gate says operable; it never says correct. §8. |
+| **Instruments get proven before they are trusted** | Anything producing evidence other work depends on is checked against a known answer *first*. §5. |
+
+And when a premise the plan rests on turns out to be dead, that is not an
+amendment — you re-answer the five shaping questions with a dated new set. §2.
+
+---
+
 ## What to read next, and only if you need it
 
 | You want | Read |
 |---|---|
 | The reasoning behind all of the above | [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) |
+| *(not optional — see §7 above)* | [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) |
 | To tick a plan off against a full list | [`templates/GRILL-CHECKLIST.md`](templates/GRILL-CHECKLIST.md) |
 | To see it go wrong in real life | [`CASE-STUDY.md`](CASE-STUDY.md) |
 | To run a fleet of agents on a codebase | [`templates/_RULES.md.template`](templates/_RULES.md.template) and the other templates — **these assume an AI agent fleet and a code repository.** Ignore them otherwise. |
