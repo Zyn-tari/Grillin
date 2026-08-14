@@ -84,6 +84,12 @@ jobs:
           probe done-self-ref        done-self-reference "sed -i 's|test -f findings/T2.md|python3 x.py | diff -u tasks/T2/baseline.txt -|' tasks/T2/TASK.md"
           exit $fail
 
+      - name: the one-task example is a valid plan
+        run: ./scripts/validate-plan.py examples/one-task-plan --run-gates
+
+      - name: check-index fires on each of its four defects
+        run: bash tests/test-check-index.sh
+
       - name: the installed hook gates a plan at the repository root
         run: bash tests/test-hook-gates-root-plan.sh
 
