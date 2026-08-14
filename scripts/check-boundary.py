@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# FOR THIS REPOSITORY ONLY. This is Grillin checking ITSELF — the surface list
+# below is hardcoded to this repo's own entry points. It is not a tool you can
+# point at your own files.
 """Does the scoping boundary reach every surface a reader can enter through?
 
 Whitespace-normalised, so a statement wrapped across lines still counts — the

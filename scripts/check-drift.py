@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# FOR THIS REPOSITORY ONLY. This is Grillin checking ITSELF — its surfaces are
+# hardcoded (SCALING.json, index.html, README.md, GRILLING-THE-PLAN.md). It is
+# not a tool you can point at your own files. For that, use check-index.py.
 """
 check-drift.py — the surfaces must say the same thing.
 

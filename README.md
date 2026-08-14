@@ -95,6 +95,28 @@ gate and ignore those — they are the execution scaffolding, not the planning m
 
 ---
 
+### Which of these are for you
+
+Three scripts ship here and only two are usable on your own work. An operator
+who had just built an index-plus-shards changelog found `check-drift.py`,
+correctly identified that they had made a drift generator, and could not point
+it at anything — it is hardcoded to this repo. That was not their mistake.
+
+| script | run it on | what it answers |
+|---|---|---|
+| [`scripts/validate-plan.py`](scripts/validate-plan.py) | **your plan** | is this plan operable? |
+| [`scripts/check-index.py`](scripts/check-index.py) | **your index + shards** | do an index and the files it points at still agree? |
+| `scripts/check-drift.py` | *this repo only* | Grillin checking its own surfaces |
+| `scripts/check-boundary.py` | *this repo only* | Grillin checking its own entry points |
+
+`check-index.py` exists because splitting a long file into an index plus shards
+is the right move and creates a second place holding the same facts. It checks
+that every linked shard exists, that none is orphaned, that the index's name for
+a shard appears **verbatim** as a heading inside it — the pair a status hook
+keys on, and the one most likely to be tidied on one side only — and that any
+stated count still holds.
+
+
 ## Start here
 
 **New to Claude Code itself? → [`WORKING-WITH-CLAUDE-CODE.md`](WORKING-WITH-CLAUDE-CODE.md).**
@@ -110,6 +132,7 @@ After that, in roughly the order you need them:
 | **[`QUICKSTART.md`](QUICKSTART.md)** | **Start here.** What to actually do, in order, with the times. |
 | [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The reasoning behind it. Eleven phases, sixteen principles, the scaling model, anti-patterns. |
 | **[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md)** | **The other half.** Being inside a plan after it turns out to be wrong — re-entry, amendments, frozen contracts, validating the instrument, and how to build a reader. Every rule traces to a defect a real run produced. |
+| [`examples/one-task-plan/`](examples/one-task-plan/) | **The smallest plan that is still a plan.** One task. Copy it when the alternative is a four-line shell loop you will not keep. |
 | **[`examples/`](examples/)** | **A real first plan** by a first-time user, and the gate report that fails it with 26 findings. |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | **Two runs.** The one that produced the method, and the one that broke it — where the 2-versus-50 number comes from. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Feed it to tooling, or hand it to an agent as a planning brief. |
