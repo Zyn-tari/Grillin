@@ -576,6 +576,90 @@ def check_adversary(f: Findings, tasks: dict, cfg: dict):
              f"`smokin verify` says so out loud; `smokin tick` enforces it where it can.")
 
 
+RE_CONTEXT = re.compile(r"^\*\*Context:\*\*\s*(.+)$", re.M | re.I)
+
+
+def check_health_checker(f: Findings, tasks: dict, cfg: dict):
+    """
+    The OTHER reader. There are two, and only one of them was ever enforced.
+
+    A **health checker** runs continuously, in rounds, asking *are the rules
+    being followed?* — it has read everyone's reasoning, which is exactly what
+    makes it good at this and disqualifies it from judging the result.
+    An **adversary** runs once, at the end, asking *is the result true?* — where
+    that same contamination is disqualifying.
+
+    Opposite contamination rules, so they cannot be the same person, and this
+    check deliberately does NOT require a clean owner: for the health role,
+    contamination is the qualification.
+
+    On the reference run the health checker caught roughly 20 defects. An agent
+    briefing an orchestrator from QUICKSTART alone staffed the adversary and left
+    this role out entirely, because nothing asked for it and the document that
+    describes it was unreachable from the entry path.
+    """
+    if not cfg.get("require_adversary", True):
+        return
+    if len(tasks) < ADVERSARY_MIN_TASKS:
+        return                          # check_adversary already reported the floor
+    for tid, path in sorted(tasks.items()):
+        m = RE_READER.search(path.read_text(errors="replace"))
+        if m and m.group(1).strip().lower() == "health":
+            f.ok("health-checker",
+                 f"{tid} declares '**Reader:** health' — the rules-following pass, "
+                 f"run in rounds. Its contamination is required, not disqualifying, "
+                 f"so it is not checked for a clean owner.")
+            return
+    f.fail("health-checker", f"{sorted(tasks)[0]}",
+           "no task declares '**Reader:** health'. There are TWO reader roles and this "
+           "plan staffs one. The health checker runs in rounds asking whether the RULES "
+           "are being followed — it caught ~20 defects on the reference run, and it is "
+           "the role most often left out because the adversary is the famous one. "
+           "See OPERATING-THE-PLAN.md §7.")
+
+
+def check_adversary_context(f: Findings, tasks: dict, cfg: dict):
+    """
+    The adversary must not be a subagent of the orchestrator.
+
+    §7: fresh context — "Not a subagent of the orchestrator, not a continued
+    session." An agent briefing an orchestrator instructed the exact arrangement
+    the method forbids, because the rule lived in a document the entry path never
+    mentioned.
+
+    THIS CHECK SURFACES THE RULE; IT DOES NOT ENFORCE IT. Nothing readable from
+    files can establish how a task was actually instantiated. What it does is put
+    the sentence in front of whoever writes the adversary's contract, which is
+    where the mistake was made.
+    """
+    if not cfg.get("require_adversary", True) or len(tasks) < ADVERSARY_MIN_TASKS:
+        return
+    bad = 0
+    for tid, path in sorted(tasks.items()):
+        text = path.read_text(errors="replace")
+        m = RE_READER.search(text)
+        if not m or m.group(1).strip().lower() != "adversary":
+            continue
+        mc = RE_CONTEXT.search(text)
+        if not mc:
+            bad += 1
+            f.fail("adversary-context", f"{path}:1",
+                   f"{tid} is the adversarial pass and declares no '**Context:**'. §7 "
+                   f"requires fresh context — NOT a subagent of the orchestrator, NOT a "
+                   f"continued session. Add: '**Context:** fresh — not a subagent of the "
+                   f"orchestrator, not a continued session'. This line is a declaration, "
+                   f"not a proof: nothing here can see how the task was really started.")
+        elif "fresh" not in mc.group(1).lower():
+            bad += 1
+            f.fail("adversary-context", f"{path}:{line_of(path, mc.group(0))}",
+                   f"{tid}'s **Context:** says {mc.group(1).strip()!r}. §7 requires fresh "
+                   f"context; a subagent or a continued session is reviewing its own "
+                   f"reasoning.")
+    if not bad:
+        f.ok("adversary-context",
+             "the adversarial pass declares fresh context (a declaration, not a proof)")
+
+
 def check_confirmed_is_exercised(f: Findings, plan: Path, cfg: dict):
     """
     CONFIRMED means you ran something.
@@ -1265,6 +1349,8 @@ def main():
     check_graph(f, tasks, cfg)
     check_plan_source_of_truth(f, plan, tasks, cfg)
     check_adversary(f, tasks, cfg)
+    check_health_checker(f, tasks, cfg)
+    check_adversary_context(f, tasks, cfg)
     check_confirmed_is_exercised(f, plan, cfg)
     check_frozen_human_contracts(f, tasks, cfg)
     check_instrument_fixture(f, plan, tasks, cfg)
@@ -1308,8 +1394,26 @@ def main():
               "given, so no done-command was executed. Nothing here proves a "
               "single gate would fail on unstarted work. Re-run with --run-gates.")
         return 2
-    print("RESULT: PASS — the plan is structurally operable. "
-          "That is not the same as correct; it still needs an adversarial pass.")
+    # Name what is still unchecked FOR THIS PLAN, rather than printing one
+    # unconditional caveat. The old line said "operable, not correct" on every
+    # single run, and an operator later described reading it as boilerplate —
+    # correctly, because a sentence that never changes carries no information.
+    # A line that names this plan's readers changes when the plan does.
+    readers = {}
+    for tid, path in sorted(tasks.items()):
+        m = RE_READER.search(path.read_text(errors="replace"))
+        if m:
+            readers.setdefault(m.group(1).strip().lower(), []).append(tid)
+    print("RESULT: PASS — the plan is structurally operable.")
+    if len(tasks) < ADVERSARY_MIN_TASKS:
+        print(f"        Not checked: whether it is CORRECT. At {len(tasks)} task(s) this "
+              f"plan is below the {ADVERSARY_MIN_TASKS}-task floor, so no reader is "
+              f"required — you are the reader.")
+    else:
+        who = " · ".join(f"{r}: {', '.join(t)}" for r, t in sorted(readers.items())) or "none"
+        print(f"        Not checked: whether it is CORRECT. On the run measured end to "
+              f"end this gate caught 2 defects and the readers caught 50.")
+        print(f"        This plan staffs — {who} — and NEITHER HAS REPORTED YET.")
     return 0
 
 
