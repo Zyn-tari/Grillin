@@ -142,7 +142,7 @@ Stated explicitly rather than silently skipped, per phase 10.
    them if I did.
 3. **Recruiting the two cold-start testers** for the definition of done.
 4. **Deciding whether the pilot's numbers may be published.** `CASE-STUDY.md` describes a live
-   web app app, its route counts, its defect history and a shared-constant disagreement. That
+   web app, its route counts, its defect history and a constant disagreement. That
    is a real third party's system. I flagged it; I cannot clear it.
 
 ---

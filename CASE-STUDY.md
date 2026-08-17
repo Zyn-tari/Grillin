@@ -3,8 +3,13 @@
 Reconstructed from the session that produced it, in order. Not idealised: several steps are
 recorded because they went **wrong** and the correction is the lesson.
 
-The project: a live web app web app being redesigned and rebranded, ~24 routed pages,
+The project: **the product** — a live web app being redesigned and rebranded, ~24 routed pages,
 72 API routes, five prior rounds of defect work behind it.
+
+> **What is deliberately not here.** The product's domain, its business rules and the specifics
+> of what was found broken. The argument this document makes rests on counts and failure shapes,
+> not on the industry it happened in — and a defect map of a running product is not the author's
+> to publish, even when the name is.
 
 ---
 
@@ -64,7 +69,7 @@ one you expect.*
 **What happened:** the inventory had turned up real defects. They were split three ways:
 
 - **A** — fix during the work (display-only, in files being rewritten anyway)
-- **B** — needs a human decision (product or product semantics)
+- **B** — needs a human decision (product semantics)
 - **C** — real but out of scope (backend, backlog)
 
 Each labelled **CONFIRMED** (read live, cited) or **SUSPECTED** (agent claim, unchecked).

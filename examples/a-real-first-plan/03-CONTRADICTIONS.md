@@ -173,7 +173,7 @@ The method's own principle 10 is "**Measure constraints; never quote them — th
 instrument, and label the conditions.**" A reader of this repo can only quote. The pilot is not
 here; no measurement, no instrument, no conditions ship with it.
 
-**This is not a defect to fix — you cannot publish someone else's live web app.** It is a
+**This is not a defect to fix — you cannot publish someone else's live product.** It is a
 framing decision: say plainly that the numbers come from one unpublished pilot, or drop the
 precision. It also interacts with FLAG 3 — the case study already publishes a lot about that
 system. → bucket B, `02-TRIAGE.md` Q4.

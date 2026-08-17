@@ -42,8 +42,8 @@ Phase 10 is on at XS; `SCALING.json` switches its status surface off. The other 
 (entry point, kickoff prompt, persistent memory, hand-off list) are unstated.
 
 **Q4 — May the pilot project's details be published?**
-`CASE-STUDY.md` names a live web app app's page count, route count, unbuilt endpoints,
-a shared-constant disagreement across three documents, and an unreadable root-owned deploy script.
+`CASE-STUDY.md` names a live web app page count, route count, unbuilt endpoints,
+a constant disagreement across three documents, and an unreadable root-owned deploy script.
 Public repo = public disclosure. **This blocks T8 outright.**
 
 ## Loop

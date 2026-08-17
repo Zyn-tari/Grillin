@@ -14,7 +14,7 @@ non-technical blocker lives.
 ## Steps
 
 1. Confirm `tasks/T1/DECISIONS.md` Q4 is answered **and permissive**. `CASE-STUDY.md` publishes a
-   third party's live web app app: ~24 routed pages, 72 API routes, ~30 endpoints specified
+   third party's live web app: ~24 routed pages, 72 API routes, ~30 endpoints specified
    and never built, three documents disagreeing about a shared configuration constant, a root-owned unreadable
    deploy script, five prior rounds of defect work. If Q4 is not cleared, **stop here** — the fix
    is to anonymise `CASE-STUDY.md`, which is a new task, not an adjustment to this one.
