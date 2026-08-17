@@ -134,7 +134,7 @@ file / the lockfile>** — <one clause on why their contents are not needed to d
      The original: the human asked to deploy "a website in PHP" onto a server with no PHP
      runtime. The brief pre-decided both branches — deploy static if the .php is a shim; if it
      is genuinely load-bearing, STOP and report. "Installing a language runtime on a production
-     server that runs a live service is not something to do inside an instruction that said
+     server that runs someone else's live service is not something to do inside an instruction that said
      'deploy this landing page'. That is the human's call, and it costs them one message."
 
      Write BOTH branches. A gate with only the stop branch written reads as discouragement; an

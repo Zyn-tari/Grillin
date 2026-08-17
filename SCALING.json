@@ -767,13 +767,12 @@
     "skillsAccrete": "Scar tissue is written during the run, not only before it — in the pilot a live mail incident became a permanent never-rule the same day."
   },
   "pilot": {
-    "what": "the product — a live web app being redesigned and rebranded. First run of this method end to end",
+    "what": "A live web app being redesigned and rebranded — first run of this method end to end",
     "when": "2026-07-31 to 2026-08-01",
     "waves": 12,
     "autonomousRun": "10h 46m",
     "changelogReceipts": 109,
     "tasksClosed": "19 of 23",
-    "tags": "w2 … w11",
     "substrateMeasurement": "Agent tool 4.87x (8 haiku recons, 682 agent-sec in ~140s, peak 4 concurrent) vs Workflow 1.78x (13 mixed agents, 6881 agent-sec in 3870s, max overlap 2). LABEL: one host, one day, uncontrolled and non-comparable workloads, instrument unverified — the agent-second figures may include queue-wait. The direction is safe because the Workflow cap min(16, nproc-2)=2 is documented; the magnitude is an inference across different experiments, not a measured delta.",
     "lessonsFolded": [
       "a second adversarial pass overturned all five branches the first let through",
