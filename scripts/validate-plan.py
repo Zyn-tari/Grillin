@@ -33,6 +33,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -61,6 +62,7 @@ FLOORS = {
     "require_rollback_real": True,
     "require_paths_disjoint": True,
     "require_persona_model": True,
+    "require_research_contract": True,
 }
 VALID_STATUS = {"NOT STARTED", "IN PROGRESS", "BLOCKED", "DONE"}
 
@@ -70,7 +72,13 @@ VALID_STATUS = {"NOT STARTED", "IN PROGRESS", "BLOCKED", "DONE"}
 ADVERSARY_MIN_TASKS = 4
 # Sections that constitute a task's contract. Changing any of them after the
 # task has been handed out is moving the goalpost, which is why they are hashed.
-CONTRACT_SECTIONS = ("what you own", "steps", "done means", "do not")
+# "if it fails" is OPTIONAL in the template and frozen when present. It decides
+# "fix it" vs "stop and report", so it grades the work as surely as "Done means"
+# does; a gradeable section outside the hash is a goalpost that can be moved after
+# delivery, which is the exact failure check_frozen_human_contracts exists to stop.
+# Absent sections contribute nothing to section_bodies(), so contracts written
+# before this line hash exactly as they did.
+CONTRACT_SECTIONS = ("what you own", "steps", "done means", "if it fails", "do not")
 
 RE_STATUS = re.compile(r"^\*\*Status:\*\*\s*([A-Z ]+?)\s*(?:—|$)", re.M)
 RE_OWNER = re.compile(r"^\*\*(?:Owner|Agent)\b.*?:\*\*\s*(.+)$", re.M | re.I)
@@ -84,6 +92,16 @@ RE_FENCE = re.compile(r"```[a-z]*\n(.*?)```", re.S)
 RE_TASK_ID = re.compile(r"\b([A-Z]\d{1,3}[a-z]?)\b")
 RE_READER = re.compile(r"^\*\*Reader:\*\*\s*([a-z]+)", re.M | re.I)
 RE_DELIVERED = re.compile(r"^\*\*Delivered:\*\*\s*(.+)$", re.M | re.I)
+# QUICKSTART §0b question 3 — "Are the workers AI agents?" — is asked once, about
+# the whole plan. It had no written form, so the gate could not read the answer
+# and applied the agent floors to plans of people. Absent means agents, which is
+# what every existing plan means.
+RE_WORKERS = re.compile(r"^\*\*Workers:\*\*\s*(.+)$", re.M | re.I)
+# NOT anchored to line start: these two share a line, the way Agent/Model/Effort
+# do. Anchoring them made the gate demand a Timebox that was already there, six
+# characters to the right of where it was looking.
+RE_KIND = re.compile(r"\*\*Kind:\*\*\s*([^·\n]+?)\s*(?=\*\*|·|$)", re.M | re.I)
+RE_TIMEBOX = re.compile(r"\*\*Timebox:\*\*\s*([^·\n]+?)\s*(?=\*\*|·|$)", re.M | re.I)
 RE_SHA = re.compile(r"sha256:([0-9a-f]{8,64})", re.I)
 RE_CODE_SPAN = re.compile(r"`([^`\n]+)`")
 RE_SCRIPT_REF = re.compile(r"([\w./-]+\.(?:py|sh|js|mjs|ts))")
@@ -704,6 +722,52 @@ def check_confirmed_is_exercised(f: Findings, plan: Path, cfg: dict):
         f.ok("confirmed-exercised", "no CONFIRMED findings to check")
 
 
+def is_human_owned(text: str) -> bool:
+    """Is this task owned by a person rather than an agent?
+
+    ONE definition, used by two checks that pull in opposite directions, which is
+    the point. `check_frozen_human_contracts` ADDS an obligation to a human-owned
+    task (its contract freezes on delivery, hash and all). `check_persona_model`
+    REMOVES one (a person has no model and no effort). Declaring `human` is
+    therefore a trade, not an exemption — which is what stops it being the cheap
+    way around the floor.
+
+    Two definitions of "human" would eventually disagree, and the failure would
+    be a task that is exempt from the model floor and also exempt from the freeze
+    — invisible, because each check would be behaving correctly on its own.
+    """
+    # A task that names an Agent or a Model is run by one, whatever the Owner
+    # line says. `**Owner:** you` is the idiom in the shipped examples and it
+    # means "you are driving this plan", not "a person executes this task" —
+    # those examples also name a persona and a model. Without this clause the
+    # owner wording alone exempted them and their models silently stopped being
+    # checked: the gate printed PASS for the right check for the wrong reason,
+    # which is worse than printing FAIL.
+    if RE_PERSONA.search(text) or RE_MODEL.search(text):
+        return False
+    mo = RE_OWNER.search(text)
+    return bool(mo and re.search(r"\bhuman\b|\byou\b|\brequester\b", mo.group(1), re.I))
+
+
+def human_worked_plan(plan: Path) -> bool:
+    """Does PLAN.md declare that the workers are people?
+
+    The per-task test above only fires on the literal words human/you/requester.
+    Real plans of people do not write that — they write "Writer A", "the DBA",
+    "a reviewer who wrote neither T5 nor T6". Two of the five trial plans failed
+    the model floor on exactly those owners, and no regex over job titles is ever
+    going to close that. So the answer is declared once, where the question is
+    actually asked, and the gate reads the declaration instead of guessing at the
+    owner string.
+    """
+    p = plan / "PLAN.md"
+    if not p.is_file():
+        return False
+    mw = RE_WORKERS.search(p.read_text(errors="replace"))
+    return bool(mw and re.search(r"\bhumans?\b|\bpeople\b|\bpersons?\b",
+                                 mw.group(1), re.I))
+
+
 def check_frozen_human_contracts(f: Findings, tasks: dict, cfg: dict):
     """
     A human-owned task's contract freezes the moment it is handed out.
@@ -720,8 +784,7 @@ def check_frozen_human_contracts(f: Findings, tasks: dict, cfg: dict):
     bad, seen = 0, 0
     for tid, path in sorted(tasks.items()):
         text = path.read_text(errors="replace")
-        mo = RE_OWNER.search(text)
-        if not mo or not re.search(r"\bhuman\b|\byou\b|\brequester\b", mo.group(1), re.I):
+        if not is_human_owned(text):
             continue
         ms = RE_STATUS.search(text)
         status = ms.group(1).strip() if ms else "NOT STARTED"
@@ -980,9 +1043,31 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
                         roster |= set(RE_CODE_SPAN.findall(cells[0]))
             break
 
-    bad = 0
+    if human_worked_plan(plan):
+        f.ok("persona-model",
+             "PLAN.md declares human workers, so no task names a model or an effort — "
+             "a person has neither. Their contracts freeze on delivery instead.")
+        return
+
+    bad, humans = 0, 0
     for tid, path in sorted(tasks.items()):
         text = path.read_text(errors="replace")
+
+        # A person has no model and no effort, and QUICKSTART §0b question 3 says
+        # so outright: when the workers are not agents, "ignore templates/
+        # entirely — everything else still works". Everything else did not still
+        # work. This floor failed a legitimate human-owned plan twice per task
+        # and `--config` could not rescue it, because self_check refuses to let a
+        # floor be lowered. Three first-time users hit it independently; two of
+        # them stopped running the gate at all, which is the expensive outcome —
+        # a gate that is wrong about a case people actually have gets discarded
+        # whole, taking the twenty checks that were right with it.
+        #
+        # The exemption is not free: see is_human_owned. A task that claims it
+        # picks up the frozen-contract obligation in exchange.
+        if is_human_owned(text):
+            humans += 1
+            continue
 
         mm = RE_MODEL.search(text)
         if not mm:
@@ -1082,8 +1167,12 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
 
     if not bad:
         f.ok("persona-model",
-             f"every task names a real model and an effort at or above high"
-             + (f"; {len(seen)} persona(s) consistent with the roster" if seen else ""))
+             (f"every agent-owned task names a real model and an effort at or above high"
+              if humans else
+              f"every task names a real model and an effort at or above high")
+             + (f"; {len(seen)} persona(s) consistent with the roster" if seen else "")
+             + (f"; {humans} human-owned task(s) exempt, and frozen on delivery instead"
+                if humans else ""))
 
 
 RE_SIZE = re.compile(r"^\*\*Size:\*\*\s*([A-Za-z]{1,2})\b", re.M)
@@ -1187,6 +1276,84 @@ def check_done_self_reference(f: Findings, plan: Path, tasks: dict, cfg: dict):
     if not bad:
         f.ok("done-self-reference",
              "no task is graded against a fixture it produces itself")
+
+
+def check_research_task(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """
+    A task that goes and finds something out is graded on its findings, never on
+    the finding.
+
+    WHERE THIS CAME FROM. Five first-time users were each handed a different job
+    and asked to plan it with Grillin. Every one of them hit the same wall — the
+    facts the plan needed did not exist yet — and every one of them invented the
+    same answer independently: make the first task go and get them. All five then
+    said some version of *"the method never says this is fine, it just doesn't
+    say it isn't."* The method had no research step, and five out of five people
+    built one anyway.
+
+    WHY IT IS A TASK AND NOT A PHASE. The phases produce prose that nothing
+    reads. A task has an owner, a folder and a done-command, which is the entire
+    surface this gate can see. And research is the one activity whose natural
+    done-command — "I understand it now" — is exactly the unfalsifiable claim the
+    rest of the method exists to refuse.
+
+    So the contract is borrowed from the practice that solved this long ago: a
+    spike is timeboxed, answers ONE question, and its deliverable is a written
+    finding, not working code. A spike without a timebox is research with no exit
+    condition. Two things are checkable and both are checked:
+
+      1 · it declares a **Timebox:**
+      2 · its done-command tests for its own findings artefact
+
+    NOT checkable, and stated rather than pretended: whether the findings are any
+    good, and whether "what I could not establish" was answered honestly. Those
+    are the reader's, and on a plan below the four-task floor there is no reader
+    but you.
+
+    ON THE INTERACTION WITH check_done_self_reference: that check forbids grading
+    a task against a fixture in its own folder, and this one requires exactly
+    that. They do not collide, and the reason is worth writing down — the other
+    check only fires on a COMPARISON (`diff`, `cmp`), because comparing yourself
+    to your own snapshot passes whether or not the work happened. Testing that
+    you produced a non-empty artefact is false before the work and true after,
+    which is the property a done-command needs.
+    """
+    if not cfg.get("require_research_contract", True):
+        return
+    n, bad = 0, 0
+    for tid, path in sorted(tasks.items()):
+        text = path.read_text(errors="replace")
+        mk = RE_KIND.search(text)
+        if not mk or not re.search(r"\bresearch\b|\brecon\b|\bspike\b", mk.group(1), re.I):
+            continue
+        n += 1
+
+        if not RE_TIMEBOX.search(text):
+            bad += 1
+            f.fail("research-task", f"{path}:1",
+                   f"{tid} is a research task and declares no **Timebox:**. Research with no "
+                   f"exit condition does not end — it gets abandoned, which is the same thing "
+                   f"arriving later and less honestly. Name the budget, and say in Steps that "
+                   f"reaching it without an answer is a REPORTABLE RESULT, not a failure.")
+
+        cmd = done_command(path) or ""
+        own = f"tasks/{tid}/"
+        if not cmd:
+            continue                          # check_done_is_command owns that failure
+        if not any(own in p.replace("./", "") for p in RE_PATHISH.findall(cmd)):
+            bad += 1
+            f.fail("research-task", f"{path}:1",
+                   f"{tid}'s done-command does not test for anything in {own} — so it is "
+                   f"graded on the thing it was sent to find out, which nobody can check, "
+                   f"rather than on the findings it was sent to write. Point it at the "
+                   f"artefact: `test -s {own}FINDINGS.md`. That is false before the work and "
+                   f"true after, and it stays true when the answer is 'could not establish'.")
+
+    # Only when nothing failed. An earlier version emitted the PASS line beside its
+    # own FAIL lines for the same check, which reads as "fixed" at a glance.
+    if n and not bad:
+        f.ok("research-task",
+             f"{n} research task(s), each timeboxed and graded on the findings it writes")
 
 
 def check_rulings(f: Findings, plan: Path, tasks: dict, cfg: dict):
@@ -1304,6 +1471,170 @@ def check_rulings(f: Findings, plan: Path, tasks: dict, cfg: dict):
                         f"rostered, wrote none of the work, and halts when unreachable")
 
 
+# Smokin's loader is the AUTHORITY on this file. These are copies of its limits,
+# and copies drift — the standard failure is two validators with similar names
+# where the authoring one permits what the runtime one refuses, discovered in
+# production. `tests/test-config-contract.sh` is the assertion that they have not
+# drifted: it feeds the same fixtures to both and requires both to refuse. Change
+# a number here and that test fails until Smokin agrees.
+INVARIANT_KEYS = {"name", "run", "equals", "matches", "because", "budget_s"}
+MAX_INVARIANTS = 32
+AGENT_BINARIES = {"claude", "codex", "codewhale", "opencode", "aider", "herdr",
+                  "gemini", "smokin", "smokin-run", "smokin-emit"}
+
+
+def check_invariants(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """
+    If the plan opts into Smokin's plan-level invariants, its `_INVARIANTS.toml`
+    declares the readings that must not move while the plan runs.
+
+    SCOPE, and the boundary matters — the same boundary check_rulings draws.
+    Smokin's loader owns evaluation semantics: when a reading is taken, how a
+    baseline is compared, what halts. This checks only what a PLAN validator can
+    settle without running anything, and it is deliberately limited to the
+    defects that make the layer LOAD-FAIL — because Smokin refuses to tick a plan
+    whose invariant file is broken, and finding that out at tick 1 means the
+    author already handed the plan over.
+
+    One check here is NOT a copy of Smokin's, and it is the reason this function
+    earns its place: an invariant whose command is a task's own done-command.
+    That reads as diligence and is the exact conceptual error the feature exists
+    to prevent. A done-command answers "did this task achieve its thing"; an
+    invariant answers "what did this task break on the way". A done-command
+    promoted to an invariant is FALSE at baseline (the work has not happened
+    yet), so it either refuses the capture or bakes the unfinished state in as
+    normal — and the blast radius stays unmeasured, behind a file that looks like
+    it is measuring it. Smokin cannot see this: at run time it has no view of
+    which readings were copied out of which contract.
+    """
+    cfgf = plan / "_INVARIANTS.toml"
+    if not cfgf.is_file():
+        return                                    # opt-in by file; absence is not a defect
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        f.fail("invariants", f"{cfgf}:1",
+               "this plan declares _INVARIANTS.toml but python is older than 3.11, so nothing "
+               "here can read it. Smokin will refuse to tick rather than run unguarded.")
+        return
+    try:
+        raw = tomllib.loads(cfgf.read_text(errors="replace"))
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        f.fail("invariants", f"{cfgf}:1",
+               f"_INVARIANTS.toml does not parse ({e}). Smokin halts the plan rather than "
+               f"running half an invariant set, so this stops the plan at tick 1.")
+        return
+
+    declared = raw.get("invariant")
+    if not isinstance(declared, list) or not declared:
+        f.fail("invariants", f"{cfgf}:1",
+               "_INVARIANTS.toml exists and declares no [[invariant]]. Smokin treats that as a "
+               "load error and halts. Either declare a reading or delete the file.")
+        return
+    if len(declared) > MAX_INVARIANTS:
+        f.fail("invariants", f"{cfgf}:1",
+               f"{len(declared)} invariants declared, ceiling is {MAX_INVARIANTS} — every one "
+               f"of them re-runs at every tick boundary.")
+        return
+
+    # The done-commands, normalised, so an invariant that is really a completion
+    # check can be named against the task it was copied from.
+    done = {}
+    for tid, path in tasks.items():
+        c = (done_command(path) or "").strip()
+        if c:
+            done[" ".join(c.split())] = tid
+
+    bad, seen = 0, set()
+    for i, d in enumerate(declared):
+        tag = f"invariant[{i}]"
+        if not isinstance(d, dict):
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1", f"{tag} is not a table")
+            continue
+        name = str(d.get("name") or "").strip()
+        if not name:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag} has no name. The name is a key in the baseline and a heading in the "
+                   f"halt message; without it nobody can tell which reading moved.")
+            continue
+        tag = f"invariant {name!r}"
+        if name in seen:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag} is declared twice — an invariant is one reading or it is none.")
+            continue
+        seen.add(name)
+
+        unknown = sorted(set(d) - INVARIANT_KEYS)
+        if unknown:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag} has unknown key(s): {', '.join(unknown)}. Known: "
+                   f"{', '.join(sorted(INVARIANT_KEYS))}. Smokin refuses the whole file.")
+            continue
+
+        cmd = str(d.get("run") or "").strip()
+        if not cmd:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag} has no run — an invariant with no command measures nothing.")
+            continue
+        try:
+            tokens = shlex.split(cmd)
+        except ValueError as e:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1", f"{tag}: run is not a parseable command ({e}).")
+            continue
+        banned = sorted({Path(t).name for t in tokens} & AGENT_BINARIES)
+        if banned:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag}: run invokes {', '.join(banned)}. It re-runs at every tick boundary, "
+                   f"so it would measure whether the tool is installed, forever.")
+            continue
+
+        if not str(d.get("because") or "").strip():
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag} has no because. The person who reads the halt is not the person who "
+                   f"wrote the command, and a halt they cannot act on is an outage.")
+            continue
+
+        if "equals" in d and "matches" in d:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag} declares both equals and matches — one reading, one test.")
+            continue
+
+        try:
+            budget = int(d.get("budget_s", 30))
+        except (TypeError, ValueError):
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1", f"{tag}: budget_s is not a number.")
+            continue
+        if budget <= 0:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1", f"{tag}: budget_s must be positive, not {budget}.")
+            continue
+
+        # ── the check Smokin cannot make ───────────────────────────────────
+        owner = done.get(" ".join(cmd.split()))
+        if owner:
+            bad += 1
+            f.fail("invariants", f"{cfgf}:1",
+                   f"{tag} runs {owner}'s own done-command. That is a completion check, not an "
+                   f"invariant: it is FALSE at baseline because {owner} has not run yet, so it "
+                   f"either refuses the capture or records the unfinished state as normal. An "
+                   f"invariant is a reading about something this plan is NOT supposed to "
+                   f"change — the neighbours, the other endpoint, the row count.")
+
+    if not bad:
+        f.ok("invariants", f"{len(declared)} plan-level invariant(s) declared; each names a "
+                           f"reading, a reason, and a command that is not a task's own gate")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1359,7 +1690,9 @@ def main():
     check_persona_model(f, plan, tasks, cfg)
     check_size_declared(f, plan, tasks, cfg)
     check_done_self_reference(f, plan, tasks, cfg)
+    check_research_task(f, plan, tasks, cfg)
     check_rulings(f, plan, tasks, cfg)
+    check_invariants(f, plan, tasks, cfg)
     if args.run_gates:
         check_gates_fail_first(f, plan, tasks)
 

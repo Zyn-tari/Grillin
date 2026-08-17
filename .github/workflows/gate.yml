@@ -87,7 +87,40 @@ jobs:
           # A task graded against a baseline inside its own folder passes whether
           # or not the work happened. Found by a first-time user on her own plan.
           probe done-self-ref        done-self-reference "sed -i 's|test -f findings/T2.md|python3 x.py | diff -u tasks/T2/baseline.txt -|' tasks/T2/TASK.md"
+          # Plan-level invariants. Opt-in by file, so each probe writes one. The
+          # last is the one Smokin cannot make: a done-command wearing an
+          # invariant's clothes measures completion, never blast radius.
+          INV='[[invariant]]\nname = \"the neighbour still answers\"\nrun = \"printf 200\"\nbecause = \"this plan touches a shared server\"\n'
+          probe inv-no-entries       invariants          "printf '[policy]\\nbudget_s = 30\\n' > _INVARIANTS.toml"
+          probe inv-unparseable      invariants          "printf '[[invariant]\\nname = ' > _INVARIANTS.toml"
+          probe inv-no-because       invariants          "printf '$INV' | grep -v because > _INVARIANTS.toml"
+          probe inv-agent-binary     invariants          "printf '$INV' | sed 's|printf 200|claude -p check|' > _INVARIANTS.toml"
+          probe inv-unknown-key      invariants          "{ printf '$INV'; printf 'mode = \"strict\"\\n'; } > _INVARIANTS.toml"
+          probe inv-is-done-command  invariants          "printf '$INV' | sed 's|printf 200|test -f findings/T2.md|' > _INVARIANTS.toml"
+          # A research task is graded on the findings it writes, never on what it
+          # found. Five first-time users each invented this task type; none of
+          # them could have been told they had got it wrong.
+          probe research-no-timebox  research-task       "sed -i '0,/^\*\*Status:/s//**Kind:** research\n**Status:/' tasks/T1/TASK.md"
+          probe research-no-artefact research-task       "sed -i '0,/^\*\*Status:/s//**Kind:** research · **Timebox:** 90 minutes\n**Status:/' tasks/T1/TASK.md"
           exit $fail
+
+      - name: a plan of people passes, and the floor is still there
+        run: bash tests/test-human-workers.sh
+
+      - name: the research-first example is a valid plan
+        run: ./scripts/validate-plan.py examples/research-first-plan --run-gates
+
+      - name: the authoring gate and the runtime loader still agree
+        run: |
+          # Grillin re-states limits that live in Smokin's loaders. Copies drift,
+          # and the drift is invisible until a plan that passed the gate halts at
+          # tick 1. This is the assertion. It needs Smokin beside the checkout;
+          # when that is unavailable it fails rather than skipping quietly.
+          if [ -d "${SMOKIN_HOME:-$HOME/smokin}" ]; then
+            python3 tests/test-config-contract.py
+          else
+            echo "::warning::smokin not present — the cross-tool assertion did not run"
+          fi
 
       - name: the one-task example is a valid plan
         run: ./scripts/validate-plan.py examples/one-task-plan --run-gates

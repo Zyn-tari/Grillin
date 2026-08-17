@@ -40,15 +40,40 @@ a server migration can get identical answers.
 
 | | Question | Yes | No |
 |---|---|---|---|
-| **1** | Does the thing already exist in some form you can inspect? | Step 2 checks every claim against **it**. | Step 2 checks your sources against **each other** — say out loud that there is nothing live to check against. |
+| **1** | Does the thing already exist in some form you can inspect? | Step 2 checks every claim against **it**. | Step 2 checks your sources against **each other** — say out loud that there is nothing live to check against. **If it exists but you cannot reach it, that is a third answer:** see below. |
 | **2** | Will more than one worker act at the same time? | Step 5 matters. Ownership is real. | Skip step 5. Still give every task a folder, owner, status and done-command — that is for *resuming*, not coordinating, and you will forget too. |
-| **3** | Are the workers AI agents? | The `templates/` folder is for you. | Ignore `templates/` entirely. Everything else still works; a person reads the plan. |
+| **3** | Are the workers AI agents? | The `templates/` folder is for you. | Ignore `templates/` entirely, and write **`**Workers:** human`** at the top of `PLAN.md` so the gate stops asking each task for a model and an effort. A person has neither. Everything else applies unchanged, and their contracts freeze on delivery instead. |
 | **4** | Does "done" produce something that runs or deploys? | Mind the order: build → promote → restart → check. Gate the new thing, not the old one. | No ordering trap. **"Done" is still a command** — `test -f`, a `grep`, a count. Not executable ≠ not checkable. |
 | **5** | Is any step hard to undo? | Have someone try to break the plan before you run it, and stop-and-ask where a human must decide. | One review is enough. |
 
 **Write the five answers at the top of your plan.** Anyone who thinks you scoped it wrong
 argues with that list — and it is the difference between a step you *decided* to skip and one
 you forgot.
+
+### When the thing exists and you cannot reach it
+
+Question 1 has a third answer, and it is the common one for anybody planning work they will
+not personally do: the system is real, somebody can inspect it, and **you** cannot — no
+access, no credentials, not your machine, or it does not exist *yet* but will before the work
+starts. This is not the same as "there is nothing live to check against". The facts exist.
+You just do not have them.
+
+**Do not plan around the hole, and do not fill it with a guess. Make the first task go and
+get them.** A task with `**Kind:** research`, a timebox, and a done-command that tests for
+its own `FINDINGS.md` — the contract is in [`templates/TASK.md.template`](templates/TASK.md.template),
+and [`examples/research-first-plan`](examples/research-first-plan) is the whole shape in three
+tasks. Everything downstream of it stays honestly unscoped until it reports; a task whose
+content you cannot write yet is a task you should not be writing yet.
+
+The same move covers the phases that have nothing to work on. Phase 1 counts what is there and
+phase 9 verifies the environment; when you cannot see either, they do not get skipped and they
+do not get faked — **they become that first task's steps**, and you write down that this is
+what you did.
+
+> **Where this came from.** Five people were each given a different job and asked to plan it
+> with Grillin, having never seen it. Every one of them hit this, every one of them invented
+> the research-task answer independently, and every one of them said the method never told
+> them it was allowed. It is allowed. It is now the recommended move.
 
 ---
 

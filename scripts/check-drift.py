@@ -101,6 +101,24 @@ def main() -> int:
     except ValueError:
         pass                                   # shape differs; count check is best-effort
 
+    # ── 3b · ...and the markdown table, which is the one that actually drifted ──
+    # Check 3 compares SCALING.json against index.html and stops. The incident in
+    # this file's own docstring is anti-patterns that reached those two and never
+    # GRILLING-THE-PLAN.md — the surface the check did not read. Found by an
+    # adversarial reader, not by this script, which is the point.
+    # The section is last in the file today, so the terminator must also accept EOF —
+    # anchoring it to '---' alone made this check fail closed on the real file.
+    m = re.search(r"^## Anti-patterns\s*$(.*?)(?=^---\s*$|^## |\Z)", prose, re.M | re.S)
+    if m is None:
+        bad.append("GRILLING-THE-PLAN.md has no '## Anti-patterns' section to count")
+    else:
+        # Data rows only: a table row starts with '| ' and the separator does not.
+        prose_rows = [ln for ln in m.group(1).splitlines()
+                      if ln.startswith("| ") and not ln.startswith("| Don't")]
+        if len(prose_rows) != n_anti:
+            bad.append(f"GRILLING-THE-PLAN.md lists {len(prose_rows)} anti-patterns, "
+                       f"SCALING.json has {n_anti}")
+
     # ── 4 · the check list the validator actually reports ──────────────────
     v = (ROOT / "scripts" / "validate-plan.py").read_text()
     declared = set(spec.get("gateChecks", []))

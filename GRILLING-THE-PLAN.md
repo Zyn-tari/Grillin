@@ -550,3 +550,5 @@ They are the cheapest phases and they catch the most expensive errors.
 | Treat an agent's `unknown` state as done | unknown means unclassified, not finished |
 | Turn a review finding into a stop-gate | fixing specified defects is execution |
 | Ship a plan with no entry point | nobody can start it |
+| Close a symptom on a defect you never controlled for | the missing vendor file really was a 404, and blocking it left the chart still redrawing |
+| Send a research task out without a timebox | research with no exit condition is not finished, it is abandoned, and later |
