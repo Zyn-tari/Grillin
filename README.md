@@ -174,4 +174,17 @@ The rest — [`TASK.md`](templates/TASK.md.template), [`_RULES.md`](templates/_R
 
 ## Licence
 
-[MIT](LICENSE).
+**The method is free. The tools are free for noncommercial use.**
+
+| | Licence | What it means |
+|---|---|---|
+| **The method** — every `.md`, the examples, [`SCALING.json`](SCALING.json), the templates | [CC BY 4.0](LICENSE-DOCS) | Use it anywhere, including commercially and inside a product. Change it. The one condition is **attribution**. |
+| **The tools** — [`scripts/`](scripts/), the hooks, the installers, the tests | [PolyForm Noncommercial 1.0.0](LICENSE) | Free for personal, academic, research and non-profit use. **Commercial use needs a licence** — open an issue. |
+
+The rule where a file isn't listed: **if it executes, it's PolyForm. If you read it, it's CC BY.**
+
+The split is deliberate. The reasoning is the valuable part and reasoning doesn't stay put —
+people who had never read these documents re-invented pieces of them unprompted, which is the
+point rather than a leak. A method that only works where it's installed is not a method. So the
+method is free and the condition is credit. The tools are the part someone could ship inside a
+product, and that's a conversation worth having first.
