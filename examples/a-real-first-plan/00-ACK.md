@@ -46,7 +46,7 @@ That is a legitimate and even interesting scope — but a stranger has to learn 
 not from bouncing off `_HERDR.md.template`. Task **T4** decides; **T2** states it up front.
 
 **FLAG 3 — the case study publishes a third party's system.**
-`CASE-STUDY.md` describes a live web app web app: ~24 routed pages, 72 API routes, five
+`CASE-STUDY.md` describes a live web app: ~24 routed pages, 72 API routes, five
 prior rounds of defect work, ~30 endpoints in a spec that were never built, three documents
 disagreeing about a shared configuration constant, a deploy script that was root-owned and unreadable. This repo is
 currently private. Making it public publishes that. I have no way to know whether that is cleared.

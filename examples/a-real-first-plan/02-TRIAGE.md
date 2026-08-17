@@ -33,7 +33,7 @@ Product/framing semantics. I do not decide these. All four are for the repo auth
 | **Q1** | **Is Grillin' software-only?** Yes → one sentence in the README and the job is small. No → a non-software mode has to be designed, and this plan is the wrong size. | 7 of 11 phases assume code; the README claims none of that. Only the author knows which was intended. | T4 → T2, T5 |
 | **Q2** | **Is the agent fleet mandatory, recommended, or optional?** 6 of 7 templates need one. A solo human planner can use the eleven phases and one template. | Changes what "a stranger can follow it" even means. | T4 → T2 |
 | **Q3** | **At XS, which parts of phase 10 survive?** Phase 10 is on; its "status surface" output is explicitly off. The other four are unstated. | C6 — unresolvable from the text. | T3 |
-| **Q4** | **May the pilot's project details be published?** `CASE-STUDY.md` describes a live web app app, its route counts, its unbuilt endpoints, a shared-constant disagreement, an unreadable root-owned deploy script. Public repo publishes all of it. | Third-party disclosure. Not mine to clear. | **T8 — hard block on publishing** |
+| **Q4** | **May the pilot's project details be published?** `CASE-STUDY.md` describes a live web app, its route counts, its unbuilt endpoints, a constant disagreement, an unreadable root-owned deploy script. Public repo publishes all of it. | Third-party disclosure. Not mine to clear. | **T8 — hard block on publishing** |
 
 ## C — real, out of scope, recorded not scheduled
 
