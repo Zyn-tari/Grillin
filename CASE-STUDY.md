@@ -3,13 +3,16 @@
 Reconstructed from the session that produced it, in order. Not idealised: several steps are
 recorded because they went **wrong** and the correction is the lesson.
 
-The project: **the product** — a live web app being redesigned and rebranded, ~24 routed pages,
-72 API routes, five prior rounds of defect work behind it.
+The project: a live web app being redesigned and rebranded, ~24 routed pages, 72 API routes,
+five prior rounds of defect work behind it.
 
-> **What is deliberately not here.** The product's domain, its business rules and the specifics
-> of what was found broken. The argument this document makes rests on counts and failure shapes,
-> not on the industry it happened in — and a defect map of a running product is not the author's
-> to publish, even when the name is.
+> **The product is not named, and that is the trade.** What follows includes what the grilling
+> actually found broken — unbuilt endpoints, documents disagreeing with the running config, a
+> deploy script nobody could read. That detail is the evidence; without it this is a list of
+> assertions. But a named product plus a list of its weaknesses is a different document from a
+> method's case study, and it is not the author's to publish. So the findings stay and the
+> identity goes. If you want to know whether the numbers are real, the check available to you is
+> the same one the method recommends: read the reasoning and see whether it holds.
 
 ---
 
