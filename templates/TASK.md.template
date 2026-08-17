@@ -15,6 +15,45 @@ it is the progress record, and it is the only one that survives a lost conversat
 **Blocked by:** <ids> · **Blocks:** <ids>
 **Mandatory downstream:** <adversarial passes — TWO, the second with fresh context, on money/authz? integrator?>
 
+<!-- RESEARCH TASKS ONLY — delete both lines otherwise. Add them when the task's job is to
+     find something out rather than to change something: the facts the plan needs do not
+     exist yet, the system cannot be inspected from where you are, or the request names a
+     symptom nobody has measured.
+
+     `Kind: research` turns on check_research_task, which requires the Timebox and requires
+     the done-command to test for this task's own findings file. That is the whole point:
+     a research task is graded on the findings it WRITES, never on what it found. "I
+     understand it now" is not checkable by anyone, and a task graded on it is graded on
+     nothing.
+
+     THE TIMEBOX IS NOT A TARGET, IT IS AN EXIT. Research without one does not finish; it
+     gets abandoned, which is the same outcome arriving later and with less written down.
+     Say in Steps that hitting the timebox without an answer is a REPORTABLE RESULT — the
+     finding is then "could not establish X; here is what it would take", and that finding
+     is worth as much as the answer for planning the next task.
+
+     ONE QUESTION PER TASK. Two questions is two tasks; a research task with a list of
+     things to look into is how a plan acquires a member that never reports.
+
+     AND DO NOT SHIP THE SPIKE. Whatever this task builds to answer the question is
+     evidence, not the implementation — put that in Do NOT explicitly, because the
+     throwaway that answered the question is the most tempting thing in the repository.
+
+**Kind:** research · **Timebox:** <90 minutes | 1 day — and say what happens when it runs out>
+-->
+
+<!-- Done means, for a research task — the shape the gate requires:
+
+## Done means
+```
+test -s tasks/<ID>/FINDINGS.md
+```
+     FINDINGS.md answers, in this order: the one question; what was run, verbatim, with its
+     raw output; the answer or the words "could not establish"; and what the next task should
+     therefore do. Facts land as CONFIRMED only where an invocation is quoted — everything
+     else is SUSPECTED, and the plan carries it as SUSPECTED until something exercises it. -->
+
+
 <!-- READER — only on the two reading roles. See OPERATING-THE-PLAN.md §7.
 **Reader:** adversary  → judges whether the RESULT is true. Its Owner must appear nowhere
                               else in the plan; the gate fails the plan if it does. It reads the
@@ -96,6 +135,73 @@ same rule as the work itself, one level down.
 
 <Evidence another person or agent can check. Captured output, a diff, a status code, a count —
 never "it works".>
+
+## If it fails
+
+<!-- OPTIONAL — and frozen with the rest of the contract when present, because it decides
+     "fix it" vs "stop and report" and so grades the work exactly as "Done means" does.
+     `CONTRACT_SECTIONS` in validate-plan.py includes it for that reason.
+
+     WHY IT EXISTS. "Done means" says what right looks like. Nothing else in this file has ever
+     said what WRONG looks like, or how to tell which wrong. A failed done-command hands the
+     worker one bit — pass/fail — and the worker supplies the second bit by guessing.
+
+     The shape comes from outside this method. A designer with no access to Grillin or Smokin
+     wrote a bug report for a chart that would not move. Every hypothesis in it was wrong. It
+     was still the most useful document in that repair, because of one paragraph:
+
+         run document.querySelector('svg[...] path').getAttribute('d').
+         If it is empty, calc() is never completing.
+         If it has a value but never changes when you drag a slider, the event handlers are
+         not firing.
+
+     One command, two readings, two different bugs, two different fixes. Note what carried it:
+     not the diagnosis — the diagnosis was wrong — but that each candidate was made falsifiable
+     in one command. So do NOT write causes into this section. Write observations and what each
+     reading means. A wrong cause here costs nothing; a wrong observation costs everything.
+
+     OMIT THIS SECTION ENTIRELY unless failure on this task is ambiguous — unless the same
+     failed done-command could mean two different things. On a task whose done-command is
+     `test -f dist/app.css` there is exactly one reading, and a table here is padding that
+     makes the contract longer and less read. Earned when: the done-command runs an instrument
+     someone built for this plan (OPERATING-THE-PLAN.md §5); when the artefact under test is
+     deployed rather than local, so "the file is wrong" and "the deploy is stale" produce
+     identical output; when a coexisting defect is visible in the same log as the symptom.
+
+     Each row must clear three bars, or delete it:
+       1. Column 1 is a command and its literal output, not a description. "the chart looks
+          broken" is not an observation.
+       2. The readings lead to DIFFERENT next actions. Two readings that both end in "fix it"
+          are one reading with extra words.
+       3. At least one row's Next column IS stop-and-report. The reading a worker under time
+          pressure never reaches alone is "the contract is wrong" — twice on the reference
+          deploy an instruction named something absent from the artefact that actually shipped
+          (`index.php` for a file deployed as `index.html`; `data-r="headcta"`, which was in no
+          version of the file). Each cost a round trip because the only available move looked
+          like "make the command pass". See OPERATING-THE-PLAN.md §10.
+
+     NOT ENFORCED, and it cannot be: no gate can tell an ambiguous done-command from an
+     unambiguous one. Per OPERATING-THE-PLAN.md §11 that makes it a preference, and it is
+     listed there as one. -->
+
+<Omit this whole section unless the same failure has two readings. Rows are (observation →
+meaning → next); the observation is a command and its output.>
+
+| You observe | It means | Next |
+|---|---|---|
+| `grep -c 'data-r="headcta"' <deployed file>` → `0` **and** `grep -c 'data-r=' <deployed file>` → `0` | The contract names an identifier scheme that is not in the artefact that shipped. The step was never performable as written. | `QUESTIONS.md` and stop. Do **not** add the attribute to make the command pass — that is inventing the contract you were meant to satisfy. |
+| First grep → `0`, second → `31` | The scheme exists; this one hook is missing. Ordinary undone work. | Do the step. |
+| `python3 <plan-local instrument> fixtures/<known-answer>` → the wrong known answer | The ruler is broken, not the thing measured. Every number it has produced is void, including any already transcribed into `FINDINGS.md`. (§5: a palette script shattered one gradient into 24 near-blacks and reported *no accent detectable* at 1.05:1. Every individual number was true. The conclusion was worthless.) | Stop. `QUESTIONS.md`. Do not fix the artefact — you have no measurement of it yet. |
+| Same fixture → the correct known answer, real target still out of range | The measurement is real. | Fix the artefact. |
+
+**A coexisting defect is not a cause until you block it and the symptom follows.** On the
+reference deploy a real 404 — a missing vendored file — was asserted as the cause of a chart that
+would not redraw. Blocking that file on an otherwise-working build did not reproduce the symptom,
+which disproved it in one test. Fixing the 404 was still correct on its own merits; it was simply
+not this bug. When two candidates appear in the same log, the row is a **control test** — *remove
+X, does the symptom appear* — not an observation, and it belongs here for the same reason as §5's
+positive control: without it, an empty result and a broken query are the same output.
+See OPERATING-THE-PLAN.md §9.
 
 ## Do NOT
 

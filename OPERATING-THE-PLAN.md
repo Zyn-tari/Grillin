@@ -5,7 +5,13 @@
 and which the method had nothing to say about until a full run made the gap impossible to miss.
 
 > **Where this came from.** One job, run end to end, with two retrospectives written afterwards.
-> Every rule below traces to a defect that run actually produced. Nothing here is anticipated.
+> Every rule in §§1–8 traces to a defect that run actually produced. Nothing there is anticipated.
+>
+> **§§9 and §10 come from a second, much smaller job** — one landing page onto a production VPS,
+> six hand-written briefs, 665 lines, no plan directory, the runner never invoked — and each says
+> so where it sits. They are placed *after* the measurement in §8 rather than among the rules they
+> resemble, because that measurement counts the first run only. A rule from a different job does
+> not get to borrow another job's numbers.
 
 ---
 
@@ -205,7 +211,154 @@ this round does nothing except refuse to pass a plan that has nobody staffed to 
 
 ---
 
-## 9 · What is actually enforced
+## 9 · A defect is not a cause until you remove it
+
+> **Second job.** This and §10 trace to the landing-page deploy named in the preamble, not to the
+> reference run measured in §8.
+
+> **The rule.** A defect you found is not the **cause** of a symptom until removing it removes the
+> symptom, or restoring it brings the symptom back.
+
+**Two claims, two burdens.** *"X is a defect"* needs only evidence that X exists — a 404 in the
+network log, a missing file, a wrong identifier. *"X causes Y"* needs a control test: take X away
+and watch Y, or put X back and watch Y. They are different claims with different burdens, and
+conflating them is the whole of the error. Existence is cheap and it is not evidence of causation.
+
+**Fixing X stays fine, and is often right.** Vendor the missing file, correct the identifier, close
+the 404 — those repairs stand on their own merits and need no causal claim at all. What is
+forbidden is **closing the symptom** on the strength of them. Fix the defect; leave the symptom
+open until a control test attaches it to something.
+
+**This applies to every defect→symptom attribution, not only the first one found.** The first
+plausible defect is simply where people stop looking — it arrives while the symptom is still
+unexplained, so it inherits the explanation by default. The fifth gets the same burden, and a
+defect found *after* the cause is believed known is no safer: it is the one that gets quietly
+folded into a closed bug.
+
+**The incident.** On a deployed landing page a chart failed to redraw. A vendored JS file the page
+referenced was genuinely missing — a real 404, confirmed in the network log — and was asserted as
+the cause. The control test was one line of work: block the file at the network layer and see
+whether the symptom follows. It did not. The chart still redrew, and the browser had never
+requested the file in the failing run either. The real cause was elsewhere entirely — a language
+switch froze the SVG subtree. Vendoring the missing file was correct. Closing the bug on it would
+have shipped the freeze.
+
+**The control test is execution, not inspection** — principle 7, at this level. Reading the code
+around X and finding it plausible is not a control. The test is a run of the system with X's state
+changed and the symptom observed, and both observations get recorded: what you changed, and what
+the symptom did.
+
+**When the control test is not available.** Some defects cannot be restored (the data is gone) or
+cannot be removed safely (production, and no reproduction). The rule does not become a licence to
+close on a hunch, and it does not block the ledger forever either: write the attribution down as
+**unproven**, name the control test you would have run and why you could not run it, and close the
+*defect*. The symptom stays open, or is closed as *not reproducible* — which is a different
+statement from *fixed*, and the next person needs to be able to tell them apart.
+
+> **You have finished this step when** the amendment that closes the symptom names the control
+> test, the state of the defect on each side of it, and what the symptom did on each side. A
+> closure that names only the defect is not finished; it is a hypothesis with a resolved status.
+
+---
+
+## 10 · Confirm the artefact before the first edit
+
+Phase 3 already grills the source documents against the running system, and the precedence ladder
+already puts **the running system above every document**. Both fire at planning time, once, against
+the sources that existed then. **This is the same rule at execution time**, and it belongs here
+rather than in the phases because the documents that break at execution time are the ones written
+*after* the plan: the brief handed to a worker, the change-set a designer sends on Thursday, the
+README inside a vendored bundle. By the ladder those are rung 5. They are read literally by
+whoever is holding them.
+
+**The rule.** Before executing an instruction set that names files, identifiers or selectors,
+confirm each named thing exists in the artefact you actually have. Not the repo the author was
+looking at. The deployed one.
+
+`templates/TASK.md.template` already covers the moment you *notice* — "an owned path that does not
+exist, a 'done' that cannot be evidenced: record it in `QUESTIONS.md` and stop. Do not quietly do
+the adjacent thing." This is narrower and earlier: **before the first edit, and with no plan
+directory in the picture**, which is the case that template never reaches.
+
+### What it caught, in one small deploy
+
+| Instruction, and its author | Named | The artefact actually had |
+|---|---|---|
+| A vendored bundle's README: edit this file to set the language | `index.php` | `index.html` served; no PHP ever executed — the edit would have landed in a file nobody reads |
+| A designer's change instructions, twice, throughout | `index.php` | `index.html` |
+| The same change instructions, locating an element | `data-r="headcta"` | the attribute appeared nowhere in the file |
+
+**Three misses, two authors, one deploy** — and **every other identifier in that designer's
+change-set was correct**, which is the finding. Miss rate does not correlate with the quality of
+the rest of the document, so you cannot spot the bad line by reading around it. You resolve every
+name, or you resolve none.
+
+The cost is one grep per identifier. The bundle README cost about four seconds to disprove.
+
+### Three commands, from a brief with no plan directory behind it
+
+Written this way because that is how the reference deploy actually ran. A rule that only fires
+inside a tool nobody installed catches nothing.
+
+```sh
+# 1 · every path the instructions name — does it exist here?
+grep -ohE '[A-Za-z0-9_./-]+\.(html|php|js|css|json|md|toml|ya?ml)' BRIEF.md | sort -u |
+  while read -r f; do [ -e "$f" ] || echo "ABSENT  $f"; done
+
+# 2 · every backticked identifier or selector — does it appear in what you will edit?
+grep -ohE '`[^`]+`' BRIEF.md | tr -d '`' | sort -u |
+  while read -r id; do grep -rqF -- "$id" dist/ || echo "ABSENT  $id"; done
+
+# 3 · the arithmetic invariant — run it before the edit and again after
+grep -c '<a ' dist/index.html
+```
+
+They over-report: a prose word in backticks is not an identifier, and a false ABSENT costs you a
+glance. The output you are reading is the ABSENT lines, and a run with no ABSENT lines is the
+result you wanted, not a run that failed to work.
+
+> **You have finished this step when** every file, identifier and selector named in the instructions
+> has been resolved against the artefact, and the ones that did not resolve are named in writing
+> **before** the first edit — not fixed silently. A silent substitution of `index.html` for
+> `index.php` is a plan change that never got written down; see §3.
+
+### The second technique: find the arithmetic invariant and test it
+
+Existence checks are one grep per name and tell you nothing about whether the author's *model* of
+the artefact is right. The cheap corroboration is arithmetic.
+
+That designer's change-set implied a number. The file held **11** anchor elements; the instructions
+removed **7**; the spec said **4** should remain. `11 − 7 = 4` agreed. One subtraction corroborated
+the entire map of the file without reading it line by line — and, better, made the result
+**falsifiable afterwards**: count the anchors when you are done, get 4, or the edit is wrong.
+
+> **You have finished this step when** you have written down either the invariant — the count, where
+> it came from, and what it should be afterwards — or one line saying the instructions imply none.
+> Without that line, a reader who looked and found nothing is indistinguishable from one who never
+> looked, and this is the only technique in the section whose omission leaves no trace.
+
+It is §5's positive control aimed at the instruction set instead of at the instrument, and it is the
+reason a diff whose line count does not match the spec is a signal and not a curiosity.
+
+### The limit, stated plainly
+
+**This catches identifiers that are absent. It cannot catch an identifier that is present and means
+something different.** Had that site contained an `index.php` that simply was not the file being
+served, the preflight would have passed and the edit would still have gone nowhere. A selector
+matching three nodes where the author meant one passes on existence and fails only the arithmetic; a
+selector matching exactly one wrong node passes both. Presence answers *is this name in the
+artefact* — never *is this the thing the author meant*. That second question is the reader's, §7.
+
+The same deploy produced the mirror failure, and §9 is that failure. **Present is not the same as
+responsible, and absent is not the same as to blame.** Preflight buys you the existence column of
+the table and nothing else.
+
+**ADVISORY** — and it will stay advisory. The identifiers live in prose the gate never reads, in
+documents that frequently do not exist when the plan is authored.
+
+---
+
+## 11 · What is actually enforced
 
 Honest accounting. A rule a machine cannot check is a preference.
 
@@ -223,10 +376,13 @@ Honest accounting. A rule a machine cannot check is a preference.
 | Repairs go through the converge loop | ADVISORY | — |
 | Containment extends to derivatives | ADVISORY | — |
 | Amendments are dated and attributed | ADVISORY | — |
+| A closed symptom cites its control test | ADVISORY | — |
+| Instructions are preflighted against the artefact | ADVISORY | — |
+| A task whose failure has two readings carries `## If it fails` | ADVISORY | — · frozen with the contract when present |
 
 ---
 
-## 10 · What this does not solve
+## 12 · What this does not solve
 
 ~~**Nothing in this repository runs the gate.**~~ **Closed.** It used to be true, and it was the
 largest open item in the method: `validate-plan.py` was documentation with an exit code, so every

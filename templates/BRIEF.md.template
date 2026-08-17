@@ -1,0 +1,382 @@
+<!-- BRIEF.md.template — ONE delegated task, handed to ONE agent, with no plan directory
+     around it. Copy this file, fill the <angle brackets>, delete what does not apply, send it.
+
+     DELETE EVERY COMMENT BLOCK BEFORE SENDING. They are notes to the author, not to the
+     agent. A brief that arrives carrying its own rationale about someone else's VPS is
+     longer, and the parts that matter are harder to find inside it.
+
+     WHERE IT CAME FROM. Six briefs written by hand in one afternoon against a live VPS —
+     BRIEF.md, FOLLOWUP.md, TLS.md, GRAPH.md, TRIM.md, CHART-DIAG.md, 665 lines total. The
+     operator had both Grillin and Smokin installed, produced no plan directory, and never
+     ran Smokin once. That is the fifth consecutive job where the ideas transferred and the
+     tools did not, and the artefacts show why: the job was one delegated task at a time, and
+     what Grillin shipped was a plan directory. The same shape got re-derived from a blank
+     file six times. This file is that shape, written down.
+
+     Its evidence is one afternoon, one operator, one VPS, one job shape. See "What this
+     does not solve" at the foot of the file before you rely on it for anything else. -->
+
+# <Job title — verb first, name the artefact: "Attach the real domain and install the certificate">
+
+<!-- WHEN TO USE THIS FILE, AND WHEN NOT TO. Shipping a brief template alongside a task
+     template creates exactly one new failure mode: writing the wrong one. Settle it here,
+     at the top, before anything else is read. -->
+
+> **This is a BRIEF: one delegated task, no plan around it.** Nothing dispatches it, nothing
+> ticks it, no gate reads it. You hand it to an agent and the agent hands you back a report.
+>
+> | You have | Use | Because |
+> |---|---|---|
+> | One job, one agent, one report, and **you are present while it runs** | **this file** | You are the continuity. There is no plan for this to be a task inside of. |
+> | Work that outlives the conversation, 4+ tasks, dependencies, or more than one worker | [`TASK.md.template`](TASK.md.template) in a plan directory — [`examples/one-task-plan`](../examples/one-task-plan) is the smallest one | Folder, owner, status and a re-runnable done-command are what let a **fresh context** resume from disk. A brief has none of them. |
+> | A brief that grew a second and third agent while you were writing it | Stop. Plan it. | The moment two agents can touch the same file, "what you own" stops being a paragraph and becomes a gate. |
+>
+> **The honest objection, and the answer.** [`QUICKSTART.md`](../QUICKSTART.md) §0b question 2
+> says to give every task a folder, owner, status and done-command even with one worker —
+> *"that is for resuming, not coordinating, and you will forget too."* That is right, and a
+> brief does not repeal it. A brief's resumption artefact is **the report**, which is why
+> section 9 is not optional and why every follow-up brief appends to it instead of rewriting
+> it. If you would not write the report, you do not have a brief — you have a plan directory
+> with the bookkeeping missing, and you should go and get the directory.
+>
+> **A brief has no `Blocked by`, no `Wave`, no worktree, no `Status:` line to update.** If you
+> find yourself adding them, you are writing a `TASK.md` in the wrong place.
+
+---
+
+<!-- 1 · THE JOB. One paragraph, then one sentence naming the boundary of "done". The six real
+     briefs all led with consequence, not activity: "You are deploying one landing page onto a
+     production server that already hosts live sites. The deploy itself is small. The risk is
+     entirely in what else is on that box." That sentence is what makes an agent careful, and
+     it is two lines long.
+
+     Say what done is NOT. The first brief said "Ready for a URL — not connected to one",
+     because "deploy the site" without that sentence licenses an agent to go find a domain. -->
+
+## The job
+
+<One paragraph. What is being changed, what it is being changed on, and where the risk actually
+lives — which is usually not in the change itself.>
+
+**<What "done" stops short of.>** <One or two sentences. The job ends at "<the exact observable
+state>", plus <what you hand the human instead of doing it for them>.>
+
+---
+
+<!-- 2 · FACTS ALREADY ESTABLISHED. Without it the agent spends its first twenty tool calls
+     rediscovering which web server is running, whether PHP exists, and what else is on the
+     box — every one of which you already know.
+
+     TWO RULES, both paid for:
+
+     (a) A row goes in this table only if you ran a command, and the row carries THE COMMAND,
+         not the assurance. "Both names already resolve to 203.0.113.10; I checked" is a
+         claim; `dig +short newsite.example.com` → `203.0.113.10` is a fact. This is the same
+         bar check_confirmed_is_exercised enforces inside a plan, where CONFIRMED must quote
+         the invocation that produced it and not the subject it is about. Nothing enforces it
+         here. Anything you believe but did not run belongs in section 3, for the agent to
+         check — not in this table.
+
+     (b) Rows that name a FILE or an IDENTIFIER get checked against the artefact actually
+         deployed, not the bundle, the spec, or whoever wrote the request. This went wrong
+         three times in one afternoon, from two different authors: instructions said
+         `index.php` when the served file was `index.html` (twice), and named
+         `data-r="headcta"` on a button carrying no such attribute. Grep the deployed file
+         before you write the row. See OPERATING-THE-PLAN.md §10. -->
+
+## Facts already established — do not re-derive these
+
+| | How it was established |
+|---|---|
+| <Host / target> — `<address>` | `<the command you ran>` → `<its output>` |
+| <The stack fact that would otherwise cost 20 tool calls> — **<value>** | `<command>` → `<output>`. <The corollary the agent should draw: "apache2 is inactive — the zip's `.htaccess` is irrelevant here"> |
+| **<The fact that drives the decision in section 4>** — **<value>** | `<command>` → `<output>`. See "<section 4 heading>" below |
+| <What else is live on this target> | `<command>` → `<names, paths, owners>` |
+| <The thing they do NOT need to change> | `<command>` → `<output>`. **You do not need to touch this.** |
+| <Capacity / size / count, as a number> | `<command>` → `<54 G free. Zip is 15 MB.>` |
+| <Convention already in force> | `<command>` → `<apps live at /opt/<name>/, served from a dist/ subdir>` |
+
+<!-- Add a "what is on this machine, not the target" block when the two are different. Two of
+     the six briefs lost time to the agent looking for a file on the wrong host. -->
+
+**On this machine, not the <target>:** `<path>` — <what it contains, in one line, with counts:
+"23 files under a top-level `dist/`">.
+
+---
+
+<!-- 3 · RESEARCH BEFORE YOU ACT. Ordered, and with an explicit NOT-list. The not-list is the
+     part people leave out. The real brief said: "You may read those four files in full. Do not
+     read the asset files, the vendored React, or the MP4 — you do not need their contents to
+     host them, and pulling 15 MB through your context helps nobody." A 14 MB mp4 read into
+     context is a brief that fails at step 4 for reasons that look like model error.
+
+     Order matters: put the file that decides section 4 LAST in the read list and name it as
+     the decision point, so the agent arrives at the gate having read what informs it. -->
+
+## Research before you act — this is a requirement, not advice
+
+<One line on provenance: who produced the artefact and why you should not assume its shape.>
+
+1. **Read `<file>`** — <what it may tell you that you would otherwise invent>.
+2. **Read `<file>`** — <it ships a config/spec for this exact thing. Adapt it; do not invent one
+   from scratch and then discover it contradicts the shipped one.>
+3. **Read `<file>`. This is the decision point.** Determine whether <the thing section 4 hinges
+   on> is load-bearing or a shim.
+
+**Read those <N> files in full. Do NOT read <the assets / the vendored library / the <size> media
+file / the lockfile>** — <one clause on why their contents are not needed to do the job>.
+
+---
+
+<!-- 4 · THE DECISION POINT. This is the section that keeps a small instruction from
+     authorising a large irreversible act.
+
+     The original: the human asked to deploy "a website in PHP" onto a server with no PHP
+     runtime. The brief pre-decided both branches — deploy static if the .php is a shim; if it
+     is genuinely load-bearing, STOP and report. "Installing a language runtime on a production
+     server that runs a live service is not something to do inside an instruction that said
+     'deploy this landing page'. That is the human's call, and it costs them one message."
+
+     Write BOTH branches. A gate with only the stop branch written reads as discouragement; an
+     agent that knows exactly what to do on the good branch will not talk itself onto the bad
+     one. And give the cost of stopping — "one message" — or the agent weighs a stop as
+     failure and proceeds. -->
+
+## <The decision> — STOP here if it goes the wrong way
+
+<One sentence naming the conflict: what was asked, and the fact from section 2 that contradicts
+it.>
+
+- **If <the benign branch>** — <do exactly this>, and **say clearly in your report** that
+  <the thing that did not turn out to be needed> was not needed and none was <installed/changed>.
+- **If <the branch that widens the blast radius>** — **STOP. Do not <the irreversible act>.**
+  Report what <it> is actually used for and what doing it would involve.
+
+<One or two sentences on why this is not the agent's call, naming the production system at risk.
+Then the cost of asking: "That is the human's call, and it costs them one message to say yes.">
+
+---
+
+<!-- 5 · WHAT YOU OWN. Paths, not areas. Same rule as TASK.md: one owner per file, and name
+     explicitly what the agent does NOT own. In a brief there is no _RULES.md to lean on, so
+     the containment sentence must be here in full. The six briefs converged on one sentence
+     and repeated it verbatim in every follow-up. -->
+
+## What you own
+
+```
+<path>/            ← <the project>
+<path>/<subdir>/   ← <the specific thing, and the convention it matches>
+```
+
+**You may READ anywhere. You may WRITE only inside `<path>` and `<the one config file you own>`.**
+<Name the neighbours by path and say they are not yours.> If you find a defect in something you do
+not own, **report it, do not fix it.**
+
+---
+
+<!-- 6 · THE SPECIFIC TRAP. One job, one danger unique to it, spelled out with the mechanism —
+     not "be careful with nginx".
+
+     The original is the model: no `default_server` is declared anywhere on the box, so nginx
+     treats the first server block it loads for a port as the implicit default; sites-enabled
+     loads alphabetically; a file named `newsite` sorts before `zz-app` and would
+     silently become the catch-all for the entire server. Hence: name it `zz-newsite`,
+     never write `default_server`, give it a real `server_name`.
+
+     Mechanism, consequence, then the concrete rules that follow from it. An agent that
+     understands WHY the file is named `zz-` will not rename it in a later brief. One that was
+     only told the name, will. -->
+
+## The <system> trap — read this twice
+
+<The mechanism, in two or three sentences. Why the default behaviour is not what you would
+assume.>
+
+<The consequence, stated as what would silently happen — "would silently become the catch-all for
+the whole server". Silently is the operative word; name it when it applies.>
+
+So:
+
+- <concrete rule 1 — the naming/ordering/flag decision that follows from the mechanism>
+- **never** <the one attribute or flag that reactivates the trap>
+- <concrete rule 3 — the placeholder or scope that keeps it inert>
+
+<!-- Repeat this section per trap if the job has more than one. Do not merge two traps into one
+     paragraph; the agent needs to check them off separately. -->
+
+---
+
+<!-- 7 · DO NOT. Each item with its reason attached where the reason is not obvious. "Do NOT
+     `systemctl restart nginx`. Use `nginx -t` then `systemctl reload nginx` — a reload does
+     not drop the live sites' connections; a restart does." An unexplained prohibition gets
+     reasoned around by a capable agent under pressure; an explained one does not.
+
+     Repeat the section 4 gate here. It is the one an agent forgets forty minutes in. -->
+
+## Do NOT
+
+- Do NOT modify, move or reformat `<the neighbour's config>` or anything it includes.
+- Do NOT touch `<path>`, `<path>`, `<path>`.
+- Do NOT run any `<command>` that changes state. Do NOT touch <the datastore>.
+- Do NOT run `<the tool that is not needed yet>`. <Why there is nothing for it to do yet.>
+- Do NOT `<the destructive form>`. Use `<the safe form>` — <the difference, in one clause>.
+- Do NOT <the section 4 act> without coming back first.
+- Do NOT spawn sub-agents. *(or: sub-agents must run at `<model>` / `<effort>`)*
+
+---
+
+<!-- 8 · PROVE YOU BROKE NOTHING. `TASK.md` has "Done means" — evidence that your work worked.
+     This is the opposite check: evidence that everything you did NOT touch still behaves
+     identically.
+
+     The rule is BEFORE and AFTER with the IDENTICAL command. A reading taken only afterwards
+     proves nothing, because nobody knows what it was before. The original ran a two-host loop
+     before touching any config and the same loop after the reload, and every subsequent brief
+     re-ran it — including the certbot one, where it stopped being a formality, because certbot
+     rewrites nginx config in place.
+
+     The proof-of-your-own-work command must FAIL BEFORE THE WORK IS DONE. A command that
+     passes on an untouched system proves the system, not the change — QUICKSTART's rule for
+     a done-command, and it applies here for the same reason. Run it first and watch it fail;
+     if it passes, it is the wrong command. -->
+
+## Prove you broke nothing — before and after
+
+<The thing at risk> is the thing at risk, so measure it, don't hope.
+
+**Before you change anything**, record:
+
+```bash
+<the exact command, loop or one-liner — the SAME text that appears below>
+```
+
+**After <the change / the reload>**, run the **identical** command and compare. If <any value>
+changed, you broke something — <the revert step>, and report. **Put both readings in your report
+verbatim**, not a summary of them.
+
+Then prove your own work. Run this **before** you start and confirm it fails:
+
+```bash
+<command that establishes your change is live, with an expected value>
+```
+
+<!-- CONTROL TEST — include whenever this brief asserts a cause. -->
+
+**On the cause.** <What this brief believes the cause is.> <Making it go away> is **necessary, not
+sufficient** — it does not prove <the symptom> is gone. <The control test that would falsify it:
+block or remove the suspected cause and confirm the symptom follows.> If you cannot run that test
+here, **say so plainly and report "<fixed X, Y not verified — needs <who> to <do what>>"**. Do not
+report this as fixed on the strength of <a status code / a grep>. See OPERATING-THE-PLAN.md §9.
+
+---
+
+<!-- 9 · THE REPORTING CONTRACT. Numbered, so the agent can check its own report against the
+     list before sending, and so you can tell at a glance which item is missing. This is also
+     the brief's only resumption artefact — see the note at the top of the file.
+
+     Two things the six briefs learned the hard way:
+
+     (a) Name the exact output path AND the exact notification command. A report written to a
+         path nobody reads is not a report.
+
+     (b) Item 5 must be written assuming it will be PASTED WITHOUT BEING READ AROUND. It was:
+         a `sed` command containing `YOURDOMAIN.com` was run literally, placeholder and all,
+         and the vhost went live reading `server_name YOURDOMAIN.com`. Never leave a
+         placeholder in a command you hand to a human. If the real value is not known yet,
+         write the command with the value visibly missing and the words "fill this in" — never
+         a plausible-looking fake. -->
+
+## Reporting
+
+When you are finished — **or blocked, or stopped by <the section 4 decision>** — write
+`<absolute path to the report>` and then <notify>:
+
+```bash
+<the exact notification command>
+```
+
+<Fallback if that address does not resolve.>
+
+The report must contain, plainly:
+
+1. <The section 4 outcome: which branch, and what was consequently NOT done.>
+2. <The exact paths and filenames that now exist, as they actually read on disk.>
+3. **The before/after readings from section 8, verbatim** — both, not the delta.
+4. <Each verification command from this brief, with its raw output.>
+5. **What the human must do next** — <the exact commands, with real values, no placeholders.
+   Assume they will paste it without reading around it.>
+6. <Anything you changed that is not in the list above.>
+7. <What you could NOT establish, and what it would take to establish it.>
+
+**Be accurate over reassuring. If something is half-done, say which half.**
+
+<!-- FOLLOW-UP BRIEFS. Every brief after the first appends rather than rewrites:
+     "Append to REPORT.md under a `## <heading>` heading — do not rewrite what is there."
+     The report is the only continuous record a brief-shaped job has; overwriting it is the
+     brief equivalent of losing the plan directory. Say it explicitly, because "write the
+     report" reads as "write the file" to an agent that did not write the first one.
+
+     And re-state the rails in the follow-up rather than referencing them: "Same rails as
+     before — nothing outside <path>, `nginx -t` then reload, re-run the neighbour loop at the
+     end." Two lines, and it survives a fresh context that never saw brief #1. -->
+
+---
+
+<!-- APPENDIX · DIAGNOSTIC BRIEFS. Delete unless this brief is asking someone to find out why
+     something is broken. It replaces sections 3 and 4; the rest of the file stands.
+
+     Lifted from a designer's bug report that had no access to this method and converged on
+     the same shape independently. Every hypothesis in it was wrong and it was still the most
+     useful document in the repair, because it separated a WIRING MAP from an ORDERED
+     PROCEDURE and gave each observation its meaning in advance. An agent that knows what a
+     reading MEANS before taking it cannot rationalise the reading afterwards. -->
+
+## Appendix — for a diagnostic brief
+
+### How it is wired
+
+<The map. Component → file → element → handler. No instructions in this block; it is reference,
+and mixing it with the procedure is what makes bug reports unusable.>
+
+### Diagnostic procedure — in this order, changing nothing
+
+1. `<command or console expression>` → record the raw value.
+2. `<command>` → record the raw value.
+
+### What each reading means
+
+| Reading | Meaning |
+|---|---|
+| <`d` is empty> | <calc() never completes> |
+| <`d` has a value but never changes> | <the handlers are not firing> |
+| <`__probe` is undefined after the switch> | <the node was REPLACED — stale refs, not handlers> |
+
+**Report the raw values, not your interpretation of them.** <If the test is inconclusive, say so
+— "I could not separate the two causes" is a useful result and a guess is not.>
+
+**The decision point on a diagnostic brief is the stop-gate itself:** report before changing
+anything.
+
+---
+
+<!-- WHAT THIS DOES NOT SOLVE. Keep this block in the template; delete it from the brief you
+     send. It is here so the next person weighing this file knows what it is standing on. -->
+
+## What this does not solve
+
+**A brief has no reader, and that is its largest defect.** Every reading in section 8 is taken,
+compared and reported by the same agent that made the change. `OPERATING-THE-PLAN.md` §4 —
+*a repair is work, and work does not certify itself* — applies here and there is no adversary in
+a brief to satisfy it. The only mitigation this shape offers is that section 8 demands the
+readings **verbatim** in the report, so a human can be the second pair of eyes. That is weaker
+than an independent reader and should not be mistaken for one. If the work is important enough
+that self-certification is not acceptable, it is important enough for a plan directory.
+
+**Nothing here is enforced.** No gate reads a brief. `validate-plan.py` will never see it, there
+is no contract hash, and nothing detects a brief that quietly dropped section 8.
+
+**The evidence is one afternoon.** Six briefs, one operator, one VPS, one job shape — a static
+site onto a server with neighbours. Whether this shape holds for jobs that are not deployments
+is untested. What is measured is narrower and worth stating exactly: the same nine sections were
+re-derived by hand six times in one day.

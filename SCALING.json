@@ -490,6 +490,14 @@
     {
       "dont": "Leave an ambient indicator stale",
       "because": "an indicator that never updates is worse than none, because it is believed"
+    },
+    {
+      "dont": "Close a symptom on a defect you never controlled for",
+      "because": "the missing vendor file really was a 404, and blocking it left the chart still redrawing"
+    },
+    {
+      "dont": "Send a research task out without a timebox",
+      "because": "research with no exit condition is not finished, it is abandoned, and later"
     }
   ],
   "taskContract": {
@@ -836,7 +844,9 @@
     "frozenContract": "A task with a human owner records **Delivered:** <date> · contract sha256:<12 hex> when handed over, covering What you own / Steps / Done means / Do NOT. Changing it afterwards is a retroactively moved goalpost, not a deviation by the human. ENFORCED by check_frozen_human_contracts.",
     "repairScope": "The converge loop in _RULES.md section 5 already says confirm the fix by someone who did not make it. Its scope is any change, including changes to the plan, the rules and the gate. On the reference run the repair pass was the second-most defect-producing activity in the job.",
     "instrument": "Anything producing evidence other work depends on is an instrument. Prove it against a known answer BEFORE the measurements it authorises, and make that proof its gate. Appeared twice in one run: a ground-truth fixture, and a positive control (search for something known to exist, so an empty result means real absence). ENFORCED by check_instrument_fixture.",
-    "derivatives": "Containment is a property of the data, not of the step that fetched it. Whatever covers the raw artefact covers everything transcribed out of it. ADVISORY -- a machine cannot tell a transcribed figure from an original."
+    "derivatives": "Containment is a property of the data, not of the step that fetched it. Whatever covers the raw artefact covers everything transcribed out of it. ADVISORY -- a machine cannot tell a transcribed figure from an original.",
+    "attribution": "A defect you found is not the CAUSE of a symptom until removing it removes the symptom, or restoring it brings it back. 'X is a defect' needs only evidence X exists; 'X causes Y' needs a control test. Applies to every attribution, not the first one found. Fixing X stays fine; closing the SYMPTOM on it does not. Where no control test is possible, write the attribution down as unproven and close the defect, not the symptom. ADVISORY -- a machine can check that a closure mentions a control, not that the control was the right one.",
+    "preflight": "Before executing an instruction set that names files, identifiers or selectors, confirm each named thing exists in the artefact you actually have -- not the repo the author was looking at. Phase 3 and the precedence ladder say this at planning time; this is the same rule at execution time, aimed at documents written after the plan. Second technique: find a count the instructions imply, check it before and after. On one deploy: three misses, two authors, and every other identifier correct. ADVISORY -- the identifiers live in prose the gate never reads."
   },
   "readers": {
     "why": "The only section in the method backed by a number. Two roles, and they are not the same role.",
@@ -900,8 +910,11 @@
     "size-declared",
     "done-self-reference",
     "rulings",
+    "invariants",
+    "research-task",
     "gate-fails-first"
   ],
+  "researchTask": "A task whose job is to find something out, not to change something. Declared **Kind:** research with a **Timebox:**; graded on the FINDINGS file it writes, never on what it found, because 'I understand it now' is not checkable by anyone. Hitting the timebox without an answer is a reportable result -- 'could not establish X, here is what it would take' -- and the next task is planned from that as readily as from an answer. One question per task; a second question is a second task. Whatever it built to answer the question is evidence, not the implementation. Use it when the system is real but this planner cannot reach it, or when the request names a symptom nobody has measured; phase 1's count and phase 9's environment check become its steps rather than being skipped or faked. ENFORCED by check_research_task, which can see the timebox and the done-command and cannot see whether the findings are any good.",
   "gateNotRun": "CLOSED 2026-08-05. Was: nothing in the repository ran the gate. Now three things do — .githooks/pre-commit (skippable only via GRILLIN_SKIP=1, which logs the skip), .github/workflows/gate.yml (not skippable, and it mutation-tests every check so a dead check fails the build), and scripts/install-hooks.sh which sets core.hooksPath because .git/hooks is not versioned. Both calibrate before they gate: known-good must exit 0, known-bad must exit 1.",
   "gateRuns": {
     "preCommit": ".githooks/pre-commit",
