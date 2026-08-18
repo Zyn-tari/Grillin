@@ -15,6 +15,22 @@
 
 ---
 
+## Why it's called that
+
+You grill over high heat, fast, standing right there, and you find out in minutes
+whether the thing holds together. You smoke low and slow for hours, walk away, and
+come back to check the temperature — because the clock lied to you and the meat
+didn't.
+
+That is the whole pair.
+
+**Grillin'** puts your plan over high heat *before* anyone builds anything, and you
+stand there while it burns off whatever was never true. **Smokin'** runs the thing
+for hours without you watching, and when it says it's done you check the temperature
+instead of believing it.
+
+Right. That's the last of the barbecue. Here's what they actually do.
+
 ## What it is
 
 **Grillin turns a vague ask into a plan an agent can actually execute — and then attacks
@@ -36,6 +52,98 @@ Two things ship here:
 
 What comes out is a directory: a `PLAN.md`, and a `tasks/<ID>/TASK.md` per task. Markdown,
 nothing else. No library, no service, no dependency added to whatever you were planning.
+
+## What a plan actually looks like
+
+Two files and a folder. That's the whole artefact.
+
+```
+my-plan/
+├── PLAN.md                 ← the entry point: size, task table, the shaping answers
+└── tasks/
+    ├── _ROSTER.md          ← which persona runs on which model, and why
+    ├── T1/TASK.md          ← one contract per task
+    ├── T2/TASK.md
+    └── T3/TASK.md
+```
+
+**`PLAN.md`** — the door. Anyone starting cold reads this and knows what to pick up:
+
+```markdown
+# Make the log parser fast again
+
+**Size:** XS
+
+| ID | Task | Owner | Blocked by |
+|---|---|---|---|
+| T1 | find out why it is slow — timeboxed | you | — |
+| T2 | fix the ranked cause T1 names | you | T1 |
+| T3 | prove the fix, against T1's numbers | you | T2 |
+```
+
+**`tasks/T1/TASK.md`** — a contract, not a description. The part that matters is
+`## Done means`: **a command someone else can run**, which is false before the work and
+true after.
+
+````markdown
+# T1 — find out why it is slow
+
+**Status:** NOT STARTED
+**Owner:** you
+**Agent:** `implementer` · **Model:** `claude-sonnet-5` · **Effort:** high
+**Blocked by:** — · **Blocks:** T2
+**Kind:** research · **Timebox:** 90 minutes
+
+## What you own
+`tasks/T1/`
+
+## Steps
+1. One question, and it is this one: which operation accounts for most of the
+   wall-clock time, on a run you took yourself?
+2. Take a measurement before you form an opinion. Record the raw numbers.
+3. At 90 minutes, stop and write whatever you have. "Could not establish X"
+   is a reportable result, not a failure.
+
+## Done means
+```
+test -s tasks/T1/FINDINGS.md
+```
+
+## Do NOT
+- Do NOT fix anything. If the cause is obvious and the fix is one line, it is
+  still T2's line.
+- Do NOT ship whatever you built to answer the question. That is evidence,
+  not the deliverable.
+````
+
+Then you run the gate on it:
+
+```bash
+$ grillin my-plan --run-gates
+```
+
+When something is wrong it names the task, the file and the reason — never "invalid plan":
+
+```
+FAIL — owner               T2 names no owner — an orchestrator cannot dispatch it  tasks/T2/TASK.md:1
+FAIL — done-checkable      T3's done criterion is prose, not a runnable command
+FAIL — paths-disjoint      T2 and T3 can run at the same time and both own 'src/api/'
+FAIL — research-task       T1 is a research task and declares no **Timebox:**
+```
+
+And when it passes, it tells you what it did **not** check — because a green gate is a
+floor, and the floor is low:
+
+```
+RESULT: PASS — the plan is structurally operable.
+        Not checked: whether it is CORRECT. At 3 task(s) this plan is below the
+        4-task floor, so no reader is required — you are the reader.
+```
+
+Copy [`examples/one-task-plan/`](examples/one-task-plan/) and change two files, or
+[`examples/research-first-plan/`](examples/research-first-plan/) when you don't have the
+facts yet. Both pass the gate as shipped, so you can break them on purpose and watch it
+complain.
 
 ## And a brother: Smokin
 
