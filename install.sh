@@ -42,7 +42,10 @@ trap 'rm -rf "$TMP"' EXIT INT HUP TERM
 
 say "grillin: fetching the gate from $REPO@$REF"
 fetch "$RAW/scripts/validate-plan.py" > "$TMP/grillin" || die "download failed"
-fetch "$RAW/scripts/check-drift.py"   > "$TMP/grillin-check-drift" 2>/dev/null || true
+# check-drift.py is NOT installed. Its own header says "FOR THIS REPOSITORY
+# ONLY" — its surfaces are hardcoded to Grillin's own files, so on your machine
+# it can only ever mislead you. check-index.py is the one that works on your
+# files, and it lives in the repo for you to copy deliberately.
 
 # Prove it runs BEFORE it is on the PATH. An installer that puts a broken file
 # somewhere permanent and reports success is the exact failure this project is
@@ -50,14 +53,19 @@ fetch "$RAW/scripts/check-drift.py"   > "$TMP/grillin-check-drift" 2>/dev/null |
 python3 -c "import ast,sys;ast.parse(open(sys.argv[1]).read())" "$TMP/grillin" \
   || die "the downloaded gate does not parse — refusing to install a broken file"
 
+# Stamp what was actually fetched. A copied file has no git context, so without
+# this `grillin --version` can only say "source checkout" — and a user who
+# cannot tell you which ref they are on is a bug report you cannot act on.
+STAMP="$REF"
+[ "$REF" = "main" ] && STAMP="main, $(date -u +%Y-%m-%d)"
+sed -i.bak "s|^INSTALLED_FROM = .*|INSTALLED_FROM = \"$STAMP\"  # stamped by install.sh|" "$TMP/grillin" 2>/dev/null \
+  || sed "s|^INSTALLED_FROM = .*|INSTALLED_FROM = \"$STAMP\"  # stamped by install.sh|" "$TMP/grillin" > "$TMP/g2" && mv "$TMP/g2" "$TMP/grillin"
+rm -f "$TMP/grillin.bak"
+
 chmod +x "$TMP/grillin"
 "$TMP/grillin" --help >/dev/null 2>&1 || die "the downloaded gate will not run"
 
 mv "$TMP/grillin" "$PREFIX/grillin"
-if [ -s "$TMP/grillin-check-drift" ]; then
-  chmod +x "$TMP/grillin-check-drift"
-  mv "$TMP/grillin-check-drift" "$PREFIX/grillin-check-drift"
-fi
 
 # ── verify, then say so ─────────────────────────────────────────────────────
 VER_OK=no

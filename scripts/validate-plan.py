@@ -29,6 +29,14 @@ Every finding cites file:line, because a validator that says "something is wrong
 is a worse version of the checklist it replaces.
 """
 
+# ── version ─────────────────────────────────────────────────────────────────
+# install.sh copies THIS FILE onto your PATH as `grillin`. A copied file has no
+# git context, so it cannot work out its own provenance later — the installer
+# rewrites INSTALLED_FROM below at install time. Left alone it says so, rather
+# than claiming a provenance it does not have.
+__version__ = "1.0.0"
+INSTALLED_FROM = "source checkout"  # rewritten by install.sh
+
 import argparse
 import json
 import os
@@ -37,6 +45,12 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+
+# Derived, never hardcoded: check-drift.py already asserts this set matches
+# SCALING.json's gateChecks, so --version cannot claim a count the gate does not
+# actually run.
+GATE_CHECK_NAMES = sorted(set(re.findall(r'f\.(?:ok|fail)\(\s*"([a-z-]+)"',
+                                         Path(__file__).read_text())))
 
 # ── strictness floors ───────────────────────────────────────────────────────
 # The config may only TIGHTEN these. Loosening past a floor is not a config
@@ -1693,6 +1707,9 @@ def check_invariants(f: Findings, plan: Path, tasks: dict, cfg: dict):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--version", action="version",
+                    version=f"grillin {__version__} ({INSTALLED_FROM})\n"
+                            f"gate: {len(GATE_CHECK_NAMES)} checks")
     ap.add_argument("plan", help="the plan directory")
     ap.add_argument("--run-gates", action="store_true",
                     help="EXECUTE each task's done-command to prove it fails on "
