@@ -100,9 +100,8 @@ true after.
 ## Steps
 1. One question, and it is this one: which operation accounts for most of the
    wall-clock time, on a run you took yourself?
-2. Take a measurement before you form an opinion. Record the raw numbers.
-3. At 90 minutes, stop and write whatever you have. "Could not establish X"
-   is a reportable result, not a failure.
+2. At 90 minutes, stop and write whatever you have. "Could not establish X" is
+   a reportable result, not a failure.
 
 ## Done means
 ```
@@ -110,9 +109,8 @@ test -s tasks/T1/FINDINGS.md
 ```
 
 ## Do NOT
-- Do NOT fix anything. If the cause is obvious and the fix is one line, it is
-  still T2's line.
-- Do NOT ship whatever you built to answer the question. That is evidence,
+- Do NOT fix anything. If the fix is one line, it is still T2's line.
+- Do NOT ship whatever you built to answer the question — that is evidence,
   not the deliverable.
 ````
 
@@ -147,19 +145,31 @@ complain.
 
 ## And a brother: Smokin
 
-Grillin builds the plan and stops. Something has to *run* it, and for a long time that
-something was a conversation — which dies, taking the state with it.
+Grillin builds the plan and stops. Something has to *run* it — and for a long time that
+something was a conversation, which dies, taking the state with it.
 
-[**Smokin**](https://github.com/A-Pex97/smokin) is an idempotent tick that reads a plan
-directory off disk, dispatches whatever is ready across any agent CLI, re-runs each task's
-own done-command as an independent second opinion, and renders a surface a human can read.
-It holds no state in memory, so nothing is lost when it stops.
+```mermaid
+flowchart LR
+  A["a vague ask"] -->|Grillin<br/>11 phases| B["PLAN.md<br/>tasks/*/TASK.md"]
+  B --> C{"the gate<br/>23 checks"}
+  C -->|FAIL| B
+  C -->|PASS| D["Smokin tick<br/>dispatch what is ready"]
+  D --> E["worker claims done"]
+  E --> F{"re-run the task's<br/>OWN done-command"}
+  F -->|refuted| D
+  F -->|verified| G["PROGRESS.md"]
+```
+
+The loop closes at **F**, and that is the whole point of the pair: nothing advances on a
+worker saying so. [**Smokin**](https://github.com/A-Pex97/Smokin) reads the plan off disk,
+dispatches across any agent CLI, and re-runs each done-command itself. It holds no state in
+memory, so nothing is lost when it stops.
 
 > **Grillin answers *is this plan operable?*  Smokin answers *is it running, and where?***
 >
 > Grillin owns what a plan **declares**. Smokin owns what actually **happens**. Neither
-> reaches into the other's half, and that boundary is enforced by a test that feeds both
-> the same config files and requires them to agree.
+> reaches into the other's half, and a test feeds both the same config files and requires
+> them to agree.
 
 ## Install
 
@@ -181,17 +191,27 @@ curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install-hooks.
 > pipe form prints `curl: (22)` and then **exits 0 having installed nothing**. The `&&`
 > form fails properly and leaves the script on disk so you can read it first.
 
-> ### Which repo — read this before you run it
->
-> **Grillin runs *on* a plan, from outside it.** Put the gate on your `PATH`. Never put it
-> in the build, the CI, or the commit path of the project you are planning changes to —
-> that project must be able to build, test and ship with Grillin uninstalled.
->
-> **Your plan directory is not part of the software you are planning.** Keep it in its own
-> repository, or somewhere the application's build never sees.
->
-> The test is one line: **if removing Grillin breaks someone's build, it was installed in
-> the wrong place.**
+**One rule about where it goes:** Grillin runs *on* a plan, from outside it. Put the gate on
+your `PATH`, and keep your plan directory out of the repository you are planning changes to.
+
+<details>
+<summary>Why — and the one-line test</summary>
+
+Never put the gate in the build, the CI, or the commit path of the project you are planning
+changes to. **That project must be able to build, test and ship with Grillin uninstalled.**
+
+Your plan directory is not part of the software you are planning. Keep it in its own
+repository, or somewhere the application's build never sees. Where plan and code genuinely
+must share a repo, the gate runs by hand or in *your* CI — never in that repo's commit hook.
+
+**The test is one line: if removing Grillin breaks someone's build, it was installed in the
+wrong place.**
+
+This is spelled out because the passage about the committed hook was once persuasive in the
+wrong direction — an agent read it, correctly understood that the hook closes the method's
+largest open defect, and wired a plan gate into an application's `pre-commit` config.
+
+</details>
 
 ## The one number
 
@@ -229,12 +249,15 @@ Small change (1–3 tasks): run **0, 3, 9, 10**. Real project (10–25 tasks): r
 
 ## Start here
 
-**New to agentic coding? → [`WORKING-WITH-CLAUDE-CODE.md`](WORKING-WITH-CLAUDE-CODE.md).**
-Habits before method. No Grillin required.
+| | |
+|---|---|
+| **New to agentic coding** | [`WORKING-WITH-CLAUDE-CODE.md`](WORKING-WITH-CLAUDE-CODE.md) — habits before method, no Grillin required |
+| **Planning a real job** | **[`QUICKSTART.md`](QUICKSTART.md)** — twenty minutes, six steps, in order |
+| **Want to see one first** | [`examples/one-task-plan/`](examples/one-task-plan/) — copy it, change two files |
+| **Inside a plan that went wrong** | [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) — the other half |
 
-**Planning a real job? → [`QUICKSTART.md`](QUICKSTART.md).** Twenty minutes, six steps, in order.
-
-## The files
+<details>
+<summary>The full map — documents, examples, templates, scripts</summary>
 
 | File | What it is |
 |---|---|
@@ -276,6 +299,8 @@ The rest — [`TASK.md`](templates/TASK.md.template), [`_RULES.md`](templates/_R
 | [`scripts/check-index.py`](scripts/check-index.py) | **your index + shards** | do an index and the files it points at still agree? |
 | `scripts/check-drift.py` · `scripts/check-boundary.py` | *this repo only* | Grillin checking its own surfaces |
 
+</details>
+
 ## Contributing
 
 One maintainer, issues read in batches, and one rule that matters: **a change that adds a
@@ -297,15 +322,19 @@ wanted, what gets declined and why, and what a check has to prove before it ship
 
 The rule where a file isn't listed: **if it executes, it's PolyForm. If you read it, it's CC BY.**
 
-### "Is my use commercial?" — the short answer
+### "Is my use commercial?"
 
-**If you are one person learning, building your own thing, or trying this out: it's free, and
-it stays free. Stop reading here.**
+**If you are one person — learning, hobby, side project, your own product — it's free, and it
+stays free.** Students, academics, non-profits and public bodies too. Evaluating it at work is
+free; trying a thing is not deploying it. If an *organisation* is the beneficiary, open an
+issue titled `licence` — and you are free to keep working until I answer.
 
-Most of what people worry about isn't restricted at all. **The method is CC BY** — a company
-can read it, follow all eleven phases, copy the templates into their internal wiki and ship
-software with it, commercially, forever, for nothing. The only condition is saying where it
-came from. PolyForm covers the **scripts** and nothing else.
+Most of what people worry about isn't restricted at all: **the method is CC BY**, so a company
+can read it, follow every phase, copy the templates into their wiki and ship commercial
+software with it, for nothing, crediting the source. PolyForm covers the **scripts** only.
+
+<details>
+<summary>Every case, spelled out</summary>
 
 | You are | The tools |
 |---|---|
@@ -328,6 +357,8 @@ answer for small teams is going to be yes.
 **And if the licence is genuinely the blocker** for something you want to do, say so in the
 issue. That's useful information about whether this licence was the right call, and I would
 rather hear it than have you quietly walk away.
+
+</details>
 
 The split is deliberate. The reasoning is the valuable part and reasoning doesn't stay put —
 people who had never read these documents re-invented pieces of them unprompted, which is the
