@@ -81,7 +81,28 @@ ADVERSARY_MIN_TASKS = 4
 CONTRACT_SECTIONS = ("what you own", "steps", "done means", "if it fails", "do not")
 
 RE_STATUS = re.compile(r"^\*\*Status:\*\*\s*([A-Z ]+?)\s*(?:—|$)", re.M)
-RE_OWNER = re.compile(r"^\*\*(?:Owner|Agent)\b.*?:\*\*\s*(.+)$", re.M | re.I)
+# TWO SPELLINGS REACHED THIS FIELD AND THEY MEAN DIFFERENT THINGS. `**Owner:**`
+# is who is accountable. `**Agent:**` is the PERSONA, and RE_PERSONA owns that.
+# The old single alternation matched whichever came FIRST in the file, so a task
+# declaring both — which every shipped example does — resolved its owner to
+# whichever line the author happened to put higher. In
+# examples/minimal-passing-plan/T1 that made the owner
+# "`recon` · **Model:** `claude-opus-5` · **Effort:** high", and every check
+# downstream compared THAT instead of `worker-a`: adversary uniqueness, human
+# ownership, the frozen contract. It was found by a first-time user reading the
+# regex, not by any test, because nothing ever asserted what an owner resolves to.
+#
+# Owner wins wherever it appears. Agent remains a fallback only because
+# templates/TASK.md.template shipped for a long time with no Owner line, so
+# tasks authored from it have nothing else to name.
+RE_OWNER_LINE = re.compile(r"^\*\*Owner\b[^:]*:\*\*\s*([^·\n]+?)\s*(?=\*\*|·|$)", re.M | re.I)
+RE_AGENT_LINE = re.compile(r"^\*\*Agent\b[^:]*:\*\*\s*`?([^`·\n]+?)`?\s*(?=\*\*|·|$)", re.M | re.I)
+
+
+def owner_of(text: str) -> str:
+    """Who is accountable for this task. Empty string when nobody is named."""
+    m = RE_OWNER_LINE.search(text) or RE_AGENT_LINE.search(text)
+    return m.group(1).strip() if m else ""
 # Both fields commonly share one line: "**Blocked by:** — · **Blocks:** T2, T4".
 # Stop at the separator or the next bold field, or every entry in Blocks is read
 # as a blocker and the graph check reports a cycle that does not exist.
@@ -188,7 +209,7 @@ def check_owner_status(f: Findings, tasks: dict, cfg: dict):
     missing_owner, bad_status = [], []
     for tid, path in tasks.items():
         text = path.read_text(errors="replace")
-        if cfg.get("require_owner", True) and not RE_OWNER.search(text):
+        if cfg.get("require_owner", True) and not owner_of(text):
             missing_owner.append(tid)
             f.fail("owner", f"{path}:1",
                    f"{tid} names no owner — an orchestrator cannot dispatch it")
@@ -556,8 +577,7 @@ def check_adversary(f: Findings, tasks: dict, cfg: dict):
     owners, readers = {}, {}
     for tid, path in tasks.items():
         text = path.read_text(errors="replace")
-        mo = RE_OWNER.search(text)
-        owners[tid] = mo.group(1).strip().lower() if mo else ""
+        owners[tid] = owner_of(text).lower()
         mr = RE_READER.search(text)
         if mr:
             readers[tid] = mr.group(1).strip().lower()
@@ -743,10 +763,23 @@ def is_human_owned(text: str) -> bool:
     # owner wording alone exempted them and their models silently stopped being
     # checked: the gate printed PASS for the right check for the wrong reason,
     # which is worse than printing FAIL.
+    own = owner_of(text)
+    if not own:
+        return False
+    # `human` is an EXPLICIT declaration and outranks everything, including a
+    # model line. An earlier version of this guard checked the persona/model
+    # lines FIRST, which suppressed the explicit case too — a task owned by
+    # `human` and carrying the template's Agent row stopped counting as human,
+    # and check_frozen_human_contracts went quiet on exactly the tasks it exists
+    # for. Its mutation probe caught it; nothing else did.
+    if re.search(r"\bhuman\b", own, re.I):
+        return True
+    # `you` and `requester` are idiom, not declaration. The shipped examples say
+    # `**Owner:** you` while naming a persona and a model, and there they mean
+    # "you are driving this plan", not "a person executes this task".
     if RE_PERSONA.search(text) or RE_MODEL.search(text):
         return False
-    mo = RE_OWNER.search(text)
-    return bool(mo and re.search(r"\bhuman\b|\byou\b|\brequester\b", mo.group(1), re.I))
+    return bool(re.search(r"\byou\b|\brequester\b", own, re.I))
 
 
 def human_worked_plan(plan: Path) -> bool:
@@ -945,8 +978,28 @@ def check_rollback_real(f: Findings, plan: Path, tasks: dict, cfg: dict):
         f.ok("rollback", "no task declares itself irreversible")
 
 
+# A line that DISCLAIMS a path rather than claiming one. Naming what a worker
+# must not touch is good practice — templates/BRIEF.md.template instructs authors
+# to do exactly that — and until this existed, every such line was harvested as
+# OWNERSHIP. "You do NOT own `frontend/`" put `frontend/` in the owned set, so
+# the task collided with whoever legitimately owned it. A first-time user hit
+# this on their own plan and reworded four tasks to escape a collision that was
+# not real.
+#
+# Line-level, deliberately. A disclaimer split across two lines still leaks its
+# paths, and that is the safe direction to be wrong in: over-claiming ownership
+# produces a loud false collision, while under-claiming produces a silent missed
+# one, and a missed collision is the failure this check exists to prevent.
+RE_DISCLAIMS = re.compile(
+    r"\b(?:do\s*n[o']?t|does\s*n[o']?t|never|must\s+not|may\s+not|cannot)\s+"
+    r"(?:own|touch|modify|edit|write|change)\b"
+    r"|\bnot\s+(?:yours|owned|your\s+\w+)\b"
+    r"|\bis\s+not\s+yours\b", re.I)
+
+
 def _owned_paths(text: str):
-    """Specific paths from '## What you own'. Vague ones are ignored on purpose."""
+    """Specific paths from '## What you own'. Vague ones are ignored on purpose,
+    and so are paths on a line that says the worker does NOT own them."""
     body, in_section, in_fence = [], False, False
     for line in text.splitlines():
         if line.strip().startswith("```"):
@@ -958,6 +1011,8 @@ def _owned_paths(text: str):
             in_section = bool(re.match(r"^#+\s*What you own\b", line, re.I))
             continue
         if in_section:
+            if RE_DISCLAIMS.search(line):
+                continue          # a disclaimer, not a claim — see RE_DISCLAIMS
             body.append(line)
     out = set()
     for span in RE_OWNED_PATH.findall("\n".join(body)):

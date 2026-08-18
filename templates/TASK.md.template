@@ -6,6 +6,17 @@
 **Type:** BUILD | REFACTOR | RECONSIDER | ASK | VERIFY | LOOP
 **Status:** NOT STARTED | IN PROGRESS | BLOCKED | DONE — *update this line in place as you go;
 it is the progress record, and it is the only one that survives a lost conversation*
+<!-- OWNER vs AGENT — two fields, and they are not the same one. **Owner** is WHO is
+     accountable: an agent id, a person's name, or the literal word `human`. **Agent** is the
+     PERSONA, which is a description of responsibility that the roster prices.
+
+     This template shipped without an Owner line for a long time, and the gate's owner regex
+     accepted either spelling and took whichever came FIRST in the file. Every shipped example
+     declares both, so an owner silently resolved to whichever line the author put higher — in
+     one fixture that made the owner the string "`recon` · **Model:** ... · **Effort:** high",
+     and the adversary-uniqueness check compared that. Declare Owner and the ambiguity is gone. -->
+**Owner:** <agent id, a person's name, or `human` — see QUICKSTART §0b question 3>
+
 <!-- MODEL AND EFFORT — a persona is a description of responsibility; the model and the
      effort are what it is actually made of. Both come from ../_ROSTER.md, which carries the
      reason for each pairing. Real model identifiers, never tier words: an orchestrator
