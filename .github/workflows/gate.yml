@@ -104,6 +104,9 @@ jobs:
           probe research-no-artefact research-task       "sed -i '0,/^\*\*Status:/s//**Kind:** research · **Timebox:** 90 minutes\n**Status:/' tasks/T1/TASK.md"
           exit $fail
 
+      - name: owner resolution and disclaimed paths
+        run: python3 tests/test-owner-and-ownership.py
+
       - name: a plan of people passes, and the floor is still there
         run: bash tests/test-human-workers.sh
 
