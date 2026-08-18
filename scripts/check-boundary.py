@@ -34,6 +34,7 @@ SURFACES = {
     "SCALING.json":           "what gets handed to an agent",
     "WORKING-WITH-CLAUDE-CODE.md": "where a newcomer meets Grillin for the first time",
     "templates/GRILL-CHECKLIST.md": "the artefact most easily read as a to-do list",
+    "CONTRIBUTING.md":       "where a contributor decides what this project is",
 }
 
 bad = 0
