@@ -307,6 +307,24 @@ One maintainer, issues read in batches, and one rule that matters: **a change th
 rule must name the defect it came from.** [`CONTRIBUTING.md`](CONTRIBUTING.md) says what is
 wanted, what gets declined and why, and what a check has to prove before it ships.
 
+## Updating
+
+```bash
+sh grillin-install.sh          # re-run the installer; it overwrites in place
+grillin --version              # what you have, and how many checks it runs
+```
+
+The gate installs as a **single file** on your `PATH`, not a clone, so there is nothing
+to `git pull`. Re-running the installer is the update.
+
+> **A new version can add checks, and a plan that passed before may fail after.** That is
+> not a regression — a check exists because a defect was found, so a plan that starts
+> failing has been failing all along. The count went 21 → 23 in two days.
+>
+> Pin it if you need a stable answer across a job:
+> `GRILLIN_REF=v1.0.0 sh grillin-install.sh`, then update between jobs.
+> [`CHANGELOG.md`](CHANGELOG.md) says what changed.
+
 ## What it needs
 
 **python3**, stdlib only, no packages. The method itself needs nothing.

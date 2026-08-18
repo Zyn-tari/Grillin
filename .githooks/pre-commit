@@ -12,7 +12,10 @@ set -uo pipefail
 
 REPO="$(git rev-parse --show-toplevel)"
 VALIDATE="$REPO/scripts/validate-plan.py"
-[ -x "$VALIDATE" ] || VALIDATE="$(command -v validate-plan.py || true)"
+# install.sh puts the gate on PATH as `grillin`, not as `validate-plan.py`, so a
+# fallback that only looked for the latter never found an installed gate. Both
+# names, installed one first.
+[ -x "$VALIDATE" ] || VALIDATE="$(command -v grillin || command -v validate-plan.py || true)"
 
 if [ "${GRILLIN_SKIP:-}" = "1" ]; then
   echo "grillin: GATE SKIPPED by GRILLIN_SKIP=1 — this commit was not validated." >&2
