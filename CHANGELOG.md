@@ -2,7 +2,12 @@
 
 
 
-## Unreleased
+## v1.2.0 — 2026-08-20
+
+No new gate checks — still 24 — and **no verdict changes**: every finding message on the
+known-bad fixture is byte-identical, so a plan that passed v1.1.0 passes this. What changed is
+that three surfaces stopped disagreeing with the gate, and CI stopped reporting its own probes
+dead.
 
 ### The CI was failing, and it was failing honestly — 2026-08-20
 

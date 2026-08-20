@@ -34,7 +34,7 @@ is a worse version of the checklist it replaces.
 # git context, so it cannot work out its own provenance later — the installer
 # rewrites INSTALLED_FROM below at install time. Left alone it says so, rather
 # than claiming a provenance it does not have.
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 INSTALLED_FROM = "source checkout"  # rewritten by install.sh
 
 import argparse
