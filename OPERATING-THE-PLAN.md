@@ -358,6 +358,34 @@ documents that frequently do not exist when the plan is authored.
 
 ---
 
+## 10b · How you learn a worker finished
+
+**Do not write a `wait-for-agent.sh`.** Operators keep writing one — a script per agent,
+backgrounded one shell each, polling for a name to go quiet. It works, and it re-implements
+per site the question the execution layer is already the authority on.
+
+This is the boundary rule doing its job. *Which* tasks exist, who owns them, and what "done"
+means are declarations, so they are this document's and the gate's. *Has this one finished*
+is execution, so it is Smokin's:
+
+```bash
+smokin wait <plan> --task T4      # blocks until T4 settles; returns on the event
+smokin run  <plan>                # or drive the whole plan and be told when it stops
+```
+
+`wait` returns the moment the task settles rather than on a clock, `5` at once if the task is
+owned by a person — it will never settle on its own — `4` if the plan halts underneath it, and
+`3` on `--timeout`. It starts nothing and holds no state.
+
+**And a task a person owns is never dispatched to a model.** The gate and the runner use one
+definition of who counts as a person — `is_human_owned` in `scripts/validate-plan.py`, which
+Smokin copies character for character and asserts against this file in its own tests. Declare
+it with `**Owner:** human` on the task, or `**Workers:** human` in `PLAN.md` for a plan whose
+people have job titles rather than the literal word. Such a task is *parked*: the fleet keeps
+running every other ready task around it and stops only when the work left is yours.
+
+---
+
 ## 11 · What is actually enforced
 
 Honest accounting. A rule a machine cannot check is a preference.
@@ -379,6 +407,7 @@ Honest accounting. A rule a machine cannot check is a preference.
 | A closed symptom cites its control test | ADVISORY | — |
 | Instructions are preflighted against the artefact | ADVISORY | — |
 | A task whose failure has two readings carries `## If it fails` | ADVISORY | — · frozen with the contract when present |
+| A person's task is not dispatched to a model | **ENFORCED, ELSEWHERE** | `smokin` `route()` clause 0, on this file's `is_human_owned` |
 
 ---
 
