@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "name": "grilling-the-plan",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A method for turning a vague ask into an executable plan that survives contact with reality, by attacking every claim in it — including your own — before anyone builds.",
   "boundary": {
     "output": "One plan directory: a PLAN.md and a tasks/<ID>/TASK.md per task. Markdown. Nothing else.",
