@@ -37,6 +37,39 @@ minutes they decided what to build.
 
 `tests/test-brainstormed.py` — 44 checks.
 
+### The `grep` trap — 2026-08-20
+
+**Open since v1.0.0, recommended by our own QUICKSTART, and reached independently by four
+first-time users.** A done-command that grades CONTENT — `grep -q DONE tasks/T1/OUT.md` —
+says "No such file or directory" while the work is unstarted, because the artefact it grades
+does not exist yet. That is the gate working. `check_gates_fail_first` called it a broken
+gate and told the author *"Its paths are unanchored"*, which was false: the path was
+anchored; `grep` exits 2 on stderr where `test -s` exits 1 silently.
+
+The wasted cycle was never the cost. **The documented way out is a bare `test -s`, which is
+satisfied by writing any file at all** — so the refusal pushed authors off a gate that reads
+content and onto one that gates paperwork. A curator said exactly that, unprompted.
+
+- **A missing FILE is now ambiguous and gets resolved.** Inside the plan directory → an
+  artefact the plan has not produced yet → clean fail. Outside it → a gate that cannot run
+  here → still refused, and the message now names the file instead of blaming the author's
+  paths. Exit `126`/`127` and a shell naming a missing tool, module, permission or syntax
+  error remain blow-ups, by exit status where possible because dash and bash word them
+  differently.
+- **Diagnosis is read from stderr only.** This fixes the mirror defect reported from the
+  field: a check that PASSED while printing the words *"cannot open"* in its own message was
+  reported as broken — a string match on prose. stdout is the gate's output, not its opinion
+  of itself.
+- **`QUICKSTART.md` §0b question 4 no longer recommends the failing form**, and now says why
+  the content check is the one worth writing.
+- **The known-bad fixture got a better diagnosis, not just fewer findings** (51 → 49): T3's
+  real defect is that its gate passes on unstarted work, which the missing-file misreading
+  had been hiding behind the wrong message.
+
+`tests/test-gate-fails-first.py` — 21 checks. Mutation-proven: reverting to the v1.0.0
+behaviour fails 11 of them while every broken-gate control still passes, so the file is not
+merely asserting that everything fails.
+
 ### The known-bad example was telling three different stories — 2026-08-20
 
 `examples/a-real-first-plan` is this repo's known-bad calibration fixture, and the record of

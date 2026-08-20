@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| [`a-real-first-plan/`](a-real-first-plan) | A genuine first attempt. **Fails, with 51 findings.** Read it to see how finished a broken plan feels. |
+| [`a-real-first-plan/`](a-real-first-plan) | A genuine first attempt. **Fails, with 49 findings.** Read it to see how finished a broken plan feels. |
 | [`minimal-passing-plan/`](minimal-passing-plan) | The smallest plan that passes cleanly. **A fixture, not a specimen** — do not copy it as a model. |
 
 One of each is the minimum needed to tell a working validator from a broken one, which is the rule
@@ -29,7 +29,7 @@ work to make this repo usable by a stranger, then publish it."* They worked from
 alone.
 
 `a-real-first-plan-GATE-REPORT.txt` is what [`scripts/validate-plan.py`](../scripts/validate-plan.py)
-says about it. **It fails, with 51 findings.**
+says about it. **It fails, with 49 findings.**
 
 Both are here on purpose.
 

@@ -292,6 +292,47 @@ def check_done_is_command(f: Findings, tasks: dict, cfg: dict):
         f.ok("done-checkable", "every task's done criterion is a runnable command")
 
 
+# The shapes a shell actually uses to say a file is missing. Kept small and
+# literal on purpose: a clever parser that guesses wrong here re-creates the
+# defect it exists to fix, and the fallback (look at the command itself) covers
+# whatever these miss.
+_MISSING_PATTERNS = (
+    r"(?:^|\n)[^\n:]*: ([^\n:]+): No such file or directory",   # grep: f: No such…
+    r"No such file or directory: '([^']+)'",                      # FileNotFoundError
+    r"can't open file '([^']+)'",                                 # python3 foo.py
+    r"cannot open '?([^'\n:]+)'?",                                # various
+)
+
+
+def _missing_path(err: str, cmd: str):
+    """Which file did the shell say was missing? None when it did not say."""
+    for pat in _MISSING_PATTERNS:
+        m = re.search(pat, err, re.I)
+        if m:
+            return m.group(1).strip()
+    # THE FALLBACK, and it is the honest one. If the diagnostic named no path,
+    # look at what the command itself reads: a done-command that mentions a file
+    # under the plan and got a missing-file error is overwhelmingly failing on
+    # that file. Returning None here would put the plan back in the old
+    # behaviour, which is the outcome this whole change exists to avoid.
+    for tok in re.findall(r"[\w./-]+\.[\w]+", cmd):
+        if not tok.startswith(("/", "~")) and ".." not in tok:
+            return tok
+    return None
+
+
+def _inside(rel: str, plan: Path) -> bool:
+    """Is this path inside the plan directory — i.e. something the plan makes?"""
+    if rel.startswith("~"):
+        return False
+    try:
+        target = (plan / rel).resolve() if not rel.startswith("/") else Path(rel).resolve()
+        target.relative_to(plan.resolve())
+        return True
+    except (ValueError, OSError):
+        return False
+
+
 def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
     """
     The check that would have caught the worst defect in the pilot plan.
@@ -330,22 +371,51 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
         # "command not found" — so a regex written against bash silently passed
         # a gate that shells out to a binary nobody has installed, and reported
         # it as failing cleanly. 127 and 126 are POSIX and say it without prose.
+        # STDERR ONLY. This used to scan stdout as well, and a task whose gate
+        # PASSED while printing the words "cannot open" in its own message was
+        # reported as a broken gate — a string match on prose, found in the
+        # field. Under `sh`, a missing binary, a traceback and an unreadable file
+        # all report on stderr; 126/127 below covers the rest by exit status. So
+        # stdout is the gate's OUTPUT and is no longer read as its diagnosis.
+        err = r.stderr or ""
         blew_up = None
         if r.returncode in (126, 127):
-            blew_up = type("M", (), {"group": lambda self, n=0:
-                                     f"exit {r.returncode} — not found or not executable"})()
+            blew_up = f"exit {r.returncode} — not found or not executable"
         else:
-            blew_up = re.search(
-                r"FileNotFoundError|No such file or directory|command not found|"
-                r"\bnot found\b|ModuleNotFoundError|ImportError|cannot open|"
-                r"Permission denied|unbound variable|syntax error",
-                (r.stderr or "") + (r.stdout or ""), re.I)
+            m2 = re.search(
+                r"command not found|\bnot found\b|ModuleNotFoundError|ImportError|"
+                r"Permission denied|unbound variable|syntax error", err, re.I)
+            if m2:
+                blew_up = m2.group(0)
+        # THE MISSING FILE IS AMBIGUOUS, AND READING IT ONE WAY WAS THE DEFECT.
+        # `grep -q DONE tasks/T1/OUT.md` on unstarted work says "No such file or
+        # directory" and exits 2 — which is the gate WORKING: the artefact it
+        # grades does not exist yet. This check called that a broken gate, and
+        # told the author "your paths are unanchored" when they were not. The
+        # cost was not the wasted cycle. It was that the documented way out is a
+        # bare `test -s`, which is satisfied by writing any file at all — so the
+        # refusal pushed authors from a gate that reads content to one that reads
+        # paperwork. Confirmed by four first-time users independently, and
+        # QUICKSTART 0b recommended the failing form the whole time.
+        #
+        # So the question is WHICH file is missing. One the plan will produce is
+        # a clean fail. One outside the plan is a gate that cannot run here.
+        if blew_up is None:
+            missing = re.search(
+                r"FileNotFoundError|No such file or directory|cannot open|"
+                r"can't open file", err, re.I)
+            if missing:
+                where = _missing_path(err, cmd)
+                if where is None or not _inside(where, plan):
+                    blew_up = (f"{missing.group(0)}: "
+                               f"{where or 'and the gate does not say which file'}")
         if blew_up:
             f.fail("gate-fails-first", f"{path}",
                    f"{tid}'s done-command could not run here — it failed on its own "
-                   f"inputs, not on the work ({blew_up.group(0)!r}). Its paths are "
-                   f"unanchored: an orchestrator running it from anywhere but the "
-                   f"author's directory gets an error it may read as a clean fail.")
+                   f"inputs, not on the work ({blew_up!r}). Whatever it needs is not "
+                   f"inside the plan directory, so an orchestrator running it from "
+                   f"anywhere but the author's machine gets an error it may read as a "
+                   f"clean fail.")
         elif r.returncode == 0:
             f.fail("gate-fails-first", f"{path}",
                    f"{tid} is {status} but its done-command already exits 0. "

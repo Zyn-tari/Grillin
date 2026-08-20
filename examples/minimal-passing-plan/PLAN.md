@@ -5,7 +5,7 @@
 
 This is the smallest plan that passes `validate-plan.py --run-gates` cleanly, and it exists so the
 gate can be proven against a known answer before anyone trusts it on their work. Its counterpart,
-[`../a-real-first-plan`](../a-real-first-plan), is a real plan that fails with 51 findings. One of
+[`../a-real-first-plan`](../a-real-first-plan), is a real plan that fails with 49 findings. One of
 each is the minimum needed to tell a working validator from a broken one.
 
 **It is a fixture, not a specimen.** Do not copy it as a model plan — it has four tasks that do
