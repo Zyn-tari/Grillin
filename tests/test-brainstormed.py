@@ -163,7 +163,16 @@ has("...and the gate notices it was declared", line, "declared anyway")
 p = mkplan("noplan", 5, "**Brainstormed:** architectural · approved 2026-08-19")
 (p / "PLAN.md").unlink()
 rc, line = gate(p)
-chk("a plan with no PLAN.md is not reported by THIS check", line, "")
+# It still does not REPORT here — check_plan_source_of_truth owns a missing
+# PLAN.md and one defect gets one finding. What changed is that the silence is
+# now PRINTED: since the gate began accounting for every declared check, a check
+# with nothing to say emits a SKIP rather than nothing at all. Asserting on the
+# empty string was asserting that this check leaves no trace, which was never
+# the property being defended.
+chk("a plan with no PLAN.md is not reported by THIS check",
+    line.split(" —")[0], "SKIP")
+has("...and the SKIP names who owns that failure instead", line,
+    "plan-truth owns that failure")
 
 print("\n=== 5 · the shipped fixtures stay calibrated ===")
 # 0 for known-good and 1 for known-bad is the repo's own instrument calibration,
