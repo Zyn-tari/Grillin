@@ -21,8 +21,8 @@ FAIL — graph               T2 is blocked by Q2, which is not a task in this pl
 FAIL — graph               T3 is blocked by Q3, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
 FAIL — graph               T4 is blocked by Q1, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
 FAIL — graph               T4 is blocked by Q2, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
-FAIL — graph               T7 says it is blocked by T4, but T4 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
 FAIL — graph               T7 says it is blocked by T2, but T2 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
+FAIL — graph               T7 says it is blocked by T4, but T4 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
 FAIL — graph               T8 is blocked by Q4, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md
 FAIL — plan-truth          T2 is blocked by ['Q1', 'Q2', 'T1'] in its TASK.md but ['T1'] in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
 FAIL — plan-truth          T3 is blocked by ['Q3', 'T1'] in its TASK.md but — in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md:1
@@ -59,5 +59,10 @@ FAIL — brainstormed        This plan holds 8 tasks (S), and SCALING.json requi
 FAIL — gate-fails-first    T3 is NOT STARTED but its done-command already exits 0. The gate does not detect the work — an orchestrator would run it, see success, and mark unstarted work complete.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
 PASS — gate-fails-first    T6: gate fails cleanly while not started, as a gate should
 PASS — gate-fails-first    T7: gate fails cleanly while not started, as a gate should
+SKIP — invariants          not applicable: this plan declares no _INVARIANTS.toml — the layer is opt-in by file and its absence is not a defect
+SKIP — research-task       not applicable: no task declares itself research, recon or a spike, and the contract binds only a task sent to find something out
+SKIP — rulings             not applicable: this plan declares no _RULINGS.toml — the layer is opt-in by file and its absence is not a defect
+
+checks: 24 declared — 21 reported above, 3 skipped. A SKIP is not a finding and does not reach the exit code.
 
 RESULT: FAIL — 49 finding(s). This plan is not operable as written.
