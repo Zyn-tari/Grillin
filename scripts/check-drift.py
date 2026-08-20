@@ -193,7 +193,13 @@ def main() -> int:
                            f"--run-gates > {report.name} (then rewrite the absolute paths "
                            f"to ~/grillin)")
             else:
-                for surface in (ROOT / "examples" / "README.md",
+                # EVERY surface, and the root README was the one missed the
+                # first time this was fixed — a first-time reader of the map
+                # found it hours later, still saying 26. A drift check that
+                # covers most of the surfaces is a drift check that will be
+                # trusted and wrong.
+                for surface in (ROOT / "README.md",
+                                ROOT / "examples" / "README.md",
                                 ROOT / "examples" / "minimal-passing-plan" / "PLAN.md"):
                     if not surface.is_file():
                         continue

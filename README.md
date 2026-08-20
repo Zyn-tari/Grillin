@@ -274,7 +274,7 @@ Small change (1–3 tasks): run **0, 3, 9, 10**. Real project (10–25 tasks): r
 |---|---|
 | [`examples/one-task-plan/`](examples/one-task-plan/) | The smallest plan that is still a plan. |
 | [`examples/research-first-plan/`](examples/research-first-plan/) | **When you don't have the facts yet.** The first task goes and gets them; the rest stay honestly unscoped. |
-| [`examples/`](examples/) | A real first plan by a first-time user, and the gate report that fails it with 26 findings. |
+| [`examples/`](examples/) | A real first plan by a first-time user, and the gate report that fails it with 51 findings. |
 
 **Templates** — of the eleven, seven assume a fleet of AI agents against a code repository
 and two are specific to a terminal multiplexer. If that isn't you, use the method and the
