@@ -80,7 +80,12 @@ Run before you open anything:
 ./scripts/validate-plan.py examples/a-real-first-plan  --run-gates   # must exit 1
 ./scripts/check-drift.py                                             # surfaces must agree
 python3 tests/test-owner-and-ownership.py
+python3 tests/test-brainstormed.py
+python3 tests/test-gate-fails-first.py
+python3 tests/test-config-contract.py
 bash    tests/test-human-workers.sh
+bash    tests/test-check-index.sh
+bash    tests/test-hook-gates-root-plan.sh
 ```
 
 The known-good fixture passing and the known-bad example failing is the calibration. A gate

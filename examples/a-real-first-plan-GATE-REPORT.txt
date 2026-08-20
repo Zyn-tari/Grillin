@@ -21,8 +21,8 @@ FAIL — graph               T2 is blocked by Q2, which is not a task in this pl
 FAIL — graph               T3 is blocked by Q3, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
 FAIL — graph               T4 is blocked by Q1, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
 FAIL — graph               T4 is blocked by Q2, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
-FAIL — graph               T7 says it is blocked by T2, but T2 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
 FAIL — graph               T7 says it is blocked by T4, but T4 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
+FAIL — graph               T7 says it is blocked by T2, but T2 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
 FAIL — graph               T8 is blocked by Q4, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md
 FAIL — plan-truth          T2 is blocked by ['Q1', 'Q2', 'T1'] in its TASK.md but ['T1'] in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
 FAIL — plan-truth          T3 is blocked by ['Q3', 'T1'] in its TASK.md but — in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md:1
@@ -56,8 +56,8 @@ FAIL — persona-model       T8 names no **Effort:**  ~/grillin/examples/a-real-
 FAIL — size-declared       PLAN.md declares no **Size:**. A plan that never says how big it is cannot be held to it, and the bands stay advice until it does. Add one of ['XS', 'S', 'M', 'L', 'XL'].  ~/grillin/examples/a-real-first-plan/PLAN.md:1
 PASS — done-self-reference no task is graded against a fixture it produces itself
 FAIL — brainstormed        This plan holds 8 tasks (S), and SCALING.json requires a plan this size to record that its shape was agreed with a person before the files were written. Nothing in this gate can tell a plan that is structurally perfect from one that is about the wrong problem. Add a line to PLAN.md: `**Brainstormed:** architectural · approved <date>`. Using Claude Code, that is the `brainstorming` skill, run BEFORE step 1 — and it hands over to this method instead of its own writing-plans skill.  ~/grillin/examples/a-real-first-plan/PLAN.md:1
-FAIL — gate-fails-first    T3's done-command could not run here — it failed on its own inputs, not on the work ('FileNotFoundError'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
-FAIL — gate-fails-first    T6's done-command could not run here — it failed on its own inputs, not on the work ('No such file or directory'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T6/TASK.md
-FAIL — gate-fails-first    T7's done-command could not run here — it failed on its own inputs, not on the work ('FileNotFoundError'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
+FAIL — gate-fails-first    T3 is NOT STARTED but its done-command already exits 0. The gate does not detect the work — an orchestrator would run it, see success, and mark unstarted work complete.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
+PASS — gate-fails-first    T6: gate fails cleanly while not started, as a gate should
+PASS — gate-fails-first    T7: gate fails cleanly while not started, as a gate should
 
-RESULT: FAIL — 51 finding(s). This plan is not operable as written.
+RESULT: FAIL — 49 finding(s). This plan is not operable as written.
