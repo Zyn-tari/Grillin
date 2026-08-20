@@ -426,23 +426,71 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
                  f"{tid}: gate fails cleanly while {status.lower()}, as a gate should")
 
 
+# A LINK TO A FILE THE PLAN HAS NOT WRITTEN YET IS NOT A DANGLING LINK. This
+# check resolved every relative link against the disk, so the shape the method
+# recommends failed the method's own gate: a research-first plan grades T1 on
+# `tasks/T1/FINDINGS.md` and tells T2 to read it before doing anything, and the
+# moment T2 wrote that as a markdown link instead of a code span the gate called
+# it broken. examples/research-first-plan is exactly that shape and only passes
+# today because its cross-reference happens to be a backtick. The check was
+# teaching authors to stop linking, which is the reverse of what it is for.
+#
+# WHERE THE LINE IS DRAWN, and it is not "anything under tasks/". Existing on
+# disk is one way for a target to be real; being PROMISED is the other, and a
+# promise counts only when it is written down. So a missing target is forgiven
+# when both hold: it sits inside `tasks/<ID>/` for a task this plan actually
+# holds, AND that task's own contract names the file — in its done-command, its
+# Outputs section, anywhere in its TASK.md. That is the plan declaring what it
+# produces, which is the only kind of evidence Grillin ever reads.
+#
+# What still fails, and has to: a typo (`tasks/T1/FINDNGS.md` is named by
+# nobody), a link into a task folder that does not exist, and every link outside
+# `tasks/` — a doc nobody wrote does not become real by being linked to.
+def _promised_output(plan: Path, tasks: dict, md: Path, target: str):
+    """Which task's contract promises `target`. None means no task's does."""
+    rel = os.path.relpath(os.path.normpath(str(md.parent / target)), str(plan))
+    parts = Path(rel).parts
+    if len(parts) < 3 or parts[0] != "tasks" or parts[1] not in tasks:
+        return None
+    # LINKS ARE STRIPPED BEFORE THE PROMISE IS LOOKED FOR, and this was found by
+    # this fix's own probe rather than by reading it. A task linking
+    # `[notes](TYPO.md)` inside its OWN folder put the string "TYPO.md" into its
+    # own contract, so the link stood as its own promise and every typo a task
+    # made about itself passed. A link is a reference; only a declaration
+    # promises — a done-command, an Outputs line, a sentence.
+    text = RE_MD_LINK.sub("", tasks[parts[1]].read_text(errors="replace"))
+    # The bare filename is enough: a done-command reading `test -s
+    # tasks/T1/FINDINGS.md` and an Outputs line reading `FINDINGS.md` are the
+    # same promise written at two levels of detail.
+    if parts[-1] in text or "/".join(parts) in text:
+        return parts[1]
+    return None
+
+
 def check_references(f: Findings, plan: Path, cfg: dict):
     if not cfg.get("require_refs_resolve", True):
         return
-    dangling = 0
+    tasks = find_tasks(plan)
+    dangling = promised = 0
     for md in sorted(plan.rglob("*.md")):
         for i, line in enumerate(md.read_text(errors="replace").splitlines(), 1):
             for target in RE_MD_LINK.findall(line):
                 t = target.split("#")[0].strip()
                 if not t or "://" in t or t.startswith("mailto:"):
                     continue
-                if not (md.parent / t).exists():
-                    dangling += 1
-                    f.fail("references", f"{md}:{i}",
-                           f"link target does not resolve: {t!r} "
-                           f"(resolved relative to {md.parent})")
+                if (md.parent / t).exists():
+                    continue
+                if _promised_output(plan, tasks, md, t):
+                    promised += 1
+                    continue      # not written yet; declared, and that is real
+                dangling += 1
+                f.fail("references", f"{md}:{i}",
+                       f"link target does not resolve: {t!r} "
+                       f"(resolved relative to {md.parent})")
     if not dangling:
-        f.ok("references", "every relative link in the plan resolves")
+        f.ok("references", "every relative link in the plan resolves"
+             + (f"; {promised} of them to a file a task's contract promises"
+                if promised else ""))
 
 
 def check_graph(f: Findings, tasks: dict, cfg: dict):
@@ -1081,9 +1129,35 @@ RE_DISCLAIMS = re.compile(
     r"|\bis\s+not\s+yours\b", re.I)
 
 
+# CITING A PATH IS NOT CLAIMING IT. RE_DISCLAIMS closed the negated case; this
+# is the positive one, and a curator took a real FAIL on it: two tasks listed
+# the same schema file under "## What you own" — one because it owns it, one
+# because it is the thing that must not break — and the gate failed BOTH, then
+# named the two innocent tasks as a collision. The advice that follows a false
+# collision is "stop writing the neighbours down", which deletes the sentence
+# that made the boundary reviewable in the first place. That is the same cost
+# RE_DISCLAIMS was added to stop, arriving through the other door.
+#
+# A MARKER, NOT A GUESS. The author has to say it — `read-only`, `reference
+# only`, `for reference`, `context only` — and saying it is one word. Naming
+# somebody else as the owner ("T3 owns it") is deliberately NOT enough on its
+# own, because "owned by this task" is a claim written the same shape, and
+# under-claiming is the silent failure: a false collision is loud and gets
+# argued with, a missed one ships and clobbers at merge time.
+#
+# Line-level, for the same reason and with the same trade as RE_DISCLAIMS: a
+# citation split across two lines still leaks its paths, and over-claiming is
+# the safe direction to be wrong in.
+RE_CITES = re.compile(
+    r"\bread[\s-]?only\b"
+    r"|\b(?:reference|context)\s+only\b"
+    r"|\bfor\s+(?:reference|context)\b", re.I)
+
+
 def _owned_paths(text: str):
     """Specific paths from '## What you own'. Vague ones are ignored on purpose,
-    and so are paths on a line that says the worker does NOT own them."""
+    and so are paths on a line that says the worker does NOT own them, or that
+    marks them read-only — a task may need to name what it must not break."""
     body, in_section, in_fence = [], False, False
     for line in text.splitlines():
         if line.strip().startswith("```"):
@@ -1095,8 +1169,9 @@ def _owned_paths(text: str):
             in_section = bool(re.match(r"^#+\s*What you own\b", line, re.I))
             continue
         if in_section:
-            if RE_DISCLAIMS.search(line):
-                continue          # a disclaimer, not a claim — see RE_DISCLAIMS
+            if RE_DISCLAIMS.search(line) or RE_CITES.search(line):
+                continue          # a disclaimer or a read-only citation, not a
+                                  # claim — see RE_DISCLAIMS and RE_CITES
             body.append(line)
     out = set()
     for span in RE_OWNED_PATH.findall("\n".join(body)):
@@ -1152,7 +1227,9 @@ def check_paths_disjoint(f: Findings, tasks: dict, cfg: dict):
                        f"{a} and {b} can run at the same time and both own {p!r}. "
                        f"Two workers editing one path is one conflict, relocated to "
                        f"merge time where it is most expensive. Give it one owner and "
-                       f"let the other emit a fragment.")
+                       f"let the other emit a fragment. If one of them only READS it, "
+                       f"say so on that line — 'read-only' — and it stops counting as "
+                       f"a claim; naming the path is worth keeping.")
     if not bad:
         f.ok("paths-disjoint", "no two concurrent tasks own the same path")
 
@@ -1167,6 +1244,37 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
     are what the persona is actually made of. Leaving them as tier words means
     the pairing was never decided, only gestured at, and an orchestrator cannot
     dispatch `mid`.
+
+    SIZE-BLIND, AND THAT IS THE RULING — NOT AN OVERSIGHT. Two rounds of
+    first-time users reported this check as contradicting SCALING.json, which
+    gives size S `phase5Form: "reduced — folder, owner, status, done-command; no
+    persona, skills or fragments"` while the check demands a Model and an Effort
+    at every size. examples/a-real-first-plan/tasks/T1 is a user writing exactly
+    that down — "Reduced contract: size S, phase 5 run in reduced form. No
+    persona, no skills" — and taking two findings for it.
+
+    It reads like a contradiction and it is not one. The reduced form drops a
+    PERSONA. A model and an effort are not a persona; they are what a persona
+    would have been made of, and they survive it. Three things say so:
+
+      · SCALING.json `taskContract.required` lists "model" and "effort" with no
+        size qualifier anywhere in the file. The band rows carry a phase5Form,
+        never a task contract.
+      · that reduced string is a restatement of `taskContract.layout.
+        minimumAtEverySize` — the same four items, in the same order. It is the
+        FLOOR of what a task folder must carry, not the ceiling of what it may.
+      · this check already implements the reduced form as written: it never
+        REQUIRES a persona. `mp` is validated only `if mp and roster`. What the
+        document switches off is the one field the gate does not ask for.
+
+    So the defect is in the sentence, not here, and the repair belongs in
+    SCALING.json: say plainly that the reduced form still names a model and an
+    effort. Making this check size-aware via band_rule was the other candidate
+    and it was rejected on purpose — XS and S are 1-10 tasks, which is most
+    plans, and a plan that may skip declaring its model is a plan whose price
+    nobody can read. `high` stays the floor at every size. band_rule's own
+    docstring cites this check as the reason it exists; it stays the right tool
+    for a rule SCALING.json actually declares per band, and this is not one.
     """
     if not cfg.get("require_persona_model", True):
         return
