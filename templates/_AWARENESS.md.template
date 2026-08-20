@@ -76,8 +76,9 @@ The three above cost the agent context. This one costs it nothing, because the a
 it: a progress record written where the person who asked for the work can read it without
 asking.
 
-Phase 10 already requires *"a status surface the requester can read without asking — published,
-not narrated."* This is the thing that maintains it.
+Phase 10 already requires *"status the requester can read without asking"* — the task status
+lines at every size, and a published surface from L upward. This is the thing that maintains
+them.
 
 Keep it mute for two reasons. It is free — no tokens, no interruption. And an agent that gets
 acknowledged for updating its status starts producing status updates *performatively*; silence
