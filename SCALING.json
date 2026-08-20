@@ -147,7 +147,7 @@
       "type": "BUILD",
       "highValue": false,
       "producesPlanText": true,
-      "summary": "One entry point with a read order, a paste-ready kickoff prompt, persistent memory updated, a published status surface, and hand-off items you cannot do yourself, and a warm restart: a worker halfway through can establish where it got to, not only what the plan is.",
+      "summary": "One entry point with a read order, a paste-ready kickoff prompt, persistent memory updated, status the requester can read without asking — the task status lines at every size, a published status surface from L — hand-off items you cannot do yourself, and a warm restart: a worker halfway through can establish where it got to, not only what the plan is.",
       "output": "An executable plan.",
       "minSize": "XS"
     }
@@ -175,7 +175,7 @@
         "worktrees",
         "integrator",
         "waves",
-        "status surface"
+        "published status surface"
       ],
       "isolation": "none — work in place",
       "verification": "self-check against the running system",

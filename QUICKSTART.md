@@ -182,6 +182,13 @@ A first-time user paraphrased these fields instead of using the file. The result
 correct to a human and did not match what the gate parses, and that one substitution
 caused most of her first run's findings. The gate reads fields, not intent.
 
+**Not every bold field in that template is enforced, and the template now says which.**
+`**Status:**` and `**Owner:**` are parsed and will fail your plan; `**Type:**` and
+`**Skills:**` are parsed by nothing and are still worth writing, because each one carries
+a decision from an earlier phase that is otherwise lost. The legend at the top of
+`templates/TASK.md.template` lists both registers. Do not read "unenforced" as
+"optional" — read it as "nothing will tell you it is missing".
+
 Your `PLAN.md` must also declare **Size:** — one of `XS` (1-3 tasks), `S` (4-10),
 `M` (11-25), `L` (26-60), `XL` (61+). The gate fails if the count leaves the band,
 because a size nobody enforces is advice: in a watched trial a user asked for
