@@ -52,6 +52,59 @@ from pathlib import Path
 GATE_CHECK_NAMES = sorted(set(re.findall(r'f\.(?:ok|fail)\(\s*"([a-z-]+)"',
                                          Path(__file__).read_text())))
 
+# Why a declared check can stay silent, in that check's own terms. main() prints
+# one of these as a SKIP line for every name that said nothing, so the printed
+# run adds up to the number --version claims and a reader never has to open this
+# file to find out where a missing line went.
+#
+# Keyed on the EMITTED NAME, not the function: check_owner_status emits two.
+# `{floor}` is filled in from ADVERSARY_MIN_TASKS rather than written twice.
+# tests/test-check-accounting.py fails when a declared name has no entry here,
+# which is the only thing standing between this table and rot.
+_ALWAYS = ("this check reports on every run — a SKIP here is a defect in the gate, "
+           "not a fact about your plan")
+SILENT_BECAUSE = {
+    "adversary":           "turned off: the config does not set require_adversary",
+    "adversary-context":   "not applicable: under the {floor}-task floor where an adversary "
+                           "is staffed, or require_adversary is off",
+    "brainstormed":        "not applicable: this plan has no PLAN.md — plan-truth owns that "
+                           "failure, and one defect gets one finding",
+    "config-integrity":    _ALWAYS,
+    "confirmed-exercised": "turned off: the config does not set require_confirmed_is_exercised",
+    "done-checkable":      "turned off: the config does not set require_done_command",
+    "done-self-reference": "turned off: the config does not set require_done_command",
+    "frozen-contract":     "turned off: the config does not set require_frozen_human_contracts",
+    "gate-fails-first":    "not run: --run-gates was not given, so no done-command was executed",
+    "graph":               "turned off: the config does not set require_graph_consistent",
+    "health-checker":      "not applicable: under the {floor}-task floor, or require_adversary "
+                           "is off",
+    "instrument":          "not applicable: no task has a done-command for a plan-local "
+                           "instrument to be load-bearing in, or require_instrument_fixture "
+                           "is off",
+    "invariants":          "not applicable: this plan declares no _INVARIANTS.toml — the layer "
+                           "is opt-in by file and its absence is not a defect",
+    "layout":              _ALWAYS,
+    "owner":               _ALWAYS,
+    "paths-disjoint":      "turned off: the config does not set require_paths_disjoint",
+    "persona-model":       "turned off: the config does not set require_persona_model",
+    "plan-truth":          "not applicable: this plan has no tasks/<ID>/TASK.md at all — layout "
+                           "owns that failure; or require_plan_source_of_truth is off",
+    "references":          "turned off: the config does not set require_refs_resolve",
+    "research-task":       "not applicable: no task declares itself research, recon or a spike, "
+                           "and the contract binds only a task sent to find something out",
+    "rollback":            "turned off: the config does not set require_rollback_real",
+    "rulings":             "not applicable: this plan declares no _RULINGS.toml — the layer is "
+                           "opt-in by file and its absence is not a defect",
+    "size-declared":       "not applicable: this plan has no PLAN.md — plan-truth owns that "
+                           "failure",
+    "status":              _ALWAYS,
+}
+# A name with no registered reason still gets a line. Silence is the one state
+# this gate must never leave a reader to interpret, and an unexplained SKIP at
+# least says so out loud instead of vanishing.
+UNREGISTERED_SKIP = ("this check reported nothing and no reason is registered for it in "
+                     "SILENT_BECAUSE — that is a defect in the gate; please report it")
+
 # ── strictness floors ───────────────────────────────────────────────────────
 # The config may only TIGHTEN these. Loosening past a floor is not a config
 # change, it is a decision, and it belongs in a changelog entry — not in a
@@ -159,9 +212,23 @@ class Findings:
     def ok(self, check, msg):
         self.rows.append(("PASS", check, "", msg))
 
+    def skip(self, check, msg):
+        # A check that simply says nothing looks exactly like a check that never
+        # ran. `--version` claims 24 and a clean run printed 22 named checks; a
+        # first-time curator found the gap, could not settle "not applicable"
+        # against "did not fire" without reading this source, and was right not
+        # to take it on trust. SKIP is a verdict, not a finding: it is never
+        # counted in `failed` and never reaches the exit code.
+        self.rows.append(("SKIP", check, "", msg))
+
     @property
     def failed(self):
         return any(r[0] == "FAIL" for r in self.rows)
+
+    @property
+    def named(self):
+        """Every check that has said anything at all on this run."""
+        return {r[1] for r in self.rows}
 
 
 def line_of(path: Path, needle: str) -> int:
@@ -2055,12 +2122,30 @@ def main():
     if args.run_gates:
         check_gates_fail_first(f, plan, tasks)
 
+    # ── every declared check accounts for itself ────────────────────────────
+    # The two that started this were `rulings` and `invariants`, both opt-in by
+    # file and both silent when the file is absent — indistinguishable, in the
+    # printed output, from two checks that had quietly stopped running. A gate
+    # that cannot account for its own checks is asking to be trusted on faith.
+    reported = f.named
+    for name in GATE_CHECK_NAMES:
+        if name not in reported:
+            f.skip(name, SILENT_BECAUSE.get(name, UNREGISTERED_SKIP)
+                                       .format(floor=ADVERSARY_MIN_TASKS))
+
     width = max((len(r[1]) for r in f.rows), default=10)
     for verdict, check, where, msg in f.rows:
         loc = f"  {where}" if where else ""
         print(f"{verdict} — {check.ljust(width)} {msg}{loc}")
 
     fails = sum(1 for r in f.rows if r[0] == "FAIL")
+    skipped = sum(1 for r in f.rows if r[0] == "SKIP")
+    print()
+    # The arithmetic a reader could not do before: reported + skipped is exactly
+    # what --version claims, so nothing declared can go missing unnoticed.
+    print(f"checks: {len(GATE_CHECK_NAMES)} declared — "
+          f"{len(GATE_CHECK_NAMES) - skipped} reported above, {skipped} skipped. "
+          f"A SKIP is not a finding and does not reach the exit code.")
     print()
     # ── the RESULT line is a PARSED INTERFACE, not just prose ───────────────
     # External tooling reads it. A learning cache on this machine matches
@@ -2103,9 +2188,19 @@ def main():
               f"required — you are the reader.")
     else:
         who = " · ".join(f"{r}: {', '.join(t)}" for r, t in sorted(readers.items())) or "none"
-        print(f"        Not checked: whether it is CORRECT. On the run measured end to "
-              f"end this gate caught 2 defects and the readers caught 50.")
+        print("        Not checked: whether it is CORRECT. Nothing above is a reading "
+              "of this plan's correctness.")
         print(f"        This plan staffs — {who} — and NEITHER HAS REPORTED YET.")
+        # THE NUMBERS BELOW ARE HISTORY AND HAVE TO READ AS HISTORY. They used to
+        # be printed bare, under the result of YOUR plan, phrased as though the
+        # gate had just measured it — one run, in August 2026, reported as if it
+        # were a live reading. The fact stays because it is the most useful thing
+        # this tool says about its own ceiling; the framing is what was wrong.
+        # tests/test-check-accounting.py holds these two numbers to
+        # SCALING.json's `measurement` block so they cannot drift apart.
+        print("        For scale, and this is the historical record rather than anything "
+              "measured here — SCALING.json's one end-to-end run (5 Aug 2026; one job, "
+              "one operator, one domain): the gate caught 2 defects, the readers 50.")
     return 0
 
 
