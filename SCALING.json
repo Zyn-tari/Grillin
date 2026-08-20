@@ -210,7 +210,7 @@
       ],
       "isolation": "branches, no worktrees",
       "verification": "one adversarial pass on the risky task",
-      "phase5Form": "reduced — folder, owner, status, done-command; no persona, skills or fragments",
+      "phase5Form": "reduced — folder, owner, status, done-command, and still a model and an effort; no persona, skills or fragments",
       "brainstormed": "required"
     },
     {
