@@ -106,7 +106,7 @@ Print it. Tick it. A plan that fails these is not ready, regardless of how good 
 - [ ] A single entry point with an explicit read order
 - [ ] A paste-ready kickoff prompt
 - [ ] Persistent memory updated — a cold start lands here
-- [ ] A status surface the requester can read without asking
+- [ ] Task status lines the requester can read without asking — at every size — plus a **published** status surface from L upward
 - [ ] Escalation conditions listed, and they are decisions — not findings
 
 ## Will the worker stay oriented?
