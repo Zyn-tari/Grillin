@@ -1,7 +1,20 @@
 # Changelog
 
 
-## Unreleased
+## v1.1.0 — 2026-08-20
+
+**Read this before you re-run the gate on a plan that was green.** This release changes
+verdicts in BOTH directions, which no previous release has done:
+
+- Plans of **4 tasks or more that were passing will now FAIL** until they add a
+  `**Brainstormed:**` line. That is a new obligation, not a bug fix.
+- Plans that were **failing on `gate-fails-first` may now PASS**, because a done-command that
+  grades content is no longer misread as a broken gate. If a plan of yours goes green here,
+  it was green all along and the gate was wrong.
+
+The gate is **24 checks**, up from the 23 that v1.0.0 shipped. `--version` reported "1.0.0"
+alongside "gate: 24 checks" for a few hours today — the same version string describing two
+different gates, which is the exact class of defect this repo exists to catch.
 
 ### The shape gets argued before the files exist — 2026-08-20
 
