@@ -144,7 +144,9 @@ Emit fragments into this folder instead: `<FRAGMENT>.ext`.
 
 **If reality diverges from this file, the file is wrong — say so.** A step that cannot be
 performed as written, an owned path that does not exist, a "done" that cannot be evidenced: record
-it in `QUESTIONS.md` and stop. Do not quietly do the adjacent thing. Amending the plan is the
+it in `QUESTIONS.md` and stop **your** work — not the plan's. Somebody answers by
+putting `ANSWER.md` beside it; `smokin run` is watching for that file and carries the plan on
+by itself. Do not quietly do the adjacent thing. Amending the plan is the
 integrator's call, not yours, but the divergence must be *reported* rather than absorbed.
 
 **Commit** to your branch before reporting: code + `FINDINGS.md` + `CHANGES.md` + any fragments.

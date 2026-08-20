@@ -518,10 +518,10 @@ interactive map in [`index.html`](index.html).
 | Size | Tasks | Turn on |
 |---|---|---|
 | **XS** | 1–3 | Phases 0, 3, 9, **10**. No fan-out, no skills, no isolation. ~1 hour of planning. |
-| **S** | 4–10 | + Phase 1 (2–3 recon workers), + Phase 4 diagram, + **Phase 5 reduced** (folder, owner, status, done-command — no persona, no skills, no fragments), 1 skill, branches only. |
-| **M** | 10–25 | + Phase 5 **full** contracts (persona, skills, fragments), 3–5 skills, worktrees, **integrator**, adversarial pass. |
-| **L** | 25–60 | + waves, + long-clock loops, + published status surface, two adversarial passes. |
-| **XL** | 60+ | + sub-orchestrators per track, + a plan-of-plans. Re-run Phase 3 per track. |
+| **S** | 4–10 | + Phase 1 (2–3 recon workers), + Phase 4 diagram, + **Phase 5 reduced** (folder, owner, status, done-command, and still a model and an effort — no persona, no skills, no fragments), 1 skill, branches only. |
+| **M** | 11–25 | + Phase 5 **full** contracts (persona, skills, fragments), 3–5 skills, worktrees, **integrator**, adversarial pass. |
+| **L** | 26–60 | + waves, + long-clock loops, + published status surface, two adversarial passes. |
+| **XL** | 61+ | + sub-orchestrators per track, + a plan-of-plans. Re-run Phase 3 per track. |
 
 **Two things never scale down.** At every size, from a one-line fix upward:
 

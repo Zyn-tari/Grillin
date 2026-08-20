@@ -67,7 +67,12 @@ jobs:
           probe rollback-prose       rollback            "sed -i 's|^\*\*Owner:\*\* worker-a|**Owner:** worker-a\n**Reversible:** no\n**Rollback:** just undo it|' tasks/T1/TASK.md"
           probe paths-collide        paths-disjoint      "sed -i 's|\`findings/T2.md\`|\`findings/T1.md\`|' tasks/T2/TASK.md; sed -i 's|^\*\*Blocked by:\*\* T1|**Blocked by:** —|' tasks/T2/TASK.md; sed -i 's|\*\*Blocks:\*\* T2|**Blocks:** —|' tasks/T1/TASK.md"
           probe effort-too-low       persona-model       "sed -i 's/\*\*Effort:\*\* high/**Effort:** medium/' tasks/T1/TASK.md"
-          probe model-is-tier-word   persona-model       "sed -i 's/\`claude-sonnet-5\`/\`top\`/' tasks/T1/TASK.md"
+          # WAS DEAD, AND LOUDLY: it sed'd `claude-sonnet-5` while the fixture
+          # says `claude-opus-5`, so the mutation applied to nothing, the plan
+          # stayed green, and the probe reported its own check as dead on every
+          # CI run. That is the failure mail. A probe whose mutation misses is
+          # the same defect class the probes exist to catch.
+          probe model-is-tier-word   persona-model       "sed -i 's/\`claude-opus-5\`/\`top\`/' tasks/T1/TASK.md"
           probe persona-not-rostered persona-model       "sed -i 's/\`recon\`/\`freelancer\`/' tasks/T1/TASK.md"
           # The delegation node's config. Opt-in by file, so each probe writes one.
           RUL='[[ruling]]\nclass = \"receipt-trust\"\nwhen = \"verdict.passed\"\npersona = \"judge\"\nevidence = [\"receipt\"]\noutcomes = [\"accept\", \"reject\", \"insufficient-evidence\"]\ndefault = \"halt\"\n'
@@ -86,7 +91,11 @@ jobs:
           probe size-out-of-band     size-declared       "sed -i 's|^\*\*Size:\*\* S|**Size:** XS|' PLAN.md"
           # A task graded against a baseline inside its own folder passes whether
           # or not the work happened. Found by a first-time user on her own plan.
-          probe done-self-ref        done-self-reference "sed -i 's|test -f findings/T2.md|python3 x.py | diff -u tasks/T2/baseline.txt -|' tasks/T2/TASK.md"
+          # ALSO DEAD, for a different reason: the replacement contains a pipe
+          # and the s/// used | as its delimiter, so sed died with "unknown
+          # option to `s'" and the probe reported the check dead. Delimiter is
+          # now # , which appears nowhere in either half.
+          probe done-self-ref        done-self-reference "sed -i 's#test -f findings/T2.md#python3 x.py | diff -u tasks/T2/baseline.txt -#' tasks/T2/TASK.md"
           # Plan-level invariants. Opt-in by file, so each probe writes one. The
           # last is the one Smokin cannot make: a done-command wearing an
           # invariant's clothes measures completion, never blast radius.
@@ -106,6 +115,24 @@ jobs:
 
       - name: owner resolution and disclaimed paths
         run: python3 tests/test-owner-and-ownership.py
+
+      # The harnesses added after this file was written. Each one is here because
+      # a check with no CI step is a check that only runs when somebody
+      # remembers, and the two dead probes above are what that looks like.
+      - name: a plan of 4+ tasks records that its shape was agreed
+        run: python3 tests/test-brainstormed.py
+
+      - name: a gate that grades content is not a broken gate
+        run: python3 tests/test-gate-fails-first.py
+
+      - name: a citation is not a claim, and a promised file resolves
+        run: python3 tests/test-citations-and-promises.py
+
+      - name: every declared check accounts for itself in a run
+        run: python3 tests/test-check-accounting.py
+
+      - name: the human-worker example is a valid plan
+        run: ./scripts/validate-plan.py examples/human-worker-plan --run-gates
 
       - name: a plan of people passes, and the floor is still there
         run: bash tests/test-human-workers.sh

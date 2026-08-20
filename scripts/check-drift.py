@@ -210,6 +210,49 @@ def main() -> int:
                         bad.append(f"{surface.relative_to(ROOT)} says "
                                    f"{sorted(wrong)} findings, the gate produces {stored}")
 
+    # ── 7 · the size table in the prose, which nothing was reading ──────────
+    # check 5 compares SCALING.json's ranges to the gate's BANDS and stops. The
+    # markdown table is a THIRD copy, and it said M 10-25, L 25-60, XL 60+ —
+    # overlapping bands, so a 25-task plan was two sizes at once. It survived
+    # because this file never read it, which is the same reason the anti-pattern
+    # table drifted in check 3b.
+    m = re.search(r"^\|\s*\*\*XS\*\*.*?(?=^\s*$|\Z)", prose, re.M | re.S)
+    if m is None:
+        bad.append("GRILLING-THE-PLAN.md has no size table to check against BANDS")
+    else:
+        for row in m.group(0).splitlines():
+            r = re.match(r"\|\s*\*\*(XS|S|M|L|XL)\*\*\s*\|\s*([0-9]+)[–-]?([0-9]*)\+?\s*\|", row)
+            if not r:
+                continue
+            size, lo, hi = r.group(1), int(r.group(2)), r.group(3)
+            want = gate.get(size)
+            if not want:
+                continue
+            if lo != want[0] or (hi and int(hi) != want[1]):
+                bad.append(f"GRILLING-THE-PLAN.md's size table says {size} is "
+                           f"{lo}-{hi or '+'}, the gate's BANDS says "
+                           f"{want[0]}-{want[1]}")
+
+    # ── 8 · the headline number has to be the sum of its parts ──────────────
+    # "the readers caught 50" is printed by the gate on every run. Its parts are
+    # health 20 and adversary 44 (30 blocking, 14 non-blocking), which sum to 64.
+    # A reader tried to add it up, could not, and nothing in the repo explained
+    # the gap. 50 is health + the adversary's BLOCKING findings; that reading is
+    # now recorded, and this asserts it stays true.
+    meas = spec.get("measurement", {})
+    head = re.search(r"readers caught (\d+)", meas.get("headline", ""))
+    adv = re.search(r"(\d+)\s+blocking", (spec.get("readers", {})
+                                           .get("adversary", {}).get("found", "")))
+    if head and adv:
+        want = meas.get("healthChecker", 0) + int(adv.group(1))
+        if int(head.group(1)) != want:
+            bad.append(f"SCALING.json's headline says the readers caught "
+                       f"{head.group(1)}, but healthChecker {meas.get('healthChecker')} "
+                       f"+ adversary {adv.group(1)} blocking = {want}")
+        if "headlineDecomposition" not in meas:
+            bad.append("SCALING.json's headline number has no stated decomposition — "
+                       "a number the gate prints on every run must be addable")
+
     if bad:
         print("DRIFT — the surfaces disagree:\n")
         for b in bad:

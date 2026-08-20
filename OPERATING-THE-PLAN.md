@@ -276,7 +276,7 @@ confirm each named thing exists in the artefact you actually have. Not the repo 
 looking at. The deployed one.
 
 `templates/TASK.md.template` already covers the moment you *notice* — "an owned path that does not
-exist, a 'done' that cannot be evidenced: record it in `QUESTIONS.md` and stop. Do not quietly do
+exist, a 'done' that cannot be evidenced: record it in `QUESTIONS.md` and raise it. Do not quietly do
 the adjacent thing." This is narrower and earlier: **before the first edit, and with no plan
 directory in the picture**, which is the case that template never reaches.
 
@@ -355,6 +355,38 @@ the table and nothing else.
 
 **ADVISORY** — and it will stay advisory. The identifiers live in prose the gate never reads, in
 documents that frequently do not exist when the plan is authored.
+
+---
+
+## 10a · The two ways a person is in the plan, and they are not the same
+
+Keep these apart. Confusing them is what produced a plan that took the model-floor exemption
+without the obligation that pays for it.
+
+**ASKING — a worker is blocked and you decide.** This is the common one. The work is an
+agent's; only the *decision* is yours. The worker writes `tasks/<ID>/QUESTIONS.md` and stops
+its own branch. You answer by putting `ANSWER.md` beside it. That file existing is the entire
+signal — nothing to parse, no marker to remember, and the question survives verbatim next to
+its answer for whoever reads the plan later.
+
+**The plan does not stop while it waits.** Every other ready task keeps being dispatched, and
+when the only work left is yours, `smokin run` holds: it watches the plan directory and carries
+on by itself the moment the answer lands. You are not the scheduler. Do not write a
+`wait-for-agent.sh`, and do not sit there re-running the tick.
+
+**OWNING — the work itself is a person's.** A sign-off, an interview, a judgement call that
+has to be made by someone accountable. Declare it with `**Owner:** … human` on the task, or
+`**Workers:** human` in `PLAN.md` for a plan whose people have job titles. Such a task is never
+dispatched to a model, and it is *parked*, not blocking: the fleet keeps running around it.
+
+**Reach for ASKING unless the WORK is human, not just the decision.** See
+`examples/human-worker-plan/` for the owning case worked end to end.
+
+> **A known limit, stated rather than left implicit.** `**Workers:** human` in `PLAN.md` lifts
+> the model floor for every task, but the frozen-contract obligation — and Smokin's refusal to
+> dispatch to a model — read the *task's* `**Owner:**`. Write **both** if your owners are job
+> titles, or you take the exemption without the obligation that makes it a trade. The gate does
+> not enforce this today.
 
 ---
 
