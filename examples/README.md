@@ -1,12 +1,23 @@
-# Two examples: one that fails, one that passes
+# The shipped examples: one that fails, one that passes, one worked by people
 
 | | |
 |---|---|
 | [`a-real-first-plan/`](a-real-first-plan) | A genuine first attempt. **Fails, with 49 findings.** Read it to see how finished a broken plan feels. |
 | [`minimal-passing-plan/`](minimal-passing-plan) | The smallest plan that passes cleanly. **A fixture, not a specimen** — do not copy it as a model. |
+| [`human-worker-plan/`](human-worker-plan) | **A plan whose workers are people, not agents.** Three named humans write an incident review. Shows `**Workers:** human`, task files with no model or effort, no roster — and the frozen contract that is the price of the exemption. |
 
 One of each is the minimum needed to tell a working validator from a broken one, which is the rule
 [`OPERATING-THE-PLAN.md`](../OPERATING-THE-PLAN.md) §5 applies to every other instrument.
+
+`human-worker-plan/` is the third shape, and it is here because it was missing. Grillin supports a plan
+worked by people — [`QUICKSTART.md`](../QUICKSTART.md) §0b question 3 asks it outright — and until now
+nothing shipped that demonstrated it. Three first-time users hit the model floor on a plan of people
+independently, and two of them stopped running the gate at all, which is the expensive failure: a gate
+that is wrong about a case people really have gets discarded whole, taking the twenty checks that were
+right with it. Later, both curators planning human-worked jobs assembled their contracts by hand, and one
+had to open [`tests/test-human-workers.sh`](../tests/test-human-workers.sh) to find out what the
+declaration buys and costs. That answer now lives in
+[`human-worker-plan/README.md`](human-worker-plan/README.md), in one paragraph.
 
 ---
 
