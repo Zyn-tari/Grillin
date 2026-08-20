@@ -25,6 +25,40 @@ mistake is visible from here.
 **0b is never skipped.** It takes two minutes and it is what tells you which of the
 rest applies.
 
+### Before step 1 — argue the shape with a person
+
+The rows above are a size call. They do not tell you whether you are solving the right
+problem, and **nothing in this repo's gate can**: a plan can be structurally perfect and about
+the wrong thing, and every check will pass. 0b helps, but a curator can answer all five
+questions inside their own head in the same two minutes they decided what to build.
+
+So on a plan of **4 tasks or more**, the shape gets argued with a person first, and the plan
+records that it happened. One line, next to your 0b answers:
+
+```
+**Brainstormed:** architectural · approved 2026-08-19
+```
+
+The gate checks it (`brainstormed`), and only at S and above — at XS this is advisory, because
+a one-to-three task plan is the case the table above already tells you not to ceremonialise.
+
+**Using Claude Code?** This is its `brainstorming` skill, and the three paths it classifies a
+request into are the rows of the table above:
+
+| Its path | This table's row | What you write |
+|---|---|---|
+| **spike** — "can we…", the output is an answer | *One obvious change* | Nothing. Find out, report, keep no code |
+| **bounded** — a scoped change to a flow that already exists | *1–3 tasks* | A short design in chat, approved. No plan directory |
+| **architectural** — new subsystems, changed interfaces | *4–10, or more* | **A Grillin plan** |
+
+Run it **before step 1**. One difference matters: on its architectural path that skill ends by
+invoking its own `writing-plans` skill — **do not**. Grillin *is* the plan-writing method, and
+running both produces two plans in two formats. Take the classification, the questions, the
+approaches and the approval from brainstorming, then come back here for step 1 onward.
+
+The approval is the gate, not the design's length. "Too simple to need approval" is that
+skill's own named anti-pattern, and it is why the recorded line has to say *approved*.
+
 The times are for the planning, not the work.
 
 ---

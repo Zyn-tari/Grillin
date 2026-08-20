@@ -178,7 +178,8 @@
         "status surface"
       ],
       "isolation": "none — work in place",
-      "verification": "self-check against the running system"
+      "verification": "self-check against the running system",
+      "brainstormed": "advisory"
     },
     {
       "size": "S",
@@ -209,7 +210,8 @@
       ],
       "isolation": "branches, no worktrees",
       "verification": "one adversarial pass on the risky task",
-      "phase5Form": "reduced — folder, owner, status, done-command; no persona, skills or fragments"
+      "phase5Form": "reduced — folder, owner, status, done-command; no persona, skills or fragments",
+      "brainstormed": "required"
     },
     {
       "size": "M",
@@ -242,7 +244,8 @@
       ],
       "isolation": "worktrees + single-owner contended files",
       "verification": "adversarial pass after every build task",
-      "phase5Form": "full — persona, skills, fragments, integrator"
+      "phase5Form": "full — persona, skills, fragments, integrator",
+      "brainstormed": "required"
     },
     {
       "size": "L",
@@ -271,7 +274,8 @@
         "sub-orchestrators"
       ],
       "isolation": "worktrees + waves + integrator per merge group",
-      "verification": "two independent adversarial passes; second must not see the first"
+      "verification": "two independent adversarial passes; second must not see the first",
+      "brainstormed": "required"
     },
     {
       "size": "XL",
@@ -297,7 +301,8 @@
       ],
       "leaveOff": [],
       "isolation": "worktrees + waves + per-track integrators",
-      "verification": "two passes per task, plus a completeness critic per track"
+      "verification": "two passes per task, plus a completeness critic per track",
+      "brainstormed": "required"
     }
   ],
   "neverScaleDown": [
@@ -889,29 +894,30 @@
     "consequence": "The layers catch disjoint classes. Grillin had spent nearly all its written mechanism on the class that yields 2, which is why the highest-value check added does nothing but refuse to pass a plan with nobody staffed to attack it."
   },
   "gateChecks": [
-    "config-integrity",
-    "layout",
-    "owner",
-    "status",
-    "done-checkable",
-    "references",
-    "graph",
-    "plan-truth",
     "adversary",
     "adversary-context",
-    "health-checker",
+    "brainstormed",
+    "config-integrity",
     "confirmed-exercised",
+    "done-checkable",
+    "done-self-reference",
     "frozen-contract",
+    "gate-fails-first",
+    "graph",
+    "health-checker",
     "instrument",
-    "rollback",
+    "invariants",
+    "layout",
+    "owner",
     "paths-disjoint",
     "persona-model",
-    "size-declared",
-    "done-self-reference",
-    "rulings",
-    "invariants",
+    "plan-truth",
+    "references",
     "research-task",
-    "gate-fails-first"
+    "rollback",
+    "rulings",
+    "size-declared",
+    "status"
   ],
   "researchTask": "A task whose job is to find something out, not to change something. Declared **Kind:** research with a **Timebox:**; graded on the FINDINGS file it writes, never on what it found, because 'I understand it now' is not checkable by anyone. Hitting the timebox without an answer is a reportable result -- 'could not establish X, here is what it would take' -- and the next task is planned from that as readily as from an answer. One question per task; a second question is a second task. Whatever it built to answer the question is evidence, not the implementation. Use it when the system is real but this planner cannot reach it, or when the request names a symptom nobody has measured; phase 1's count and phase 9's environment check become its steps rather than being skipped or faked. ENFORCED by check_research_task, which can see the timebox and the done-command and cannot see whether the findings are any good.",
   "gateNotRun": "CLOSED 2026-08-05. Was: nothing in the repository ran the gate. Now three things do — .githooks/pre-commit (skippable only via GRILLIN_SKIP=1, which logs the skip), .github/workflows/gate.yml (not skippable, and it mutation-tests every check so a dead check fails the build), and scripts/install-hooks.sh which sets core.hooksPath because .git/hooks is not versioned. Both calibrate before they gate: known-good must exit 0, known-bad must exit 1.",

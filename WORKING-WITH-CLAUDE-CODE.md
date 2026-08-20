@@ -189,6 +189,46 @@ three habits and stop there.
 
 ---
 
+## 6b · The skill that runs before this one
+
+Claude Code ships a `brainstorming` skill, and it is the step in front of Grillin, not a
+competitor to it. It classifies a request into one of three paths and refuses to write
+anything until you have approved a design. Grillin cannot do that job: this method starts
+once you have decided *what* to build, and its gate checks structure — a plan about entirely
+the wrong problem passes every one of the 24 checks.
+
+**The seam, and it matters.** On its architectural path that skill finishes by invoking its
+own `writing-plans` skill. Do not let it. Grillin **is** the plan-writing method; running
+both gives you two plans in two formats and no answer about which one an orchestrator obeys.
+Take these from brainstorming:
+
+- the **classification** — spike, bounded, or architectural
+- the **questions**, asked one at a time, about purpose and constraints and success criteria
+- the **2–3 approaches** with trade-offs, and the recommendation
+- the **approval** — an explicit yes before any file exists
+
+and then come to `QUICKSTART.md` step 1 instead of `writing-plans`.
+
+**What Grillin does with it.** A plan of four tasks or more must record the outcome, or the
+gate refuses it:
+
+```
+**Brainstormed:** architectural · approved 2026-08-19
+```
+
+At XS it is advisory — the band is data in `SCALING.json`, not a number written into the
+checker, which is the mistake `check_persona_model` is still making.
+
+**And one warning specific to agents.** The failure this guards is not laziness, it is
+fluency: an agent handed a one-line ask will produce a beautiful, complete, internally
+consistent plan directory in a single turn, and nothing about the artefact will look wrong.
+The shipped example `examples/a-real-first-plan` is a real first-time user hitting exactly
+this — its `04-SHAPE.md` says, in its own words, *"This diagram has not been approved… I wrote
+the task contracts anyway."* That plan is this repository's **known-bad** calibration fixture,
+and `check_brainstormed` is now one of the reasons it fails.
+
+---
+
 ## 7 · Where Grillin fits
 
 Grillin is a method for the fourth row: **writing a plan that several agents can execute without

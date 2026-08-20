@@ -1,6 +1,7 @@
 # Minimal passing plan — the gate's own fixture
 
 **Size:** S
+**Brainstormed:** architectural · approved 2026-08-19
 
 This is the smallest plan that passes `validate-plan.py --run-gates` cleanly, and it exists so the
 gate can be proven against a known answer before anyone trusts it on their work. Its counterpart,
