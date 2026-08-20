@@ -1250,6 +1250,40 @@ RE_SIZE = re.compile(r"^\*\*Size:\*\*\s*([A-Za-z]{1,2})\b", re.M)
 # published three times is a number that eventually disagrees with itself.
 BANDS = [("XS", 1, 3), ("S", 4, 10), ("M", 11, 25), ("L", 26, 60), ("XL", 61, 999999)]
 
+RE_BRAINSTORMED = re.compile(r"^\*\*Brainstormed:\*\*\s*(.+)$", re.M | re.I)
+# The three paths the brainstorming skill classifies a request into. Two of them
+# do not produce a plan document at all, which is exactly why the value matters
+# rather than merely being present.
+BRAINSTORM_PATHS = ("spike", "bounded", "architectural")
+
+
+def band_of(n: int) -> str:
+    for name, lo, hi in BANDS:
+        if lo <= n <= hi:
+            return name
+    return BANDS[-1][0]
+
+
+def band_rule(key: str, size: str, default=None):
+    """Read a per-band rule from SCALING.json rather than hardcoding the bands.
+
+    THE REASON THIS EXISTS. `check_persona_model` is size-BLIND while
+    SCALING.json declares per-band behaviour, and the contradiction has been
+    found independently by two rounds of first-time users: the document says one
+    thing at XS and the gate demands another. Any new check that scales must
+    read the same file the documents are generated from, or it becomes the third
+    place a band is written down and the second place it is wrong.
+    """
+    try:
+        spec = json.loads((Path(__file__).resolve().parent.parent
+                           / "SCALING.json").read_text())
+    except (OSError, ValueError):
+        return default          # a missing spec must not invent strictness
+    for b in spec.get("scaling", []):
+        if b.get("size") == size:
+            return b.get(key, default)
+    return default
+
 
 def check_size_declared(f: Findings, plan: Path, tasks: dict, cfg: dict):
     """A size band nobody enforces is advice.
@@ -1345,6 +1379,80 @@ def check_done_self_reference(f: Findings, plan: Path, tasks: dict, cfg: dict):
     if not bad:
         f.ok("done-self-reference",
              "no task is graded against a fixture it produces itself")
+
+
+def check_brainstormed(f: Findings, plan: Path, tasks: dict, cfg: dict):
+    """Was the shape argued out with a person before the files were written?
+
+    THE FAILURE THIS IS FOR. A curator with a capable agent goes from a one-line
+    ask straight to a directory of task files. The plan is then structurally
+    perfect and about the wrong problem — and every check in this gate passes,
+    because structure is all they can see. The five questions in QUICKSTART 0b
+    were the first answer to that and they are necessary; they are not
+    sufficient, because a curator can answer all five inside their own head in
+    the same two minutes they decided what to build.
+
+    So on a plan big enough to be worth arguing about, the plan must record that
+    the argument happened: which path the work was classified as, and that the
+    design was approved BEFORE the files existed. Claude Code ships the
+    mechanism as its `brainstorming` skill; this check does not care which
+    mechanism was used, only that the plan says a shape was agreed and by when.
+
+    SIZE-AWARE, AND THE BAND COMES FROM SCALING.json. At XS this is advisory:
+    a one-to-three task plan is the case QUICKSTART already tells people not to
+    ceremonialise. Reading the requirement from the spec rather than hardcoding
+    it is deliberate — see `band_rule`.
+
+    THE PATH VALUE IS CHECKED, not just its presence. Two of the three paths
+    (`spike`, `bounded`) are defined as producing NO plan document. A four-task
+    plan declaring itself bounded is a plan whose own header says it should not
+    exist, and that contradiction is worth more than the field being non-empty.
+    """
+    p = plan / "PLAN.md"
+    if not p.is_file():
+        return          # check_plan_source_of_truth owns that failure
+    size = band_of(len(tasks))
+    rule = (band_rule("brainstormed", size) or "advisory").lower()
+    m = RE_BRAINSTORMED.search(p.read_text(errors="replace"))
+    if rule != "required":
+        f.ok("brainstormed",
+             f"{size} — the shape is advisory at this size; "
+             f"{'declared anyway' if m else 'not declared'}")
+        return
+    if not m:
+        f.fail("brainstormed", f"{p}:1",
+               f"This plan holds {len(tasks)} tasks ({size}), and SCALING.json requires a "
+               f"plan this size to record that its shape was agreed with a person before "
+               f"the files were written. Nothing in this gate can tell a plan that is "
+               f"structurally perfect from one that is about the wrong problem. Add a line "
+               f"to PLAN.md: `**Brainstormed:** architectural · approved <date>`. Using "
+               f"Claude Code, that is the `brainstorming` skill, run BEFORE step 1 — and it "
+               f"hands over to this method instead of its own writing-plans skill.")
+        return
+    val = m.group(1).strip()
+    path = next((w for w in BRAINSTORM_PATHS if re.search(rf"\b{w}\b", val, re.I)), None)
+    if path is None:
+        f.fail("brainstormed", f"{p}:1",
+               f"**Brainstormed:** says {val!r}, which names none of {list(BRAINSTORM_PATHS)}. "
+               f"The path taken is the half that carries information — it is what says how "
+               f"much argument the shape got.")
+        return
+    if path != "architectural":
+        f.fail("brainstormed", f"{p}:1",
+               f"**Brainstormed:** declares the {path!r} path, but a {path} classification "
+               f"is defined as producing NO plan document — and this is a plan of "
+               f"{len(tasks)} tasks. Either the classification was wrong and this is "
+               f"architectural work, or the plan should not exist. Re-classify rather than "
+               f"editing the label: the ratchet is one-way, hidden complexity upgrades the "
+               f"path and nothing downgrades it.")
+        return
+    if not re.search(r"\bapproved\b|\bagreed\b|\bsigned[- ]off\b", val, re.I):
+        f.fail("brainstormed", f"{p}:1",
+               f"**Brainstormed:** says {val!r} but never says the design was APPROVED. "
+               f"Presenting a design and starting in the same breath is the whole failure "
+               f"this records; the gate is the approval, not the design's length.")
+        return
+    f.ok("brainstormed", f"{size} — shape agreed on the {path} path, and approved")
 
 
 def check_research_task(f: Findings, plan: Path, tasks: dict, cfg: dict):
@@ -1763,6 +1871,7 @@ def main():
     check_size_declared(f, plan, tasks, cfg)
     check_done_self_reference(f, plan, tasks, cfg)
     check_research_task(f, plan, tasks, cfg)
+    check_brainstormed(f, plan, tasks, cfg)
     check_rulings(f, plan, tasks, cfg)
     check_invariants(f, plan, tasks, cfg)
     if args.run_gates:

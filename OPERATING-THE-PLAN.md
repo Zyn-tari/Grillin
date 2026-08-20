@@ -408,6 +408,7 @@ Honest accounting. A rule a machine cannot check is a preference.
 | Instructions are preflighted against the artefact | ADVISORY | — |
 | A task whose failure has two readings carries `## If it fails` | ADVISORY | — · frozen with the contract when present |
 | A person's task is not dispatched to a model | **ENFORCED, ELSEWHERE** | `smokin` `route()` clause 0, on this file's `is_human_owned` |
+| A plan of 4+ tasks records that its shape was approved | **ENFORCED** | `check_brainstormed` — size-aware, band read from `SCALING.json` |
 
 ---
 

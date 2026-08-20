@@ -46,7 +46,7 @@ Two things ship here:
   a text editor and nothing installed. Three of the phases produce no plan text at all —
   only corrections — and they are the ones that pay.
 - **A gate.** One script that reads the plan you produced and fails if an orchestrator
-  could not run it. 23 checks, zero dependencies, fail-closed. It validates its own config
+  could not run it. 24 checks, zero dependencies, fail-closed. It validates its own config
   and is itself proven against a fixture with a known answer, because a validator that
   passes everything catches nothing.
 
@@ -151,7 +151,7 @@ something was a conversation, which dies, taking the state with it.
 ```mermaid
 flowchart LR
   A["a vague ask"] -->|Grillin<br/>11 phases| B["PLAN.md<br/>tasks/*/TASK.md"]
-  B --> C{"the gate<br/>23 checks"}
+  B --> C{"the gate<br/>24 checks"}
   C -->|FAIL| B
   C -->|PASS| D["Smokin tick<br/>dispatch what is ready"]
   D --> E["worker claims done"]
