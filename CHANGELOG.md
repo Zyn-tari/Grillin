@@ -37,6 +37,27 @@ minutes they decided what to build.
 
 `tests/test-brainstormed.py` — 44 checks.
 
+### The known-bad example was telling three different stories — 2026-08-20
+
+`examples/a-real-first-plan` is this repo's known-bad calibration fixture, and the record of
+what the gate says about it had rotted in three places at once:
+
+| Surface | Said | Reality |
+|---|---|---|
+| `a-real-first-plan-GATE-REPORT.txt` | 26 findings | 51 |
+| `examples/README.md` (twice) | "30+", then 26 | 51 |
+| `examples/minimal-passing-plan/PLAN.md` | "30+" | 51 |
+
+The report was generated once, on 17 August, and never regenerated — so every check added
+since had silently invalidated it, `brainstormed` included. All four surfaces now say 51.
+
+**And the rot is now checkable, which is the actual fix.** `check-drift.py` gained a sixth
+check: the stored report must agree with its own FAIL lines, with a live gate run, and with
+every prose surface that states a count. A stored measurement of the gate rots every time the
+gate gains a check, which makes it exactly the class of fact this repo says must be derived
+rather than remembered — and it was the one such fact nothing was deriving. Mutation-proven
+both ways: a stale report and stale prose each fail it with the surface named.
+
 ## The policy, before the entries
 
 **A new version can add checks, and a plan that passed before may fail after.**

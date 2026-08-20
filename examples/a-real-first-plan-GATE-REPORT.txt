@@ -1,31 +1,63 @@
-PASS — config-integrity config is within the hardcoded strictness floors
-PASS — layout           8 tasks, each in its own folder
-FAIL — owner            T2 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
-FAIL — owner            T3 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md:1
-FAIL — owner            T4 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md:1
-FAIL — owner            T5 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T5/TASK.md:1
-FAIL — owner            T6 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T6/TASK.md:1
-FAIL — owner            T7 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md:1
-PASS — status           every task carries a valid status line
-FAIL — done-checkable   T1's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T1/TASK.md:1
-FAIL — done-checkable   T2's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
-FAIL — done-checkable   T4's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md:1
-FAIL — done-checkable   T5's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T5/TASK.md:1
-FAIL — done-checkable   T8's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md:1
-FAIL — references       link target does not resolve: '_HERDR.md' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:149
-FAIL — references       link target does not resolve: '_RULES.md' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:151
-FAIL — references       link target does not resolve: '_RULES.md' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:152
-FAIL — references       link target does not resolve: '_AWARENESS.md.template' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:154
-FAIL — graph            T2 is blocked by Q1, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md
-FAIL — graph            T2 is blocked by Q2, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md
-FAIL — graph            T3 is blocked by Q3, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
-FAIL — graph            T4 is blocked by Q1, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
-FAIL — graph            T4 is blocked by Q2, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
-FAIL — graph            T7 says it is blocked by T2, but T2 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
-FAIL — graph            T7 says it is blocked by T4, but T4 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
-FAIL — graph            T8 is blocked by Q4, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md
-FAIL — gate-fails-first T3's done-command could not run here — it failed on its own inputs, not on the work ('FileNotFoundError'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
-FAIL — gate-fails-first T6's done-command could not run here — it failed on its own inputs, not on the work ('No such file or directory'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T6/TASK.md
-FAIL — gate-fails-first T7's done-command could not run here — it failed on its own inputs, not on the work ('FileNotFoundError'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
+PASS — config-integrity    config is within the hardcoded strictness floors
+PASS — layout              8 tasks, each in its own folder
+FAIL — owner               T2 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
+FAIL — owner               T3 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md:1
+FAIL — owner               T4 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md:1
+FAIL — owner               T5 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T5/TASK.md:1
+FAIL — owner               T6 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T6/TASK.md:1
+FAIL — owner               T7 names no owner — an orchestrator cannot dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md:1
+PASS — status              every task carries a valid status line
+FAIL — done-checkable      T1's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T1/TASK.md:1
+FAIL — done-checkable      T2's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
+FAIL — done-checkable      T4's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md:1
+FAIL — done-checkable      T5's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T5/TASK.md:1
+FAIL — done-checkable      T8's done criterion is prose, not a runnable command — nobody can re-derive completion without asking someone  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md:1
+FAIL — references          link target does not resolve: '_HERDR.md' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:149
+FAIL — references          link target does not resolve: '_RULES.md' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:151
+FAIL — references          link target does not resolve: '_RULES.md' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:152
+FAIL — references          link target does not resolve: '_AWARENESS.md.template' (resolved relative to ~/grillin/examples/a-real-first-plan)  ~/grillin/examples/a-real-first-plan/03-CONTRADICTIONS.md:154
+FAIL — graph               T2 is blocked by Q1, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md
+FAIL — graph               T2 is blocked by Q2, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md
+FAIL — graph               T3 is blocked by Q3, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
+FAIL — graph               T4 is blocked by Q1, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
+FAIL — graph               T4 is blocked by Q2, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md
+FAIL — graph               T7 says it is blocked by T2, but T2 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
+FAIL — graph               T7 says it is blocked by T4, but T4 does not list T7 in Blocks — the graph disagrees with itself  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
+FAIL — graph               T8 is blocked by Q4, which is not a task in this plan — an orchestrator cannot resolve or dispatch it  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md
+FAIL — plan-truth          T2 is blocked by ['Q1', 'Q2', 'T1'] in its TASK.md but ['T1'] in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
+FAIL — plan-truth          T3 is blocked by ['Q3', 'T1'] in its TASK.md but — in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md:1
+FAIL — plan-truth          T4 is blocked by ['Q1', 'Q2', 'T1'] in its TASK.md but ['T1'] in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md:1
+FAIL — plan-truth          T7 is blocked by ['T2', 'T3', 'T4', 'T5', 'T6'] in its TASK.md but ['T2', 'T6'] in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md:1
+FAIL — plan-truth          T8 is blocked by ['Q4', 'T1', 'T7'] in its TASK.md but ['T7'] in PLAN.md. One of them was edited and the other was not; the gate cannot tell you which is right, only that the plan no longer describes the work.  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md:1
+FAIL — adversary           no task declares '**Reader:** adversary'. The plan has nobody staffed to attack it. A green gate means operable, not correct — and the correctness layer is the one that finds almost everything.  T1
+FAIL — health-checker      no task declares '**Reader:** health'. There are TWO reader roles and this plan staffs one. The health checker runs in rounds asking whether the RULES are being followed — it caught ~20 defects on the reference run, and it is the role most often left out because the adversary is the famous one. See OPERATING-THE-PLAN.md §7.  T1
+PASS — adversary-context   the adversarial pass declares fresh context (a declaration, not a proof)
+PASS — confirmed-exercised no CONFIRMED findings to check
+PASS — frozen-contract     no human-owned task has been handed out yet
+PASS — instrument          no plan-local instrument is load-bearing in any gate
+PASS — rollback            no task declares itself irreversible
+PASS — paths-disjoint      no two concurrent tasks own the same path
+FAIL — persona-model       T1 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T1/TASK.md:1
+FAIL — persona-model       T1 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T1/TASK.md:1
+FAIL — persona-model       T2 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
+FAIL — persona-model       T2 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T2/TASK.md:1
+FAIL — persona-model       T3 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md:1
+FAIL — persona-model       T3 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md:1
+FAIL — persona-model       T4 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md:1
+FAIL — persona-model       T4 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T4/TASK.md:1
+FAIL — persona-model       T5 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T5/TASK.md:1
+FAIL — persona-model       T5 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T5/TASK.md:1
+FAIL — persona-model       T6 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T6/TASK.md:1
+FAIL — persona-model       T6 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T6/TASK.md:1
+FAIL — persona-model       T7 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md:1
+FAIL — persona-model       T7 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md:1
+FAIL — persona-model       T8 names no **Model:** — the requester cannot see a subagent's tier and must not have to ask for it  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md:1
+FAIL — persona-model       T8 names no **Effort:**  ~/grillin/examples/a-real-first-plan/tasks/T8/TASK.md:1
+FAIL — size-declared       PLAN.md declares no **Size:**. A plan that never says how big it is cannot be held to it, and the bands stay advice until it does. Add one of ['XS', 'S', 'M', 'L', 'XL'].  ~/grillin/examples/a-real-first-plan/PLAN.md:1
+PASS — done-self-reference no task is graded against a fixture it produces itself
+FAIL — brainstormed        This plan holds 8 tasks (S), and SCALING.json requires a plan this size to record that its shape was agreed with a person before the files were written. Nothing in this gate can tell a plan that is structurally perfect from one that is about the wrong problem. Add a line to PLAN.md: `**Brainstormed:** architectural · approved <date>`. Using Claude Code, that is the `brainstorming` skill, run BEFORE step 1 — and it hands over to this method instead of its own writing-plans skill.  ~/grillin/examples/a-real-first-plan/PLAN.md:1
+FAIL — gate-fails-first    T3's done-command could not run here — it failed on its own inputs, not on the work ('FileNotFoundError'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T3/TASK.md
+FAIL — gate-fails-first    T6's done-command could not run here — it failed on its own inputs, not on the work ('No such file or directory'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T6/TASK.md
+FAIL — gate-fails-first    T7's done-command could not run here — it failed on its own inputs, not on the work ('FileNotFoundError'). Its paths are unanchored: an orchestrator running it from anywhere but the author's directory gets an error it may read as a clean fail.  ~/grillin/examples/a-real-first-plan/tasks/T7/TASK.md
 
-RESULT: FAIL — 26 finding(s). This plan is not operable as written.
+RESULT: FAIL — 51 finding(s). This plan is not operable as written.

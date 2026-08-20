@@ -24,6 +24,7 @@ Exit 0 = the surfaces agree. Exit 1 = they do not. Exit 2 = could not check.
 """
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -155,6 +156,53 @@ def main() -> int:
                            f"{gate[size][0]}-{gate[size][1]}")
     else:
         bad.append("validate-plan.py has no BANDS table — size-declared cannot be drift-checked")
+
+    # ── 6 · the known-bad example's finding count, published in three places ──
+    # THE INCIDENT THIS IS FOR. The stored gate report said 26 findings, both
+    # prose surfaces said "30+", and a fresh run produced 51. The report was
+    # generated once and never regenerated, so every check added since had
+    # silently invalidated it — including the one added the day this was found.
+    # The report is a MEASUREMENT of the gate, so it rots every time the gate
+    # gains a check, which makes it exactly the kind of fact that has to be
+    # derived rather than remembered.
+    report = ROOT / "examples" / "a-real-first-plan-GATE-REPORT.txt"
+    plan = ROOT / "examples" / "a-real-first-plan"
+    if report.is_file() and plan.is_dir():
+        txt = report.read_text(errors="replace")
+        m = re.search(r"RESULT: FAIL — (\d+) finding", txt)
+        stored = int(m.group(1)) if m else None
+        counted = len(re.findall(r"^FAIL", txt, re.M))
+        if stored is None:
+            bad.append(f"{report.name} has no RESULT line — it cannot be checked "
+                       f"against the gate it claims to record")
+        elif stored != counted:
+            bad.append(f"{report.name} says {stored} findings and lists {counted}")
+        else:
+            r = subprocess.run([sys.executable, str(ROOT / "scripts" / "validate-plan.py"),
+                                str(plan), "--run-gates"],
+                               capture_output=True, text=True)
+            live = re.search(r"RESULT: FAIL — (\d+) finding", r.stdout)
+            if live is None:
+                bad.append(f"the gate no longer reports FAIL on {plan.name} — it is this "
+                           f"repo's known-bad fixture and a gate that passes it catches "
+                           f"nothing")
+            elif int(live.group(1)) != stored:
+                bad.append(f"{report.name} records {stored} findings, the gate now "
+                           f"produces {int(live.group(1))}. Regenerate it: "
+                           f"./scripts/validate-plan.py examples/a-real-first-plan "
+                           f"--run-gates > {report.name} (then rewrite the absolute paths "
+                           f"to ~/grillin)")
+            else:
+                for surface in (ROOT / "examples" / "README.md",
+                                ROOT / "examples" / "minimal-passing-plan" / "PLAN.md"):
+                    if not surface.is_file():
+                        continue
+                    t = surface.read_text(errors="replace")
+                    said = set(int(x) for x in re.findall(r"(?:with|fails with)\s+(\d+)\s+findings", t))
+                    wrong = said - {stored}
+                    if wrong:
+                        bad.append(f"{surface.relative_to(ROOT)} says "
+                                   f"{sorted(wrong)} findings, the gate produces {stored}")
 
     if bad:
         print("DRIFT — the surfaces disagree:\n")
