@@ -1,6 +1,51 @@
 # Changelog
 
 
+
+## Unreleased
+
+### The CI was failing, and it was failing honestly — 2026-08-20
+
+Two probes in `.github/workflows/gate.yml` reported their own checks dead on every run. That
+is the failure mail, and both were the exact defect class the probes exist to catch: **a
+mutation that does not apply.**
+
+- `model-is-tier-word` sed'd `claude-sonnet-5` while the fixture says `claude-opus-5`, so the
+  plan stayed unmutated and green.
+- `done-self-ref` used `|` as its `s///` delimiter over a replacement containing a pipe, so
+  sed died with ``unknown option to `s'``.
+
+All 31 probes now fire. **Five harnesses had no CI step at all** — `brainstormed`,
+`gate-fails-first`, `citations-and-promises`, `check-accounting`, and the human-worker example
+— and a check with no CI step only runs when somebody remembers, which is what the two dead
+probes look like from the inside.
+
+### Two numbers that did not add up
+
+- **The size table overlapped the gate.** `GRILLING-THE-PLAN.md` said M `10–25`, L `25–60`,
+  XL `60+` while `BANDS` says `11–25`, `26–60`, `61+` — so a 25-task plan was two sizes. It
+  survived because `check-drift.py` compared `BANDS` to `SCALING.json` and never to the prose.
+- **"the readers caught 50" could not be added up.** Health found ~20, the adversary 44 (30
+  blocking + 14 non-blocking), plus 1 fixture defect — which sums to 64, not 50. The headline
+  counts health plus the adversary's *blocking* findings, and nothing said so. Now recorded in
+  `measurement.headlineDecomposition`, and the gate prints this number on every run, so it had
+  better be addable.
+
+**Both are now drift checks** (7 and 8), each mutation-proven, because the reason each survived
+is that nothing was reading that surface.
+
+### Asking and owning are two things
+
+`OPERATING-THE-PLAN.md` §10a names them apart. **ASKING** — the work is an agent's, only the
+decision is yours: `QUESTIONS.md` → `ANSWER.md`, and the plan does not stop while it waits.
+**OWNING** — the work itself is a person's. Reach for asking unless the *work* is human, not
+just the decision.
+
+The template said *"record it in `QUESTIONS.md` and stop"*, which is now the opposite of what
+the tools do: the worker stops its own branch, never the plan. And the `**Workers:** human`
+exemption hole is recorded as a stated limit rather than left implicit — the plan-level line
+lifts the model floor for every task while the freeze reads each task's Owner, so write both.
+
 ## v1.1.0 — 2026-08-20
 
 **Read this before you re-run the gate on a plan that was green.** This release changes

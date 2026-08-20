@@ -891,7 +891,8 @@
       "not the same kind of thing: the gate cannot find a false premise, the readers cannot run a command on every commit",
       "the gate ran continuously and the readers in bursts, so this is yield, not rate"
     ],
-    "consequence": "The layers catch disjoint classes. Grillin had spent nearly all its written mechanism on the class that yields 2, which is why the highest-value check added does nothing but refuse to pass a plan with nobody staffed to attack it."
+    "consequence": "The layers catch disjoint classes. Grillin had spent nearly all its written mechanism on the class that yields 2, which is why the highest-value check added does nothing but refuse to pass a plan with nobody staffed to attack it.",
+    "headlineDecomposition": "50 = healthChecker 20 + the adversary's 30 BLOCKING findings. The adversary's 14 non-blocking findings and the 1 fixture defect are deliberately not in the headline, which is why the parts sum to 64 and the headline says 50. Nothing said this until a reader tried to add it up and could not."
   },
   "gateChecks": [
     "adversary",
