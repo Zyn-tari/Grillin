@@ -3,6 +3,33 @@
 
 # <ID> — <Short title>
 
+<!-- WHICH BOLD FIELDS THE GATE ACTUALLY READS — read this before you trim any of them.
+
+     Every field in this file is written `**Name:**`. That identical formatting used to imply
+     they were all enforced, and they are not: across three plans by first-time curators
+     `**Skills:**` appeared ZERO times and `**Type:**` in two plans out of three, and nothing
+     failed either way. A register where half the entries are unenforced and none of them say
+     so teaches its reader that the register means nothing. So it says so.
+
+     PARSED BY validate-plan.py — spelling and placement matter, and a plan fails without them:
+       Status · Owner · Agent (the persona) · Model · Effort · Blocked by · Blocks ·
+       Reader · Context (adversary only) · Kind · Timebox (research only) ·
+       Reversible · Rollback · Delivered (human-owned tasks only)
+
+     NOT PARSED BY ANYTHING — notes for the human and the worker who read this file:
+       Type · Skills · Mandatory downstream · Wave · Branch · Worktree
+
+     "Not parsed" is not "decorative". Type and Skills each carry a decision made in an earlier
+     phase, and dropping them loses the decision, not just the line — see each field below.
+     What it does mean is that no gate will tell you they are missing, so nothing but this
+     comment will. If you think one of these should be enforced, say so in the plan's
+     QUESTIONS — do not assume the omission was deliberate. -->
+
+<!-- TYPE — NOT parsed by the gate. It carries the phase 4 decision into the task file.
+     Phase 4 requires every node on the dependency graph to be typed, and this line is where
+     that type survives the diagram. It matters most for RECONSIDER and ASK: a task whose
+     legitimate output is "don't build this", or "a human decides", reads exactly like a BUILD
+     task once the diagram is gone, and gets built. -->
 **Type:** BUILD | REFACTOR | RECONSIDER | ASK | VERIFY | LOOP
 **Status:** NOT STARTED | IN PROGRESS | BLOCKED | DONE — *update this line in place as you go;
 it is the progress record, and it is the only one that survives a lost conversation*
@@ -94,9 +121,16 @@ test -s tasks/<ID>/FINDINGS.md
 
 Rules: [`../_RULES.md`](../_RULES.md) · Roster: [`../_ROSTER.md`](../_ROSTER.md)
 
-**Skills — invoke ALL of these before your first tool call, in this order:** `<skill>` · `<skill>`
-They are your starting context. Reading them after you begin is worth a fraction of reading them
-before.
+<!-- SKILLS — NOT parsed by the gate, and load-bearing anyway. Phase 6's output is "a small
+     set of skills; ONE LINE PER TASK referencing them", and this is that line: without it
+     phase 6 produces skills nothing loads. Principle 11 is the same rule from the other end.
+     Scaled by size, which is the other reason it is not enforced: phase 5's reduced form at
+     size S drops skills deliberately, so an empty line here can be correct.
+     Previously spelled as a sentence rather than a field, which is a plausible reason curators
+     never reproduced it; it is a plain `**Skills:**` field now so the register is uniform. -->
+**Skills:** `<skill>` · `<skill>` — **invoke ALL of these before your first tool call, in this
+order.** They are your starting context. Reading them after you begin is worth a fraction of
+reading them before.
 
 **Wave:** <W#> · see [`../_WORKTREES.md`](../_WORKTREES.md)
 **Branch:** `<prefix>/<ID>-<slug>` · **Worktree:** `<path>`

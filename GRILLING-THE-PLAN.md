@@ -378,10 +378,21 @@ author who had spent the session warning about exactly this.
 - **One entry point** with an explicit read order.
 - **A paste-ready kickoff prompt.**
 - **Persistent memory updated** so a cold start lands on this plan, not on last month's work.
-- **A status surface** the requester can read without asking — published, not narrated. The
-  cheapest way to keep one true is to derive it from the status lines principle 13 already
-  requires, on the write that updates them: that write is the only *work-shaped* event a harness
-  offers, and it costs the worker nothing because the surface is never shown to it.
+- **Status the requester can read without asking** — never narrated in a conversation. This is
+  **two artefacts**, and conflating them is a documented defect: a curator planning at XS read
+  one name, found it switched off in the scaling table, and added the wrong thing. So they get
+  different names, here and everywhere:
+  - **Task status lines** — the `**Status:**` line inside each `tasks/<ID>/TASK.md`. Required by
+    principle 13 at **every size, XS included**, and never switched off by the scaling table.
+    Reading them is a glob over `tasks/*/TASK.md`, not a question to a worker.
+  - **A published status surface** — a separate, derived artefact: one page or file the requester
+    opens. This is what the scaling table means by *published status surface*, it **turns on at
+    L**, and it is in XS's `leaveOff` list. At XS the status lines *are* the surface, and a page
+    rendering three of them is ceremony. Build one earlier only if the requester will not glob.
+
+  The cheapest way to keep a *published* surface true is to derive it from the status lines, on
+  the write that updates them: that write is the only *work-shaped* event a harness offers, and
+  it costs the worker nothing because the surface is never shown to it.
 - **Hand-off items you cannot do yourself**, stated explicitly rather than silently skipped.
 - **A warm restart, not just a cold one.** The entry point tells a fresh worker what the plan
   *is*; it must also let one that is halfway through establish *where it got to*. See
