@@ -627,7 +627,7 @@
     "invariant": "Declare the substrate once and do not mix mid-run. A substrate that uses more than one mechanism internally -- as Smokin does, scripts for control flow and panes for the tasks that need a human -- is ONE substrate, not a mixture, provided the choice between them is declared per task and checkable. Mixing means switching substrate mid-run, not composing one.",
     "third": {
       "id": "smokin",
-      "repo": "https://github.com/A-Pex97/smokin",
+      "repo": "https://github.com/Zyntari/Smokin",
       "rules": "templates/_SMOKIN.md (from the smokin repo)",
       "how": "an idempotent tick dispatches from disk and reaps receipts; panes are an escape hatch under a stated rule",
       "buys": [

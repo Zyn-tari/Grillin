@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Grillin installer.
 #
-#   curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Zyntari/Grillin/main/install.sh | sh
 #
 # Installs `grillin` — the gate — onto your PATH, and nothing else. The method
 # is prose you read in a browser; the only thing worth installing is the part
@@ -12,7 +12,7 @@
 # beyond curl-or-wget, and python3 which the gate itself needs anyway.
 set -eu
 
-REPO="${GRILLIN_REPO:-A-Pex97/grillin}"
+REPO="${GRILLIN_REPO:-Zyntari/Grillin}"
 REF="${GRILLIN_REF:-main}"
 RAW="https://raw.githubusercontent.com/$REPO/$REF"
 PREFIX="${GRILLIN_PREFIX:-$HOME/.local/bin}"
@@ -99,7 +99,7 @@ Use it:
 
 Run it on every commit, in THE REPO THAT HOLDS YOUR PLANS:
 
-    curl -fsSL https://raw.githubusercontent.com/A-Pex97/grillin/main/install-hooks.sh \
+    curl -fsSL https://raw.githubusercontent.com/Zyntari/Grillin/main/install-hooks.sh \
       -o grillin-hooks.sh && sh grillin-hooks.sh
 
   Not the project you are planning changes to. Grillin runs ON a plan, from
@@ -108,5 +108,5 @@ Run it on every commit, in THE REPO THAT HOLDS YOUR PLANS:
 
 The method itself is prose and needs nothing installed:
 
-    https://github.com/A-Pex97/grillin
+    https://github.com/Zyntari/Grillin
 EOF
