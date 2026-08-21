@@ -11,7 +11,7 @@ in the plan's own text. Run against this plan.
 |---|---|---|
 | `~/grillin` exists and contains 7 top-level entries + `templates/` with 7 files | `ls -la`, `find` | **VERIFIED** |
 | Every file this plan cites by `file:line` exists | `ls`, direct reads | **VERIFIED** — all 14 read in full |
-| The repo has a GitHub remote | `git remote -v` → `git@github.com:Zyntari/Grillin.git` (fetch + push) | **VERIFIED** |
+| The repo has a GitHub remote | `git remote -v` → `git@github.com:Zyn-tari/Grillin.git` (fetch + push) | **VERIFIED** |
 | Branch `main`, `origin/main` present, 11 commits | `git branch -a`, `git log --oneline` | **VERIFIED** |
 | `SCALING.json` is valid JSON | `python3 -c "import json; json.load(...)"` | **VERIFIED** |
 | Four sources define the scaling model and one disagrees | extracted all four | **VERIFIED** — `03-CONTRADICTIONS.md` C1 |

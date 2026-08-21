@@ -21,7 +21,7 @@ workers to enumerate a fourteen-file repository would have cost more to set up t
 | `CASE-STUDY.md` | 221 | The origin session, 12 numbered steps. |
 | `SCALING.json` | ~880 | The whole method as data. 19 top-level keys. |
 | `index.html` | 353 | Interactive phase map, self-contained, data inlined in JS. |
-| `LICENSE` | 21 | MIT, © 2026 Zyntari. |
+| `LICENSE` | 21 | MIT, © 2026 Zyn-tari. |
 | `.gitignore` | 3 | `.DS_Store`, `node_modules/`, `*.log` — a Node .gitignore in a repo with no code. |
 | `templates/` | 7 files, 1,184 lines | see below |
 
@@ -59,7 +59,7 @@ deleting the branch/worktree/commit sections). VERIFIED by reading all seven.
 | Broken internal links in the five `.md` documents | **0** | VERIFIED — extracted all 13 link targets, all resolve |
 | Broken internal links **inside `templates/`** | **3** | VERIFIED — `_RULES.md.template:74` → `_HERDR.md`, `_AWARENESS.md.template:213` → `_RULES.md`, `_HERDR.md.template:6` → `_RULES.md`; none of those three files exist, they are all `*.md.template`. A fourth, `_WORKTREES.md.template:86`, links to `_AWARENESS.md.template` **with** the suffix — so the templates do not agree with each other on the convention. |
 | Git commits | 11 | VERIFIED — `git log --oneline` |
-| Git remote | `git@github.com:Zyntari/Grillin.git`, branch `main`, `origin/main` present | VERIFIED |
+| Git remote | `git@github.com:Zyn-tari/Grillin.git`, branch `main`, `origin/main` present | VERIFIED |
 
 ## What I did not verify
 

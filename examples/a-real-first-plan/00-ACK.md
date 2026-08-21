@@ -7,7 +7,7 @@
 ## The restatement
 
 Grillin' is an eleven-phase planning method that currently lives in a private GitHub repo
-(`git@github.com:Zyntari/Grillin.git`) and has been run exactly once, by the person who wrote it,
+(`git@github.com:Zyn-tari/Grillin.git`) and has been run exactly once, by the person who wrote it,
 on the project it was extracted from. The job is to close the gap between *"the author can run
 this"* and *"a stranger can clone this, follow it, and end up holding a real plan"* — and then
 make it public. That is documentation, sequencing and four or five decisions. It is not a code

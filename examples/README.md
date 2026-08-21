@@ -36,7 +36,7 @@ This is the example. It is not a polished specimen.
 
 `a-real-first-plan/` is a genuine plan produced by someone using this method for the first
 time, with no author available and no prior exposure to it. **Unedited except for one thing:**
-when the repository moved to the Zyntari organisation, the old account name was rewritten
+when the repository moved to the Zyn-tari organisation, the old account name was rewritten
 wherever it appeared, including in this plan's own inventory of what it found. Nothing else was
 touched — not a task, not a finding, not the licence line it recorded seeing at the time, which
 was MIT and is now PolyForm. Its defects are the author's. The job was *"plan the

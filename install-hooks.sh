@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Make the gate run on every commit, in ANY repository that holds plans.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Zyntari/Grillin/main/install-hooks.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Zyn-tari/Grillin/main/install-hooks.sh | sh
 #
 # A gate nobody runs is documentation with an exit code. This is what turns
 # "enforceable" into "enforced", and the difference is the whole distinction
@@ -42,7 +42,7 @@ if [ -z "$GATE" ]; then
   elif command -v grillin >/dev/null 2>&1; then GATE="$(command -v grillin)"
   else
     die "no gate found. Install it first:
-    curl -fsSL https://raw.githubusercontent.com/Zyntari/Grillin/main/install.sh | sh"
+    curl -fsSL https://raw.githubusercontent.com/Zyn-tari/Grillin/main/install.sh | sh"
   fi
 fi
 

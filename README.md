@@ -161,7 +161,7 @@ flowchart LR
 ```
 
 The loop closes at **F**, and that is the whole point of the pair: nothing advances on a
-worker saying so. [**Smokin**](https://github.com/Zyntari/Smokin) reads the plan off disk,
+worker saying so. [**Smokin**](https://github.com/Zyn-tari/Smokin) reads the plan off disk,
 dispatches across any agent CLI, and re-runs each done-command itself. It holds no state in
 memory, so nothing is lost when it stops.
 
@@ -174,7 +174,7 @@ memory, so nothing is lost when it stops.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Zyntari/Grillin/main/install.sh -o grillin-install.sh \
+curl -fsSL https://raw.githubusercontent.com/Zyn-tari/Grillin/main/install.sh -o grillin-install.sh \
   && sh grillin-install.sh
 grillin <plan-dir> --run-gates
 ```
@@ -183,7 +183,7 @@ Then make it run on every commit, **in the repo that holds your plans**:
 
 ```bash
 cd <your-plans-repo>
-curl -fsSL https://raw.githubusercontent.com/Zyntari/Grillin/main/install-hooks.sh -o grillin-hooks.sh \
+curl -fsSL https://raw.githubusercontent.com/Zyn-tari/Grillin/main/install-hooks.sh -o grillin-hooks.sh \
   && sh grillin-hooks.sh
 ```
 
