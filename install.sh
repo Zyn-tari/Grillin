@@ -59,7 +59,7 @@ python3 -c "import ast,sys;ast.parse(open(sys.argv[1]).read())" "$TMP/grillin" \
 STAMP="$REF"
 [ "$REF" = "main" ] && STAMP="main, $(date -u +%Y-%m-%d)"
 sed -i.bak "s|^INSTALLED_FROM = .*|INSTALLED_FROM = \"$STAMP\"  # stamped by install.sh|" "$TMP/grillin" 2>/dev/null \
-  || sed "s|^INSTALLED_FROM = .*|INSTALLED_FROM = \"$STAMP\"  # stamped by install.sh|" "$TMP/grillin" > "$TMP/g2" && mv "$TMP/g2" "$TMP/grillin"
+  || { sed "s|^INSTALLED_FROM = .*|INSTALLED_FROM = \"$STAMP\"  # stamped by install.sh|" "$TMP/grillin" > "$TMP/g2" && mv "$TMP/g2" "$TMP/grillin"; }
 rm -f "$TMP/grillin.bak"
 
 chmod +x "$TMP/grillin"
