@@ -131,6 +131,18 @@ jobs:
       - name: every declared check accounts for itself in a run
         run: python3 tests/test-check-accounting.py
 
+      - name: a citation that names a section resolves to a real heading
+        run: python3 tests/test-citation-mirroring.py
+
+      - name: the size table's third column matches the data it copies
+        run: python3 tests/test-size-table-mirroring.py
+
+      - name: the instrument check fires, and is quiet when calibrated
+        run: python3 tests/test-instrument-fixture.py
+
+      - name: two concurrent tasks may not share one git worktree
+        run: python3 tests/test-worktree-disjoint.py
+
       - name: the human-worker example is a valid plan
         run: ./scripts/validate-plan.py examples/human-worker-plan --run-gates
 

@@ -73,6 +73,7 @@ def main() -> int:
 
     # name -> (path, line number in the index)
     linked = {}
+    rel_of = {}
     for i, line in enumerate(lines, 1):
         for m in link.finditer(line):
             name, rel = m.group(1).strip(), m.group(2).split("#")[0].strip()
@@ -85,6 +86,7 @@ def main() -> int:
                 inside = str(p).startswith(str(a.shard_dir.resolve()))
             if inside:
                 linked[name] = (p, i)
+                rel_of[name] = rel
 
     if not linked:
         print(f"check-index: {a.index} links to nothing inside {a.shard_dir} — "
@@ -93,8 +95,14 @@ def main() -> int:
         return 2
 
     # ── 1 · every linked shard exists ───────────────────────────────────────
+    # A DIRECTORY COUNTS AS EXISTING. A plan-of-plans links its tracks as files
+    # (`hermes/PLAN.md`) and its shared material as directories (`_personas/`),
+    # and an is_file() test called the second kind missing on an index where
+    # both were correct. Reporting a present directory as absent is the shape
+    # that gets a checker switched off. The heading and count checks below
+    # already skip anything that is not a file, so nothing downstream changes.
     for name, (p, ln) in sorted(linked.items()):
-        if not p.is_file():
+        if not (p.is_file() or p.is_dir()):
             bad.append(f"{a.index}:{ln}  index links {name!r} to {p}, which does not exist")
 
     # ── 2 · every shard is linked ───────────────────────────────────────────
@@ -110,6 +118,16 @@ def main() -> int:
     # ── 3 · the index's name appears verbatim as a heading in the shard ─────
     for name, (p, ln) in sorted(linked.items()):
         if not p.is_file():
+            continue
+        # A LABEL CAN DRIFT FROM A HEADING; A PATH CANNOT. This check exists
+        # because an index's NAME for a shard and the heading inside it are a
+        # pair a consumer keys on, and one side gets "improved" alone. Where the
+        # index names a shard by the very path it links — `hermes/PLAN.md`
+        # pointing at hermes/PLAN.md — there is no pair: the name cannot say
+        # something the link does not. Checking it there reported all seven
+        # tracks of a correct plan-of-plans as drifted.
+        if name.rstrip("/") == linked[name][0].name or \
+           name.rstrip("/") == rel_of.get(name, "").rstrip("/"):
             continue
         heads = [h.strip() for h in
                  re.findall(r"^#{1,6}\s+(.+?)\s*$", p.read_text(errors="replace"), re.M)]
@@ -142,10 +160,22 @@ def main() -> int:
             p = linked[name][0]
             if not p.is_file():
                 continue
-            got = len(entry.findall(p.read_text(errors="replace")))
+            hits = entry.findall(p.read_text(errors="replace"))
+            got = len(hits)
             if got != n:
+                # SHOW WHAT WAS COUNTED. A wrong --entry-re does not fail; it
+                # produces a precise, plausible, wrong number, and the operator
+                # has no way to tell that from real drift. The first run of this
+                # tool against a plan-of-plans reported every track over by
+                # exactly five because the regex matched the wave rows as well
+                # as the task rows. Two examples would have said so instantly.
+                sample = ", ".join(repr(h if isinstance(h, str) else h[0])
+                                   for h in hits[:2]) or "nothing"
                 bad.append(f"{a.index}:{ln}  index says {name!r} holds {n} entries; "
-                           f"{p.name} holds {got}")
+                           f"{p.name} holds {got} — --entry-re matched {sample}"
+                           + ("" if got else
+                              ". Zero matches usually means the wrong --entry-re, "
+                              "not an empty shard"))
 
     if bad:
         print(f"DRIFT — {a.index} and {a.shard_dir} disagree:\n")

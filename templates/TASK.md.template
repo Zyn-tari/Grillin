@@ -12,12 +12,33 @@
      so teaches its reader that the register means nothing. So it says so.
 
      PARSED BY validate-plan.py — spelling and placement matter, and a plan fails without them:
-       Status · Owner · Agent (the persona) · Model · Effort · Blocked by · Blocks ·
+       Status · Model · Effort · Blocked by · Blocks ·
        Reader · Context (adversary only) · Kind · Timebox (research only) ·
        Reversible · Rollback · Delivered (human-owned tasks only)
 
+     PARSED, BUT ONE OF THE PAIR IS ENOUGH — and this line used to lie about it:
+       Owner · Agent. The gate resolves an owner from EITHER, preferring Owner when both
+       are present; `**Agent:** `recon`` alone satisfies the owner check and dispatches as
+       `recon`. Six of the eight tasks in examples/a-real-first-plan ship with no Owner line
+       and rely on that, and tests/test-owner-and-ownership.py asserts the fallback by name.
+       The register listed Owner among the fields "a plan fails without" anyway, which is
+       false, and a register that overstates its own enforcement is the exact defect the
+       paragraph above this one exists to prevent. Declare BOTH regardless — the fallback is
+       a floor, not a recommendation, and the two fields answer different questions (who is
+       accountable, versus what responsibility the roster priced). A project that wants the
+       floor raised sets `require_owner` in its config and the gate demands a literal Owner.
+
      NOT PARSED BY ANYTHING — notes for the human and the worker who read this file:
-       Type · Skills · Mandatory downstream · Wave · Branch · Worktree
+       Type · Skills · Mandatory downstream · Wave · Branch ·
+       Must not read · Numbers · Output shape
+
+     PARSED AS OF 2026-08-26 — `Worktree` moved OUT of the list above, and this note is
+     here because a register that quietly changes what it enforces is worse than one that
+     never enforced anything. `check_worktree_disjoint` now refuses two tasks that can run
+     at the same time and declare the same worktree. It was bought by the first real run of
+     the XL band: one persona held five ready tasks, the runner dispatched them together,
+     five branches went into one worktree, and a concurrent task committed another task's
+     staged files while both reported success.
 
      "Not parsed" is not "decorative". Type and Skills each carry a decision made in an earlier
      phase, and dropping them loses the decision, not just the line — see each field below.
@@ -29,8 +50,26 @@
      Phase 4 requires every node on the dependency graph to be typed, and this line is where
      that type survives the diagram. It matters most for RECONSIDER and ASK: a task whose
      legitimate output is "don't build this", or "a human decides", reads exactly like a BUILD
-     task once the diagram is gone, and gets built. -->
+     task once the diagram is gone, and gets built.
+
+     TYPE AND KIND ARE TWO AXES, NOT TWO SPELLINGS OF ONE. They have sat in this file with no
+     cross-reference, and the enum below has no research-shaped value, so a curator writing a
+     research task looks for one here, does not find it, and either invents a value or misses
+     `Kind:` altogether — which is the line that actually does something.
+
+       **Type** is what this task DOES to the system. Unparsed; it carries the phase 4
+              decision, and its whole job is to survive the diagram.
+       **Kind** is how this task is GRADED. Parsed. `Kind: research` turns on
+              check_research_task, which requires the Timebox and requires the done-command
+              to test for this task's own findings file.
+
+     They compose rather than compete: a research task is normally **Type:** ASK — its
+     legitimate output is a finding, not a change — and it is `Kind: research` that makes the
+     gate grade it on the findings it WRITES rather than on what it found. Declaring one does
+     not imply the other, and there is no value of Type that turns any grading on. -->
 **Type:** BUILD | REFACTOR | RECONSIDER | ASK | VERIFY | LOOP
+<!-- (no RESEARCH value on purpose — research is a grading Kind, not a thing done to the
+     system. See the two axes above, and `Kind:` further down this file.) -->
 **Status:** NOT STARTED | IN PROGRESS | BLOCKED | DONE — *update this line in place as you go;
 it is the progress record, and it is the only one that survives a lost conversation*
 <!-- OWNER vs AGENT — two fields, and they are not the same one. **Owner** is WHO is
@@ -52,6 +91,51 @@ it is the progress record, and it is the only one that survives a lost conversat
 **Agent:** `<persona — must appear in ../_ROSTER.md>` · **Model:** `<claude-opus-5 | claude-sonnet-5>` · **Effort:** <high | xhigh | max>
 **Blocked by:** <ids> · **Blocks:** <ids>
 **Mandatory downstream:** <adversarial passes — TWO, the second with fresh context, on money/authz? integrator?>
+
+<!-- MUST NOT READ — NOT parsed by the gate. Starving a task's input is a plan-shaping
+     decision made once, at authoring time, and stated here; it is not a permission the gate
+     polices. It narrows the read-anywhere default rather than revoking it, and that
+     reconciliation is BODY text — "Containment" below, and ../_RULES.md §2a — because a
+     comment block is deleted before the file reaches the worker who needs to read it.
+     Two builds held to the same bar diverged sharply in cost for one reason: one of them
+     kept re-reading a shared corpus that had nothing new in it by the second pass. A "you may read anywhere" default
+     never names what NOT to read, so nothing stops that — the corpus, another worker's
+     still-changing unit, anything this task does not need to do its own job.
+
+     Two exceptions, and only these two, are lawful — declare them here, do not improvise
+     them mid-task:
+       (a) this task must RECONCILE against near-finished peer units (a budget against the
+           aims it funds, a season arc against its episodes) — name those units explicitly;
+       (b) a thread runs across non-adjacent units (a running example, a recurring name) —
+           point at a continuity bible every such task reads regardless of grouping.
+     See GRILLING-THE-PLAN.md § "F1 · Starve the inputs, and declare the exceptions", for the
+     rule and its cost evidence — do not re-derive the numbers here. -->
+**Must not read:** <the corpus / other units' packs / everything outside what Steps names —
+or the declared exception: "also reads `<finished unit>`, reconciling against §…" ·
+"continuity bible: `<path>`, read regardless of grouping">
+
+<!-- NUMBERS — NOT parsed by the gate. A quality word with no number attached steers nobody:
+     "denser" and "clearer" describe a feeling, and two readers of the same file act on two
+     different feelings. This is the floor or ceiling this task is graded against — or, where
+     no number exists yet, the reference to measure before Steps begins, not after. State it
+     in THIS task's own units: a byte count is not a rendered-page count, and a limit checked
+     in the wrong unit can pass while the artefact it is supposed to bound overflows.
+     See GRILLING-THE-PLAN.md § "F2 · A number, or the reference to measure". -->
+**Numbers:** <the floor/ceiling this task is graded against, in its own medium's units — or
+"measure <reference> first; no number exists yet">
+
+<!-- OUTPUT SHAPE — NOT parsed by the gate. The research Done-means block below already
+     grades a task on an exact form — FINDINGS.md, in that order — rather than on "I
+     understand it now", because a form a script can slice is a form downstream work can
+     consume without anyone reading it first (`check_research_task` enforces exactly that
+     one case). This field carries the same idea onto every OTHER task's output: name the
+     file, the heading form, the order, before Steps begins — not worked out afterwards by
+     whoever assembles it. On a research or gathering task, name the "What this does NOT
+     achieve" block as required per topic, so an honesty section can assemble itself from
+     independent admissions instead of one worker's summary of them.
+     See GRILLING-THE-PLAN.md § "F4 · Output a script can eat". -->
+**Output shape:** <exact file, heading form, and order downstream assembly depends on — on a
+research/gathering task, name the "What this does NOT achieve" block as required per topic>
 
 <!-- RESEARCH TASKS ONLY — delete both lines otherwise. Add them when the task's job is to
      find something out rather than to change something: the facts the plan needs do not
@@ -132,10 +216,18 @@ Rules: [`../_RULES.md`](../_RULES.md) · Roster: [`../_ROSTER.md`](../_ROSTER.md
 order.** They are your starting context. Reading them after you begin is worth a fraction of
 reading them before.
 
+<!-- WORKTREE — PARSED. A git worktree holds exactly ONE checked-out branch, and an index
+     holds one lock. Two tasks pointed at the same directory at the same time do not get an
+     error naming the problem; they get each other's staged files, and both still pass. So
+     either give this task its own worktree, or put an edge between it and whoever shares
+     one — `**Blocked by:**` / `**Blocks:**` — and the graph then states the order git was
+     already enforcing. Sharing a worktree between ORDERED tasks is correct and is the whole
+     reason to keep one per persona: later tasks land where earlier ones did. -->
 **Wave:** <W#> · see [`../_WORKTREES.md`](../_WORKTREES.md)
 **Branch:** `<prefix>/<ID>-<slug>` · **Worktree:** `<path>`
 
-**Containment.** You may READ anywhere. You may WRITE only inside your worktree and this task
+**Containment.** You may READ anywhere except what **Must not read** above names
+([`../_RULES.md`](../_RULES.md) §2a). You may WRITE only inside your worktree and this task
 folder. `<live path>` is the **deployed checkout** — never write to it. If you notice a defect in
 a file you do not own, record it in `FINDINGS.md`; do not fix it.
 
@@ -161,7 +253,22 @@ sentence in the file.>
 
 ## What you own
 
-<Exact paths. One owner per file. Name explicitly what you do NOT own and who does.>
+<!-- THE MARKER THE GATE IS LOOKING FOR, WHICH NOTHING USED TO TELL YOU ABOUT.
+     `check_paths_disjoint` harvests every backticked path in this section and treats it as
+     an ownership CLAIM. That is deliberate and it is the safe direction to be wrong in: a
+     false collision is loud and gets argued with, a missed one ships and clobbers at merge
+     time. The cost is that naming a neighbour you must not break — which is exactly what the
+     line below asks you to do — reads to the gate as claiming it, and two tasks that merely
+     CITE the same path get failed as a collision.
+
+     The escape is one word, and the author has to say it. Put `read-only`, `reference only`,
+     `for reference` or `context only` on the same line as the path and it stops counting as
+     a claim while staying written down. Naming somebody else as the owner ("T3 owns it") is
+     deliberately NOT enough — "owned by this task" is a claim written the same shape.
+     Line-level: a marker that wraps onto a second line does not cover the path on the first. -->
+
+<Exact paths. One owner per file. Name explicitly what you do NOT own and who does — put
+`read-only` on that line so the gate reads it as a citation and not as a second claim.>
 
 ## Steps
 

@@ -120,6 +120,41 @@ v, _ = verdict("sleep 90")
 chk("a hanging gate still FAILS on timeout", v, "FAIL")
 
 print("\n=== 5 · the shipped fixtures ===")
+print("\n=== 5 · a command's own PREREQUISITES are not deliverables ===")
+# Found by the first real XL-band run: ten done-commands ran a script that did
+# not exist yet. Which way the gate read that depended on the INTERPRETER —
+# `bash missing.sh` exits 127 and was caught; `python3 missing.py` exits 2 with
+# "No such file or directory", which the missing-file rule reads as a data
+# artefact the plan has not produced, and passed. The reporting program was
+# Python-heavy, so it saw the failing half.
+v, line = verdict("python3 tools/check.py")
+chk("a python script that does not exist FAILS", v, "FAIL")
+chk("...and the message says it is the script, not the work",
+    "the script it runs" in line, True)
+v, _ = verdict("bash tools/run_done_command.sh")
+chk("...and so does a shell script, as it always did", v, "FAIL")
+v, _ = verdict("node tools/verify.js")
+chk("...and any other interpreter", v, "FAIL")
+
+# THE CONTROL THAT KEEPS THIS FROM SWALLOWING EVERY PLAN. A gate that grades a
+# file the task will WRITE is the shape QUICKSTART recommends and must stay a
+# clean fail. Only the script the gate EXECUTES is a prerequisite.
+v, _ = verdict("test -f tasks/T1/OUT.md")
+chk("control · a data artefact the task produces is still a clean fail", v, "PASS")
+v, _ = verdict("grep -q FOUND tasks/T1/OUT.md")
+chk("control · so is grepping one", v, "PASS")
+
+print("\n=== 6 · the working directory, with the plan/no-plan line intact ===")
+v, line = verdict("cd /srv/no-such-service && bash run.sh")
+chk("cd into a directory OUTSIDE the plan FAILS", v, "FAIL")
+chk("...and names the directory", "/srv/no-such-service" in line, True)
+# `cd` short-circuits `&&`, so the command exits 1 — indistinguishable from a
+# clean fail by exit status alone. That is why this is decided statically.
+v, _ = verdict("cd dist && test -f app.js")
+chk("control · cd into a directory the task BUILDS is a clean fail", v, "PASS")
+v, _ = verdict("cd tasks && test -f T1/OUT.md")
+chk("control · cd into one that exists is a clean fail", v, "PASS")
+
 r = subprocess.run([sys.executable, str(GATE),
                     str(ROOT / "examples" / "minimal-passing-plan"), "--run-gates"],
                    capture_output=True, text=True, timeout=300)

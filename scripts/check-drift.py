@@ -233,6 +233,41 @@ def main() -> int:
                            f"{lo}-{hi or '+'}, the gate's BANDS says "
                            f"{want[0]}-{want[1]}")
 
+    # ── 7b · ...and the third column, which nothing was reading either ──────
+    # Block 7 checks the size table's NUMBERS and stops there. The description
+    # column is a second copy of SCALING.json's `turnOn` arrays, and it had
+    # already drifted when this was written: SCALING.json said M turns on
+    # `substrate measurement` and the prose row for M did not mention it, so the
+    # phase-8 obligation was invisible on the surface most people read. Same
+    # failure as 3b and 7, third surface.
+    #
+    # Strict containment, one direction: every phrase SCALING.json says a band
+    # turns on must appear in that band's prose row. Dashes and case are
+    # normalised because the two surfaces spell them differently by house style
+    # (en dash in prose, hyphen in JSON) — that is a spelling normalisation, not
+    # a fuzzy match, and nothing else is forgiven. leaveOff is deliberately NOT
+    # checked: asserting a phrase is ABSENT from prose is unreliable in exactly
+    # the way this file must not be ("no skills" contains "skills").
+    def _norm(t):
+        return re.sub(r"\s+", " ", t.replace("–", "-").replace("—", "-")).strip().lower()
+
+    m = re.search(r"^\|\s*\*\*XS\*\*.*?(?=^\s*$|\Z)", prose, re.M | re.S)
+    if m:
+        prose_rows = {}
+        for row in m.group(0).splitlines():
+            r = re.match(r"\|\s*\*\*(XS|S|M|L|XL)\*\*\s*\|[^|]*\|(.*)\|\s*$", row)
+            if r:
+                prose_rows[r.group(1)] = _norm(r.group(2))
+        for band in spec.get("scaling", []):
+            size, row = band.get("size"), prose_rows.get(band.get("size"))
+            if row is None:
+                continue
+            for phrase in band.get("turnOn", []):
+                if _norm(phrase) not in row:
+                    bad.append(f"SCALING.json says size {size} turns on "
+                               f"{phrase!r}; GRILLING-THE-PLAN.md's size table row "
+                               f"for {size} does not say so")
+
     # ── 8 · the headline number has to be the sum of its parts ──────────────
     # "the readers caught 50" is printed by the gate on every run. Its parts are
     # health 20 and adversary 44 (30 blocking, 14 non-blocking), which sum to 64.
@@ -252,6 +287,58 @@ def main() -> int:
         if "headlineDecomposition" not in meas:
             bad.append("SCALING.json's headline number has no stated decomposition — "
                        "a number the gate prints on every run must be addable")
+
+    # ── 9 · cross-file section citations resolve to a real heading ─────────
+    # The build-brief extraction moved every shared rule into one home and left
+    # pointers of the form `GRILLING-THE-PLAN.md § "Title"` behind. That trade
+    # buys single-sourcing and sells a new drift: rename a heading and every
+    # pointer to it breaks in silence, because until now nothing read them. It
+    # is the same failure the count mirroring above exists to catch, arriving on
+    # a surface nobody was watching. Numbered citations (§7, §10b) go through
+    # the same door — they were already load-bearing and already unchecked.
+    heads = {}
+    for name in ("GRILLING-THE-PLAN.md", "OPERATING-THE-PLAN.md", "QUICKSTART.md"):
+        try:
+            src = (ROOT / name).read_text()
+        except OSError:
+            continue
+        titles, numbers = set(), set()
+        for ln in src.splitlines():
+            m = re.match(r"^#+\s+(.+?)\s*$", ln)
+            if not m:
+                continue
+            t = re.sub(r"\s+", " ", m.group(1)).strip()
+            titles.add(t)
+            n = re.match(r"^(\d+[a-z]?)\s*·", t)
+            if n:
+                numbers.add(n.group(1))
+        heads[name] = (titles, numbers)
+
+    # A quoted title may wrap across lines in the source that cites it, so the
+    # match spans newlines and both sides are whitespace-normalised before they
+    # are compared. Bounded at 200 chars: an unterminated quote elsewhere in a
+    # file must not swallow the rest of it and report a heading nobody wrote.
+    cite = re.compile(
+        r"(GRILLING-THE-PLAN|OPERATING-THE-PLAN|QUICKSTART)\.md[`)\]]*\s*"
+        r"§\s*(?:\"([^\"]{1,200})\"|(\d+[a-z]?))")
+    for src_file in sorted(ROOT.rglob("*.md")) + sorted(ROOT.rglob("*.template")):
+        if ".git" in src_file.parts or src_file.name == "CHANGELOG.md":
+            continue                  # the changelog is a record, not a surface
+        body = src_file.read_text(errors="replace")
+        for m in cite.finditer(body):
+            fname = f"{m.group(1)}.md"
+            if fname not in heads:
+                continue
+            titles, numbers = heads[fname]
+            where = f"{src_file.relative_to(ROOT)}:{body.count(chr(10), 0, m.start()) + 1}"
+            if m.group(2):
+                want = re.sub(r"\s+", " ", m.group(2)).strip()
+                if want not in titles:
+                    bad.append(f"{where} cites {fname} § \"{want}\" — "
+                               f"that file has no heading by that name")
+            elif m.group(3) and m.group(3) not in numbers:
+                bad.append(f"{where} cites {fname} §{m.group(3)} — "
+                           f"that file has no section numbered {m.group(3)}")
 
     if bad:
         print("DRIFT — the surfaces disagree:\n")

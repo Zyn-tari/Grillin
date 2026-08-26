@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Calibrate the gate's own arithmetic — every declared check accounts for itself.
 
-WHERE THIS CAME FROM. `--version` says `gate: 24 checks`. A clean run printed 22
+WHERE THIS CAME FROM. `--version` said `gate: 24 checks`. A clean run printed 22
 named checks, and the two missing ones — `rulings` and `invariants` — were silent
 because the plan had declared neither `_RULINGS.toml` nor `_INVARIANTS.toml`. A
 first-time curator counted the lines, could not settle "did not apply" against
@@ -96,7 +96,7 @@ chk("...and the distinct names printed equal the declared set",
     sorted(v), sorted(G.GATE_CHECK_NAMES))
 r = subprocess.run([sys.executable, str(GATE), "--version"],
                    capture_output=True, text=True, timeout=60)
-has("--version still claims 24 checks", r.stdout, "24 checks")
+has("--version claims 25 checks", r.stdout, "25 checks")   # 24 until worktree-disjoint landed 2026-08-26
 chk("...the same number the run accounts for",
     f"gate: {n_declared} checks" in r.stdout, True)
 

@@ -195,7 +195,13 @@ chk("...and the two sets are the same size",
     len(G.GATE_CHECK_NAMES), len(spec_json["gateChecks"]))
 r = subprocess.run([sys.executable, str(GATE), "--version"],
                    capture_output=True, text=True, timeout=60)
-has("--version reports the new count", r.stdout, "24 checks")
+# DERIVED, NOT REMEMBERED. This was hardcoded to 24 and rotted the day a
+# check was added — the third place that number had to be found by a
+# failing test rather than by anyone knowing it was there. The count now
+# comes from the same surface the line above just proved agrees with the
+# gate, so adding a check cannot break this and cannot silently pass either.
+has("--version reports the count SCALING.json declares", r.stdout,
+    f"{len(spec_json['gateChecks'])} checks")
 
 print()
 if fails:

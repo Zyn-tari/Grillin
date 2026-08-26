@@ -78,6 +78,48 @@ out="$(python3 "$CHK" "$LAB/CHANGELOG/index.md" "$LAB/CHANGELOG" \
 [ "$rc" -eq 0 ] && ok "an index inside its own shard dir is not an orphan" \
                 || bad "index-as-orphan" "$out"
 
+# ── the three behaviours added after this tool met a plan-of-plans ─────────
+# An index that links tracks as files and shared material as DIRECTORIES, and
+# names each shard by the very path it links. All three fixes exist because the
+# first real run against such an index reported a correct program as drifted.
+
+build; mkdir -p "$LAB/CHANGELOG/_shared"
+printf -- '- [_shared](CHANGELOG/_shared/) — a directory, not a file\n' >> "$LAB/CHANGELOG.md"
+out="$(run)"; rc=$?
+case "$out" in *"_shared"*"does not exist"*) bad "5 · a linked directory is not missing" "reported present dir as absent" ;;
+  *) ok "5 · a linked directory counts as existing" ;; esac
+
+build; rm -rf "$LAB/CHANGELOG/_shared"
+printf -- '- [CHANGELOG/nope/](CHANGELOG/nope/) — absent directory\n' >> "$LAB/CHANGELOG.md"
+out="$(run)"
+case "$out" in *"does not exist"*) ok "5b · ...but an ABSENT directory still fires" ;;
+  *) bad "5b · absent directory" "not reported — the fix went too far" ;; esac
+
+# 6 · a name that IS the path cannot drift from a heading, so check 3 must not
+#     fire on it. The control below proves check 3 is still alive for labels.
+build; sed -i 's|^- \[W1\](CHANGELOG/W1.md)|- [CHANGELOG/W1.md](CHANGELOG/W1.md)|' "$LAB/CHANGELOG.md"
+sed -i 's|^## W1$|## W1 — retitled freely|' "$LAB/CHANGELOG/W1.md"
+out="$(run --count-re 'ZZZ_NO_MATCH_ZZZ')"
+case "$out" in *"index calls it"*) bad "6 · a path-name skips the heading check" "still fired" ;;
+  *) ok "6 · a path-name skips the heading check" ;; esac
+
+build; sed -i 's|^## W1$|## W1 — retitled freely|' "$LAB/CHANGELOG/W1.md"
+out="$(run)"
+case "$out" in *"index calls it 'W1'"*) ok "6b · control · a LABEL still gets the heading check" ;;
+  *) bad "6b · label heading check" "check 3 is now dead" ;; esac
+
+# 7 · a wrong --entry-re yields a precise, plausible, wrong number. It cannot be
+#     detected, so the finding must show what it counted.
+build
+out="$(run --entry-re '^#')"
+case "$out" in *"--entry-re matched"*) ok "7 · a count mismatch shows what it counted" ;;
+  *) bad "7 · count diagnostics" "no sample in the message" ;; esac
+
+build
+out="$(run --entry-re 'ZZZ_NEVER_MATCHES')"
+case "$out" in *"Zero matches usually means the wrong --entry-re"*) ok "7b · zero matches names the likely cause" ;;
+  *) bad "7b · zero-match hint" "not shown" ;; esac
+
 echo
 echo "  $pass passed, $fail failed"
 rm -rf "$LAB"

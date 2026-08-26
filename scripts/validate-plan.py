@@ -76,6 +76,7 @@ SILENT_BECAUSE = {
     "frozen-contract":     "turned off: the config does not set require_frozen_human_contracts",
     "gate-fails-first":    "not run: --run-gates was not given, so no done-command was executed",
     "graph":               "turned off: the config does not set require_graph_consistent",
+    "worktree-disjoint":   "turned off: the config does not set require_worktree_disjoint",
     "health-checker":      "not applicable: under the {floor}-task floor, or require_adversary "
                            "is off",
     "instrument":          "not applicable: no task has a done-command for a plan-local "
@@ -400,6 +401,67 @@ def _inside(rel: str, plan: Path) -> bool:
         return False
 
 
+# THE COMMAND'S OWN PREREQUISITES ARE NOT DELIVERABLES. Found by the first real
+# XL-band run: ten done-commands of the shape `python3 tools/check.py` where the
+# script did not exist yet. Python exits 2 saying "No such file or directory",
+# which the missing-file rule below reads — correctly, for a DATA artefact — as
+# "the thing it grades has not been produced yet", and the gate passes. `bash
+# tools/missing.sh` exits 127 and IS caught, so whether the gate lied depended on
+# which interpreter it used. The reporting program was Python-heavy.
+#
+# Two prerequisites, and they are not deliverables in different ways:
+#
+#   · the SCRIPT a done-command executes IS the gate (check_instrument draws the
+#     same line: what a done-command names is the gate, what the gate calls is an
+#     instrument). A gate that does not exist is not a gate that fails cleanly —
+#     it is a gate that cannot run, wherever it lives.
+#   · the WORKING DIRECTORY it needs. Here the plan/no-plan distinction still
+#     holds: `cd dist && test -f app.js` on a dist/ the task itself builds is a
+#     clean fail and must stay one. `cd /srv/fred/services/dash` on a directory
+#     outside the plan is a gate that cannot run here.
+INTERPRETERS = {"bash", "sh", "zsh", "dash", "python", "python2", "python3",
+                "node", "ruby", "perl", "Rscript", "deno", "bun"}
+RE_SCRIPT_SUFFIX = re.compile(r"\.(?:py|sh|js|mjs|ts|rb|pl|R|bash)$")
+
+
+def _missing_prereq(cmd: str, plan: Path):
+    """A prerequisite the command needs before it can grade anything, or None."""
+    for seg in re.split(r"&&|\|\||;|\|", cmd):
+        try:
+            argv = shlex.split(seg.strip())
+        except ValueError:
+            continue                      # unbalanced quotes — not ours to judge
+        while argv and "=" in argv[0] and not argv[0].startswith("-"):
+            argv = argv[1:]               # leading VAR=value assignments
+        if not argv:
+            continue
+        head = Path(argv[0]).name
+        if head in ("cd", "pushd") and len(argv) > 1:
+            # _inside takes the STRING form, not a Path. A directory the plan
+            # itself builds is a clean fail and must stay one; only one outside
+            # the plan is a gate that cannot run here.
+            target = Path(argv[1]) if argv[1].startswith("/") else plan / argv[1]
+            if not target.is_dir() and not _inside(argv[1], plan):
+                return (f"its working directory {argv[1]!r} does not exist and is "
+                        f"outside the plan")
+            continue
+        script = None
+        if head in INTERPRETERS:
+            for a in argv[1:]:
+                if a.startswith("-"):
+                    continue
+                script = a
+                break
+        elif RE_SCRIPT_SUFFIX.search(argv[0]) and "/" in argv[0]:
+            script = argv[0]
+        if script:
+            sp = Path(script) if script.startswith("/") else (plan / script)
+            if not sp.exists():
+                return (f"the script it runs, {script!r}, does not exist — a gate "
+                        f"that is not there is not a gate that fails cleanly")
+    return None
+
+
 def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
     """
     The check that would have caught the worst defect in the pilot plan.
@@ -476,6 +538,8 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
                 if where is None or not _inside(where, plan):
                     blew_up = (f"{missing.group(0)}: "
                                f"{where or 'and the gate does not say which file'}")
+        if blew_up is None:
+            blew_up = _missing_prereq(cmd, plan)
         if blew_up:
             f.fail("gate-fails-first", f"{path}",
                    f"{tid}'s done-command could not run here — it failed on its own "
@@ -1062,36 +1126,101 @@ def check_instrument_fixture(f: Findings, plan: Path, tasks: dict, cfg: dict):
     Grillin's whole model is 'check the claim against the thing'. It has nothing
     to say about the INSTRUMENT being wrong. On the reskin run a measuring script
     shattered a gradient into 24 near-identical near-blacks and reported no accent
-    detectable — every individual number true, the conclusion worthless. What
+    detectable - every individual number true, the conclusion worthless. What
     caught it was a fixture with a known answer, and nothing in the method asked
     for one.
+
+    WHY THIS WAS REWRITTEN 2026-08-22. v1 read only the done-command STRING and
+    joined every reference onto the plan root: `plan / "/srv/fred-plans/..."`
+    never resolves, so an absolute path found nothing. It also never opened the
+    gate it found, so any instrument invoked one level down was invisible. On
+    this box the result was that all six plans printed the identical
+    "no plan-local instrument is load-bearing in any gate" - the check had never
+    fired once - while plans/face's F4 gate ran a plan-local measuring script
+    whose bar F5 later demonstrated three ways past. The check that exists to
+    demand a ruler be calibrated could not see the ruler.
+
+    THE DISTINCTION THAT KEEPS THIS FROM SWALLOWING EVERY PLAN: the script named
+    IN the done-command is the gate itself, and a gate is not an instrument.
+    Scripts the gate CALLS, which live inside the plan, are instruments and must
+    be exercised against a known answer.
     """
     if not cfg.get("require_instrument_fixture", True):
         return
     cmds = [c for c in (done_command(p) for p in tasks.values()) if c]
     if not cmds:
         return
-    scripts = set()
+
+    def resolve(ref):
+        """A plan-local file, whether the reference was absolute or relative."""
+        for cand in (Path(ref), plan / ref.lstrip("./")):
+            try:
+                rp = cand.resolve()
+                if rp.is_file() and rp.is_relative_to(plan.resolve()):
+                    return rp
+            except (OSError, ValueError):
+                continue
+        return None
+
+    # Level 0: whatever the done-commands name is the GATE, not an instrument.
+    gates, texts = set(), []
     for c in cmds:
         for ref in RE_SCRIPT_REF.findall(c):
-            if (plan / ref.lstrip("./")).is_file():
-                scripts.add(ref.lstrip("./"))
-    if not scripts:
+            rp = resolve(ref)
+            if rp is not None:
+                gates.add(rp)
+    for g in sorted(gates):
+        try:
+            texts.append((g, g.read_text(errors="replace")))
+        except OSError:
+            pass
+
+    # Level 1+: what the gates call, bounded, is the instrument set.
+    instruments, seen, frontier, depth = {}, set(gates), list(texts), 0
+    while frontier and depth < 3:
+        nxt = []
+        for owner, body in frontier:
+            for ref in RE_SCRIPT_REF.findall(body):
+                rp = resolve(ref)
+                if rp is None or rp in seen:
+                    continue
+                seen.add(rp)
+                instruments.setdefault(rp, owner)
+                try:
+                    nxt.append((rp, rp.read_text(errors="replace")))
+                except OSError:
+                    pass
+        frontier = nxt
+        depth += 1
+
+    if not instruments:
         f.ok("instrument", "no plan-local instrument is load-bearing in any gate")
         return
+
+    calibration = list(cmds) + [b for _, b in texts] + [
+        b for b in (_safe_read(i) for i in instruments) if b]
     bad = 0
-    for s in sorted(scripts):
-        stem = Path(s).name
-        proven = any(stem in c and re.search(r"fixture|golden|known", c, re.I)
-                     for c in cmds)
+    for i in sorted(instruments):
+        stem = i.name
+        proven = any(stem in c and re.search(r"fixture|golden|known|self-test|selftest", c, re.I)
+                     for c in calibration)
         if not proven:
             bad += 1
-            f.fail("instrument", f"{plan / s}",
-                   f"{s} produces evidence a gate depends on, but no done-command "
-                   f"runs it against a fixture with a known answer. An instrument "
-                   f"nobody calibrated authorises every measurement downstream of it.")
+            f.fail("instrument", f"{i}",
+                   f"{i.name} produces evidence a gate depends on "
+                   f"({instruments[i].name} runs it), but nothing runs it against "
+                   f"a fixture with a known answer. An instrument nobody "
+                   f"calibrated authorises every measurement downstream of it.")
     if not bad:
-        f.ok("instrument", f"{len(scripts)} instrument(s), each proven against a known answer")
+        f.ok("instrument",
+             f"{len(instruments)} instrument(s), each proven against a known answer")
+
+
+def _safe_read(path):
+    try:
+        return path.read_text(errors="replace")
+    except OSError:
+        return ""
 
 
 RE_REVERSIBLE = re.compile(r"\*\*Reversible:\*\*\s*([^·\n]*?)(?=\*\*|·|$)", re.M | re.I)
@@ -1299,6 +1428,89 @@ def check_paths_disjoint(f: Findings, tasks: dict, cfg: dict):
                        f"a claim; naming the path is worth keeping.")
     if not bad:
         f.ok("paths-disjoint", "no two concurrent tasks own the same path")
+
+
+RE_WORKTREE = re.compile(r"\*\*Worktree:\*\*\s*`?([^`·\n]+?)`?\s*(?=\*\*|·|$)", re.M | re.I)
+
+
+def check_worktree_disjoint(f: Findings, tasks: dict, cfg: dict):
+    """
+    Where git itself serialises, the plan must impose an order.
+
+    A git worktree has EXACTLY ONE checked-out branch, and an index has one
+    `index.lock`. Those are not conventions to be careful around — they are
+    exclusions git enforces, and two tasks told to work the same directory at
+    the same time do not get an error that names the problem. They get each
+    other's files.
+
+    THE RUN THAT BOUGHT THIS. An 11-track, 180-task program gave each persona one
+    persistent worktree so later tasks would land where earlier ones did. The
+    runtime dispatched the whole ready frontier at once and one persona held five
+    of them: two concurrently, then three. Five tasks, five branches, one
+    worktree. Nothing failed loudly and both tasks reported success; one commit
+    contained another task's staged files. The worker found it itself:
+
+        "Worktree contention is real: a concurrent task committed my staged
+         files into its commit."
+
+    The damage was small only because those tasks wrote into the plan repository
+    rather than the product one. For a BUILD task it is silent cross-contamination
+    of two branches.
+
+    This is `paths-disjoint` reasoning applied to the working directory instead
+    of to output paths. That check already refuses two concurrent tasks that own
+    the same output path; a worktree is a path they both write to on every
+    `git add`, and it was not covered. It is decidable statically, from the
+    files, with no runtime involved — which is what makes it the gate's business
+    rather than the runner's. The runner's half is holding a persona's second
+    task back for a tick; both halves are needed and neither replaces the other.
+    """
+    if not cfg.get("require_worktree_disjoint", True):
+        return
+    blocked_by, trees = {}, {}
+    for tid, path in tasks.items():
+        text = path.read_text(errors="replace")
+        mb = RE_BLOCKED_BY.search(text)
+        blocked_by[tid] = {d for d in (RE_TASK_ID.findall(mb.group(1)) if mb else [])
+                           if d in tasks}
+        m = RE_WORKTREE.search(text)
+        if not m:
+            continue
+        v = m.group(1).strip().rstrip("/")
+        if v and not RE_PLACEHOLDER.match(v):
+            trees[tid] = v
+
+    if not trees:
+        f.ok("worktree-disjoint", "no task declares a worktree")
+        return
+
+    def reaches(a, b, seen=None):
+        seen = seen or set()
+        if a in seen:
+            return False
+        seen.add(a)
+        return b in blocked_by[a] or any(reaches(d, b, seen) for d in blocked_by[a])
+
+    ids = sorted(trees)
+    bad = 0
+    for i, a in enumerate(ids):
+        for b in ids[i + 1:]:
+            if trees[a] != trees[b]:
+                continue
+            if reaches(a, b) or reaches(b, a):
+                continue                      # ordered — sharing is safe
+            bad += 1
+            f.fail("worktree-disjoint", f"{tasks[a]}:1",
+                   f"{a} and {b} can run at the same time and both declare "
+                   f"worktree {trees[a]!r}. A git worktree holds one checked-out "
+                   f"branch; two concurrent tasks in it do not get an error, they "
+                   f"get each other's staged files, and both still report success. "
+                   f"Put an edge between them in **Blocked by:** / **Blocks:** — "
+                   f"the graph has to state the order git is already enforcing — "
+                   f"or give one of them its own worktree.")
+    if not bad:
+        f.ok("worktree-disjoint",
+             f"{len(set(trees.values()))} worktree(s); no two concurrent tasks share one")
 
 
 def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
@@ -2112,6 +2324,7 @@ def main():
     check_instrument_fixture(f, plan, tasks, cfg)
     check_rollback_real(f, plan, tasks, cfg)
     check_paths_disjoint(f, tasks, cfg)
+    check_worktree_disjoint(f, tasks, cfg)
     check_persona_model(f, plan, tasks, cfg)
     check_size_declared(f, plan, tasks, cfg)
     check_done_self_reference(f, plan, tasks, cfg)
