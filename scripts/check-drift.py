@@ -83,6 +83,7 @@ def main() -> int:
     n_principles = len(spec["principles"])
     n_anti = len(spec["antiPatterns"])
     n_phases = len(spec["phases"])
+    n_gate = len(spec.get("gateChecks", []))
 
     for n, label, where in ((n_principles, "principles", readme),
                             (n_phases, "phases", readme)):
@@ -287,6 +288,24 @@ def main() -> int:
         if "headlineDecomposition" not in meas:
             bad.append("SCALING.json's headline number has no stated decomposition — "
                        "a number the gate prints on every run must be addable")
+
+    # ── 2b · the gate's check COUNT, wherever it is written as a numeral ────
+    # Block 2 mirrors principles, anti-patterns and phases because those are
+    # spelled out in words. The gate's own check count is written as a numeral —
+    # "25 checks" — in README twice and in WORKING-WITH-CLAUDE-CODE, and nothing
+    # read any of them. Adding the 25th check silently left all three saying 24,
+    # in the same commit that added a checker for two OTHER unread surfaces. The
+    # rule this file exists for does not exempt the file's own author.
+    for name in ("README.md", "WORKING-WITH-CLAUDE-CODE.md", "index.html"):
+        try:
+            body = (ROOT / name).read_text()
+        except OSError:
+            continue
+        for m in re.finditer(r"(\d+)\s+checks\b", body):
+            if int(m.group(1)) != n_gate:
+                line = body.count(chr(10), 0, m.start()) + 1
+                bad.append(f"{name}:{line} says {m.group(1)} checks; the gate emits "
+                           f"{n_gate}")
 
     # ── 9 · cross-file section citations resolve to a real heading ─────────
     # The build-brief extraction moved every shared rule into one home and left

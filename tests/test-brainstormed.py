@@ -203,6 +203,28 @@ r = subprocess.run([sys.executable, str(GATE), "--version"],
 has("--version reports the count SCALING.json declares", r.stdout,
     f"{len(spec_json['gateChecks'])} checks")
 
+# ── the numeral, which nothing read until it rotted ────────────────────────
+# check-drift block 2 mirrors the counts that are spelled out in WORDS. The
+# gate's check count is a NUMERAL — "25 checks" — in README twice and in
+# WORKING-WITH-CLAUDE-CODE, and adding the 25th check left all three saying 24,
+# in the same commit that added mirroring for two other unread surfaces.
+import shutil as _sh
+_readme = ROOT / "README.md"
+_backup = _readme.read_bytes()
+try:
+    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "check-drift.py")],
+                       capture_output=True, text=True, timeout=120)
+    chk("control · the surfaces agree on the check count as they stand", r.returncode, 0)
+    _readme.write_bytes(_backup.replace(f"{len(spec_json['gateChecks'])} checks".encode(),
+                                        b"1 checks", 1))
+    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "check-drift.py")],
+                       capture_output=True, text=True, timeout=120)
+    chk("probe · a wrong numeral in README fails drift", r.returncode, 1)
+    has("...and it names the file, the line and both numbers", r.stdout, "README.md:")
+finally:
+    _readme.write_bytes(_backup)
+chk("the mutated README was restored byte-for-byte", _readme.read_bytes(), _backup)
+
 print()
 if fails:
     print(f"\033[31m{fails} failed\033[0m")

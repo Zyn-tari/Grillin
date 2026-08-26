@@ -195,7 +195,7 @@ Claude Code ships a `brainstorming` skill, and it is the step in front of Grilli
 competitor to it. It classifies a request into one of three paths and refuses to write
 anything until you have approved a design. Grillin cannot do that job: this method starts
 once you have decided *what* to build, and its gate checks structure — a plan about entirely
-the wrong problem passes every one of the 24 checks.
+the wrong problem passes every one of the 25 checks.
 
 **The seam, and it matters.** On its architectural path that skill finishes by invoking its
 own `writing-plans` skill. Do not let it. Grillin **is** the plan-writing method; running
