@@ -90,7 +90,10 @@ coincidence, not an organisation.
 ## 2a · Containment
 
 - Agents work in an isolated copy, **never in the deployed checkout**.
-- **Read anywhere. Write only in your worktree and your task folder.**
+- **Read anywhere except what your own task's `Must not read:` field names; write only in your
+  worktree and your task folder.** That field *narrows* this default — it does not revoke it, and it
+  is not a containment boundary, so a lookup outside it is a scope question, not a violation. A
+  worker that read the two as the same thing reported a legitimate lookup as a breach.
 - A defect in a file you do not own gets **recorded, not fixed**.
 - **Contended files have one owner and it is never a task agent.** Others emit fragments; the
   integrator applies them.
@@ -105,6 +108,26 @@ coincidence, not an organisation.
 - Do NOT <project-specific irreversible action>.
 - Do NOT <project-specific wrong-source-of-truth trap>.
 
+## 3a · Constraints & the trap ledger — two lists, kept apart
+
+**Project constraints — written into the plan.** The don't-touch list, compliance hard-stops,
+approval gates. These live in the plan itself, next to the work they bound — not folded into
+the do-NOT list above, which stays universal and verbatim.
+
+**The standing trap ledger — pointed at, never retyped.** A running file *per domain*,
+referenced by path from every plan in that domain, not copied into any of them. Domain-labelled,
+because traps do not cross domains: a shell ledger — inline interpreter calls blocked by a hook
+(use a script file instead), a batch find/replace that silently half-applies (`sed` without
+`/g`), a zero-match count that kills a command chain (`grep -c`) — is pure noise to a content
+migration, whose real traps are organisational.
+
+A trap worth hard-coding into every prompt stays in §3, above, verbatim. The ledger is for the
+rest — the ones nobody thought to write down until the second time.
+
+Starting a new domain? Start its ledger with the first trap you hit, and label it.
+
+This project's ledger: `<path to the domain trap ledger>`
+
 ## 4 · Output contract
 
 All three are written **into the agent's own task folder** — `tasks/<ID>/` — never elsewhere.
@@ -118,10 +141,23 @@ All three are written **into the agent's own task folder** — `tasks/<ID>/` —
 Task **status** is not an output file — it is a line inside each `TASK.md`, updated in place. See
 §8 and §9.
 
-## 5 · Every task has a loop
+## 5 · A task that can converge carries a loop — by agreement, not by enforcement
+
+<!-- THIS HEADING USED TO READ "Every task has a loop", AND THAT WAS NOT TRUE OF ANYTHING.
+     No check reads `## Loop`; OPERATING-THE-PLAN.md §11 registers the rule as ADVISORY, and
+     narrower than this section claimed — its row is "Repairs go through the converge loop",
+     not "every task has one". The shipped examples split the same way: all eight tasks of
+     examples/a-real-first-plan carry `## Loop`, the one-task and research-first examples do
+     not, and nothing failed either way. A reader who takes "every" literally, finds two
+     examples without it and no gate that cares, learns that this file's rules are decorative.
+     They are not — they are agreed rather than enforced, which is a different thing, and the
+     heading now says which. Same trade as the parsed/not-parsed register in TASK.md.template. -->
 
 **Converge loop** — do → verify → **fix** → **confirm the fix, by someone who did not make it** →
-re-verify, with a stated cap. Hitting the cap is a stop-and-report.
+re-verify, with a stated cap. Hitting the cap is a stop-and-report. Earned wherever the work can
+come back wrong: a repair, a build that either compiles or does not, anything measured. A task
+with one observable outcome and no way to partially succeed does not need one, and padding it
+with a loop that can only run once makes the contract longer and less read.
 
 The confirm step is not ceremony. An agent that repairs a defect and then declares it repaired is
 self-certifying one level down from the rule in §3, and it is the level nobody watches.

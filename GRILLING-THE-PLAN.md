@@ -517,10 +517,10 @@ interactive map in [`index.html`](index.html).
 
 | Size | Tasks | Turn on |
 |---|---|---|
-| **XS** | 1–3 | Phases 0, 3, 9, **10**. No fan-out, no skills, no isolation. ~1 hour of planning. |
-| **S** | 4–10 | + Phase 1 (2–3 recon workers), + Phase 4 diagram, + **Phase 5 reduced** (folder, owner, status, done-command, and still a model and an effort — no persona, no skills, no fragments), 1 skill, branches only. |
-| **M** | 11–25 | + Phase 5 **full** contracts (persona, skills, fragments), 3–5 skills, worktrees, **integrator**, adversarial pass. |
-| **L** | 26–60 | + waves, + long-clock loops, + published status surface, two adversarial passes. |
+| **XS** | 1–3 | Phases 0, 3, 9, **10** — the precedence ladder, the document grill, the environment check, the entry point. No fan-out, no skills, no isolation. ~1 hour of planning. |
+| **S** | 4–10 | + Phase 1 (2–3 recon workers), + a triage register, + Phase 4's approved diagram, + **Phase 5 reduced** (folder, owner, status, done-command, and still a model and an effort — no persona, no skills, no fragments), 1 skill, branches only. |
+| **M** | 11–25 | + full recon fan-out, + Phase 5 **full** task contracts (persona, skills, fragments), 3–5 skills, worktrees, **integrator**, + substrate measurement (Phase 8), adversarial pass. |
+| **L** | 26–60 | + waves with merge gates, + long-clock loops, + a published status surface, two adversarial passes. |
 | **XL** | 61+ | + sub-orchestrators per track, + a plan-of-plans. Re-run Phase 3 per track. |
 
 **Two things never scale down.** At every size, from a one-line fix upward:
@@ -529,6 +529,484 @@ interactive map in [`index.html`](index.html).
 - **Phase 9** — verify the environment the plan assumes.
 
 They are the cheapest phases and they catch the most expensive errors.
+
+---
+
+## The shared authoring rules — they hold with or without a plan directory
+
+The phases above build a plan directory. Most work never gets one. The rules below are the part
+that does not depend on having one: they hold for a plan, for a single delegated brief
+([`templates/BRIEF.md.template`](templates/BRIEF.md.template)), and for the skeleton in the next
+section. They live here so that there is one copy — a rule published in four places becomes four
+different rules. Where something is already enforced or already written down in this repository,
+this section **cites** it and does not restate it.
+
+Read the register honestly: outside a plan directory almost nothing here is machine-checked. Where
+a check exists it is named. Where none exists that is said out loud, and the rule is a standard you
+hold yourself to, not a gate you can hide behind.
+
+The incidents below were bought elsewhere — on a run of hand-written briefs against a live server,
+and on two long-form builds whose costs were recorded at the time. They are reproduced as evidence
+for the rules they bought, not as measurements of this repository. Where a number appears, it is
+theirs.
+
+### What a declaration owes the worker
+
+**Lead with consequence, not activity.** State the problem as what happens, and where the work
+exists because something already went wrong, say what went wrong — the same rule a task contract
+carries ([`templates/TASK.md.template`](templates/TASK.md.template)). Every brief in the sample led
+with consequence: *the deploy itself is small; the risk is entirely in what else is on that box.*
+That sentence is what makes a worker careful.
+
+**Then say what done is NOT.** Name the boundary the work stops short of. `Done means` is the
+positive gate; this is its complement, and leaving it out is how scope grows quietly. One brief
+said *ready for a URL — not connected to one*, because "deploy the site" without that sentence
+licenses a worker to go and find a domain.
+
+**State the mechanism, not the prohibition.** A rule is written with the mechanism that causes it,
+never with the syntax it forbids. "Be careful with the web server" prevents nothing. The mechanism
+does: no default server is declared anywhere on the box, so the first server block loaded for a
+port becomes the implicit default; the config directory loads alphabetically; a file named
+`newsite` sorts before `zz-app` and would silently become the catch-all for the whole machine.
+**A worker that understands why the file is named `zz-` will not rename it in a later job. One that
+was only told the name, will.**
+
+Three riders travel with that rule:
+
+- **Say "silently" when it applies.** A failure that announces itself is a bug; a failure that does
+  not is a trap, and the word is the difference between the two.
+- **One trap per block, never merged.** Two traps in one paragraph cannot be checked off
+  separately, and a worker checks off what it can see.
+- **Every prohibition carries its reason where the reason is not obvious.** *Do not restart the
+  service; validate the config, then reload — a reload does not drop the live sites' connections, a
+  restart does.* An unexplained prohibition gets reasoned around by a capable worker under
+  pressure. An explained one does not.
+
+**Ownership is stated in full, by path, even where it feels obvious.** One owner per file (see the
+principles above and [`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template)); name
+the neighbours by path and say they are not yours; and say that a defect found in something you do
+not own is **reported, not fixed**. Inside a plan directory the rules file carries this once for
+everybody. Outside one there is no rules file, so it goes in full into every artefact — which is
+why the sample briefs converged on a single containment sentence and repeated it verbatim in every
+follow-up.
+
+**The artefact carries the instructions, not the history of the instructions.** Rationale is a note
+to the author. A brief, a contract or a skeleton that arrives carrying its own reasoning is longer,
+and the parts that matter are harder to find inside it. Keep the reasoning in the template and in
+this section; delete it from the copy you send.
+
+**Two kinds of repetition, and only one of them is a duplicate.** A rule restated across surfaces an
+author maintains is a duplicate: the copies drift, and the second one becomes a second rule. A rule
+restated *inside a single artefact handed to a reader with no history* is not — it is redundancy
+placed where attention decays. So: repeat the decision point inside the "do not" list, because it
+is the one a worker forgets forty minutes in; and re-state the rails in a follow-up instead of
+pointing back at the first instruction — *same rails as before: nothing outside `<path>`, validate
+then reload, re-run the neighbour check at the end.* Two lines, and they survive a fresh context
+that never saw the first instruction. **Do not delete these as duplicates.** They are the
+exception, and this paragraph is the reason.
+
+### Facts, and what a fact costs to write down
+
+**A row of established fact carries the command that established it, not the assurance that it was
+checked.** "Both names already resolve to 203.0.113.10; I checked" is a claim. `dig +short
+newsite.example.com` → `203.0.113.10` is a fact, and the difference is that a reader can run the
+second one. Inside a plan this is the bar `check_confirmed_is_exercised` in
+[`scripts/validate-plan.py`](scripts/validate-plan.py) holds you to; see the enforcement register in
+[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §11. **Nothing enforces it outside a plan
+directory** — no gate reads a brief and no gate reads a skeleton — so on those surfaces it is an
+authoring standard and nothing more.
+
+**Anything you believe but did not run is not a missing row. It is a task.** It belongs in the
+declared reads, for the worker to establish, never in the table of established fact. A belief
+promoted to a fact is the one defect nothing downstream can catch, because everything downstream
+treats that table as ground.
+
+**The table exists to buy back the worker's first twenty tool calls.** Without it a worker
+rediscovers which server is running, which runtime exists, and what else is on the machine — all of
+which the author already knew. Inside a plan the same instruction reads *cite the inventory that
+briefs you; do not re-derive it* ([`templates/TASK.md.template`](templates/TASK.md.template)).
+
+**Rows naming a file or an identifier are checked against the artefact actually deployed** — not
+against the bundle, the spec, or whoever wrote the request. Already owned, with the three incidents
+that bought it, by [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §10 · *Confirm the artefact
+before the first edit*. Cited, not repeated.
+
+**Where the machine you are on is not the machine the work lands on, say so and give both paths.**
+Two briefs in one afternoon lost time to a worker looking for a file on the wrong host. A path with
+no host attached reads as local, always.
+
+### Evidence tiers: two labels, and why not three
+
+Grillin's vocabulary is two labels — **CONFIRMED** (you checked it yourself) and **SUSPECTED** (you
+inferred it, or were told) — defined once in *Phase 1 — Inventory* above and used everywhere: an
+inventory row, a review finding and a claim in a report all take the same two.
+
+Methods that grade sources more finely usually run three tiers: *sourced* (citable, with a locator
+and a date), *preliminary* (backed by a capture but not independently checkable by the audience),
+and *unverified* (belief, to be resolved or cut before ship). Map those in; do not adopt them:
+
+- *sourced* → **CONFIRMED**
+- *preliminary* → **SUSPECTED**
+- *unverified* → **SUSPECTED**
+
+The third tier is not adopted because nothing can grade it. The CONFIRMED boundary is checkable —
+an invocation is quoted or it is not — and that is exactly what makes two labels worth having. A
+middle tier adds a label no machine can separate from the one below it, which makes it a preference
+wearing a vocabulary's clothes. The cost of the collapse is already recorded in
+[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §12: *told* and *inferred* land in the same bucket.
+If your project needs to tell them apart, write the distinction into the row's own text rather than
+inventing a third label the gate cannot see.
+
+### Freshness is a separate question from accuracy
+
+A source can be primary, correctly quoted, dated — and silently superseded. Accuracy asks *did you
+copy it right*; freshness asks *is it still true*, and a document can answer the first perfectly
+while failing the second. This is not the precedence-ladder claim above: the ladder ranks *kinds* of
+source and warns that specs go stale. Freshness is a property of one source you have already decided
+to trust.
+
+So for anything living — a running config, a price, an org process, an API surface, a wiki page —
+**state how still-true gets confirmed, and state it as an action**: *re-run the capture the week of
+ship*, *a fresh interview outranks document age*, *re-read the config on the box before the first
+edit*. A CONFIRMED row is confirmed **as of the moment its command ran**. Nothing in this method
+re-ages it for you.
+
+### Decision points: write both branches before the reading is taken
+
+A decision point is what keeps a small instruction from authorising a large irreversible act. One
+brief asked for a site "in PHP" on a server with no PHP runtime. The brief had pre-decided both
+branches — deploy static if the `.php` is a shim, stop and report if it is genuinely load-bearing —
+because *installing a language runtime on a production server running someone else's live service is
+not something to do inside an instruction that said "deploy this landing page."*
+
+Two rules follow, and they are the whole of it:
+
+- **Write both branches, not just the stop.** A gate with only the stop branch written reads as
+  discouragement. A worker that knows exactly what to do on the good branch will not talk itself
+  onto the bad one.
+- **Price the stop.** Say what stopping costs — *it costs you one message* — or the worker weighs a
+  stop as failure and proceeds. An unpriced stop is not a gate; it is a warning.
+
+**Assign the meaning before you take the reading.** Whichever branch a measurement selects, decide
+what each possible reading *means* while you are still writing, not while you are looking at it. A
+worker that knows what a reading means before taking it cannot rationalise the reading afterwards —
+and neither can you. Where the whole job is to find out *why* something is broken, the decision
+point **is** the stop: report first, change nothing.
+
+### Proving you broke nothing, and proving you did something
+
+These are two different proofs and they need two different commands.
+
+**Broke nothing: the identical command, before and after.** Run it, record the output, do the work,
+run the byte-identical command again, and put both outputs in the report. A reading taken only
+afterwards proves nothing, because nobody can say what it was before. This began as a formality — a
+two-host check run before and after a config reload — and stopped being one on the certificate job,
+where the tool rewrites the server config in place as a side effect of doing its actual work. The
+reading that looked like ceremony was the only thing watching the file that changed itself.
+
+**Did something: the proof command must fail before the work is done.** Already written down and
+already enforced — the `Done means` rule in [`QUICKSTART.md`](QUICKSTART.md) §4, and
+`check_gates_fail_first` in [`scripts/validate-plan.py`](scripts/validate-plan.py). It appears here
+as a heading and nothing more, because a brief has no gate to catch it for you.
+
+**A cause is not established by making the symptom go away.** A control test is required before a
+symptom is attributed to a cause — owned by [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §9 · *A
+defect is not a cause until you remove it*. Cited, not repeated.
+
+**Say which half.** Be accurate over reassuring: where something is half-done, name the half. The
+register is [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §8 · *The measurement, stated without
+euphemism*. "Fixed X; Y not verified" is a result. "Should be working now" is not.
+
+### Handing something back: reports, and commands a person will paste
+
+**Number the reporting contract.** The list of what the report must contain is numbered so the
+worker can check its own report against it before sending, and so the author can see at a glance
+which item is missing. An unnumbered list of expectations is read once and satisfied approximately.
+
+**Name the exact output path and the exact notification command.** A report written to a path nobody
+reads is not a report. Where the job has no plan directory the report *is* the resumption artefact —
+the only continuous record the work has — which is why it is never optional.
+
+**Follow-up work appends to the report; it never rewrites it.** Say it in those words, because
+"write the report" reads as "write the file" to a worker that did not write the first one, and
+overwriting it is the no-directory equivalent of losing the plan directory. Append under a new
+dated heading and leave what is there.
+
+**Never hand a person a command with a placeholder in it.** Assume it will be pasted without being
+read around, because it was: a `sed` command containing `YOURDOMAIN.com` was run literally,
+placeholder and all, and a vhost went live serving `server_name YOURDOMAIN.com`. If the real value
+is not known yet, write the command with the value **visibly missing** and the words "fill this in"
+— never a plausible-looking fake. A fake that looks real is indistinguishable from a value, and
+that is the entire failure.
+
+### F1 · Starve the inputs, and declare the exceptions
+
+**Declare what each worker reads — and name what it must not read.** The must-not list is the part
+people leave out and it is the part that pays. Two long-form builds held to the same standard —
+73,000 words and 60,000 words — cost about 10M tokens and about 2.9M. Check the direction before
+crediting the gap to size: the longer build is the expensive one, but 22% more words did not buy
+3.4x the cost. The difference was not thinking, it was re-reading: a 700 KB research corpus pulled
+in forty-odd times. Slice shared material into per-worker packs of roughly 12–25 KB, so each worker
+reads its own slice, the conventions, one exemplar and the captured ground truth — and nothing
+else.
+
+The other half of this is not cost. An instruction that says *read those four files in full; do not
+read the asset files, the vendored library, or the video — you do not need their contents in order
+to host them* is preventing a specific failure: a 14 MB video read into context is a job that dies
+at step four **for reasons that look like model error**. That failure signature is why the list is
+worth writing, because it does not present as "read too much."
+
+**This is an authoring convention, not a containment rule, and the two point in opposite
+directions.** Containment restricts where a worker may **write** and deliberately leaves reading
+open — the *Phase 5* principle above, and
+[`templates/_RULES.md.template`](templates/_RULES.md.template) §2a · *Containment*, which wins on any
+disagreement with a task. Nothing enforces a must-not-read list. Starvation is a budget and a focus
+decision the **author** makes when packing the work: it **narrows** that open read permission rather
+than revoking it. Say which one you mean — a worker that reads "must not read" as a containment
+boundary will report a legitimate lookup as a violation.
+
+**Order the read list, and put the deciding file last.** Where one of the declared reads is what
+settles a decision point, name it as the decision point and place it at the end, so the worker
+arrives at the gate having already read what informs it. A list in arbitrary order is a list read in
+arbitrary order.
+
+**Two exceptions are lawful. Both are declared, never improvised:**
+
+1. **Cross-reference-bound units get an explicit read-list of finished peer units.** Where a unit
+   must reconcile against others — a budget against the aims it funds, a timeline against everything
+   on it, a summary against what it summarises — name the finished peers it may read.
+2. **A cross-cutting thread gets a continuity bible.** Where something must surface across
+   non-adjacent units, write one short file every worker reads regardless of its group. Checking the
+   seams alone catches breaks only at group boundaries, and a thread does not run along them.
+
+Anything that is not one of those two stays starved. An exception a worker granted itself is not an
+exception; it is the corpus coming back.
+
+### F2 · A number, or the reference to measure
+
+*Give counts, not adjectives* is already stated for inventory work in *Phase 1* above. The general
+form is stronger and applies to every declaration: **every quality word either carries a number or
+names a reference a worker can measure before starting.** "More visuals, less dense" steered nothing
+until it was measured off the best existing page and became *≤130 words per visual component, ≤3
+consecutive paragraphs, ≤22 KB per section — checked by script.* Where you cannot give the number,
+name the thing to measure and make measuring it the first task.
+
+**Numbers go in the medium's own units** — not in the units that are convenient to count, and not in
+whatever the tool happens to emit. A count is a proxy for a limit, and a proxy is worth exactly what
+its correlation is worth.
+
+**Gate the quantity the limit is actually expressed in.** *Which* quantity that is, is the authoring
+decision: make it before anyone builds the gate, because a gate can only measure what it was pointed
+at. Measuring the wrong quantity once the gate exists is instrument validity, and
+[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §5 · *Validate the instrument, separately, first*
+owns that, with the worked case. Cited, not repeated.
+
+**On a migration or a rewrite, number the source corpus too** — percent of legacy units triaged,
+merged, retired. Counting only what you produced leaves the old material unmeasured, and silence is
+where old material disappears: nobody deletes it, it simply never appears in a number and so is
+never missed.
+
+### F3 · Groups, seams, barriers, and ending the chain
+
+**Overlap is the default; a barrier is a declaration.** Work starts the moment its own input lands.
+A full stop belongs only where a stage genuinely needs everything — assembly, and any unit that must
+reconcile against near-final peers. **The barrier that actually stops dispatch is the dependency
+edge** — a task's `**Blocked by:**` and `**Blocks:**` fields, checked by `check_graph` in
+[`scripts/validate-plan.py`](scripts/validate-plan.py). Declare it there and nowhere else, so the
+declaration has one home. The wave table in
+[`templates/_WORKTREES.md.template`](templates/_WORKTREES.md.template) §1 · *The waves* is the
+human-readable schedule of those edges, and `**Wave:**` itself is parsed by nothing — it sits in
+[`templates/TASK.md.template`](templates/TASK.md.template)'s NOT-PARSED register. A stop that exists
+only as a wave row is a stop no orchestrator can see: it reads the graph, finds nothing blocking, and
+dispatches straight through the full stop you thought you had declared.
+
+**Group correlated units under one worker — two or three, not more.** It is cheaper, and units
+inside a group flow into each other because one hand wrote them.
+
+**The seams between groups are where joins break, so name them and give each one an owner.** A seam
+is not a barrier and it is not a file boundary. A barrier says *nothing proceeds until this is
+done*; a
+seam says *these two finished things have to meet, and meeting is work somebody has to be assigned.*
+Usually the assembler owns every seam and reads across all of them. Ownership by file settles who
+may write; seam ownership settles who is answerable for a join that no file boundary covers.
+
+> **A naming collision worth avoiding.** [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §1 is
+> titled *The seam* and means something else entirely — the boundary between building a plan and
+> operating one. If you use the word in a plan, say which seam you mean.
+
+**End the chain out loud.** Say what happens after the last reader, in the declaration, in words:
+*after the checker, no re-verification — present.* A chain with no stated end acquires one more
+review, because the last worker cannot tell that it is last. Naming the terminal step is what stops
+verification expanding into the delivery slot.
+
+### F4 · Output a script can eat
+
+**Require an exact output form, and say so in the worker's own instruction.** Any part of the
+finished work that *can* be built mechanically from structured worker output should be: judgement
+for agents, assembly for scripts. Gatherers writing under an exact per-unit heading form turn
+slicing into packs into a zero-cost script; a term list emitted in a fixed shape is harvestable by
+sweep. A form invented per worker is a form somebody reads by hand, forever.
+
+Grillin already grades one task type on the shape of what it writes: `check_research_task` in
+[`scripts/validate-plan.py`](scripts/validate-plan.py) holds a research task to its findings file
+rather than to its activity, and [`templates/TASK.md.template`](templates/TASK.md.template) fixes
+the order that file answers in. The rule here extends that beyond research tasks; it does not
+replace it.
+
+**Every gathering task ends each topic with a "What this does NOT achieve" block.** Then the
+finished work's honesty section *assembles itself* out of independent admissions, instead of being
+composed at the end by whoever is least willing to write it.
+
+> This is not the same object as the whole-document *What this does not solve* register that
+> [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §12 and
+> [`templates/BRIEF.md.template`](templates/BRIEF.md.template) each carry. Those are one section,
+> written once, read by a person. This is one small block **per topic**, written by the worker that
+> did the topic, and consumed by an assembly script. Keep both, and do not converge the wording —
+> a script that collects on the phrase will start collecting the wrong ones.
+
+**A findings report has a form too: location · the exact current text · the exact corrected text ·
+the evidence.** Report-only workers emit findings; one owner applies them — the same shape the
+principles above already require for a contended file. Give that owner **explicit decline rights:
+it may reject a finding, with a stated reason, logged.** A reader checking one dimension in
+isolation is sometimes wrong, and an applier with no right to refuse either ships the wrong fix or
+argues about it somewhere nobody keeps.
+
+---
+
+## The skeleton — many workers, one artefact, no plan directory
+
+Grillin's phases produce a plan directory, and a plan directory is the right answer for work that
+outlives the conversation that started it. Two rungs below it, it is the wrong answer — and
+shipping only the top rung is how a method gets skipped rather than scaled. The ladder:
+
+| What you have | What to use |
+|---|---|
+| One job, one worker, and you are present while it runs | [`templates/BRIEF.md.template`](templates/BRIEF.md.template) — one delegated task, no plan around it |
+| Many workers building **one artefact**, and you are still present | **the skeleton below** — a declaration, not a directory |
+| Work that outlives the conversation: several tasks, dependencies between them, or anything a fresh context must resume from disk | the phases above, and a plan directory |
+
+The skeleton is a **declaration**. It says what gets made, what it is measured against, what counts
+as ground truth, who does what, what each of them may read, and when to stop — and it says all of
+that before anyone builds anything, which is this document's premise applied to a job too small to
+carry a directory. It has no folder, no status file, no done-command a gate can parse, and nothing
+validates it. The moment you find yourself adding a status field, a dependency between two of its
+workers, or an owner column, you are writing a plan directory in the wrong file: stop and go up a
+rung.
+
+**Going up a rung: where each slot lands.** The rung above carries the fields the gate reads, plus a
+register of the ones it does not. Several slots below have no field waiting for them there, and a
+slot with no address becomes a differently-named heading in every plan — so put them here:
+
+| Skeleton slot | Where it goes in a plan directory |
+|---|---|
+| `BAR` · `EXEMPLAR` | `PLAN.md`, above the task table. Where no exemplar exists, building one by hand is the **first task**, with its own folder, because everything downstream of it gates on it. |
+| `GROUND TRUTH`, with its freshness rule | `PLAN.md`, and the capture itself becomes a task the makers declare in `**Blocked by:**`. |
+| `SCAFFOLD` | The tasks' own `## Done means` commands, which exist and fail before any worker runs (`check_gates_fail_first`). |
+| `NUMBERS` · `Must not read` · `OUTPUT SHAPE` | Per-task fields — already in [`templates/TASK.md.template`](templates/TASK.md.template)'s NOT-PARSED register. |
+| `Seams: [N] between groups, owned by [who]` | `## What you own` on the integrator's task. A seam no task holds is a seam with no owner. |
+| `END THE CHAIN` · `PRESENT` | `PLAN.md`'s closing section — `examples/a-real-first-plan/PLAN.md` calls it *Definition of done for the whole plan*. |
+
+Nothing in that table is checked by anything. `PLAN.md` above the task table is free-form, which is
+exactly why the slot needs naming: the gate will not tell you the exemplar was never declared.
+
+For a job smaller than a single brief, use the **Pocket version** in
+[`QUICKSTART.md`](QUICKSTART.md) rather than trimming this one down.
+
+Every rule the skeleton leans on is in *The shared authoring rules* above. The slots are
+tool-independent: where a slot names a tier of worker, read it as *top / mid / small* in whatever
+you run — and a team with no agents in it at all can still run this pipeline, because the fences and
+the gates carry more of the value than the parallelism does.
+
+Copy from here down.
+
+```
+MAKE: [what · for whom · in what final form]
+
+BAR: same level as [the same-kind artefact — or a different-kind artefact that demonstrates the
+properties — or the properties alone, if neither exists].
+That means: [property] · [property] · [property]
+EXEMPLAR: [path to ONE finished unit every worker receives — confirmed yours to share. If none
+exists, building it by hand is the first task, scheduled as work, because it gates everything
+downstream of it.]
+
+NUMBERS: [floors and ceilings in the MEDIUM'S OWN units · the quantity each limit is actually
+expressed in, gated in that quantity (a rendered cap is render-then-count) · on a migration or
+rewrite: % of the legacy corpus triaged / merged / retired · every figure traceable to a
+measurement]
+[Any quality word with no number: name the reference, and measuring it is the first task.]
+
+GROUND TRUTH: [captures · fixtures · datasets · transcripts · primary documents], captured
+BEFORE anyone builds. Quote verbatim from the capture, or re-derive and mark it as re-derived.
+Never retyped from memory.
+Labels: CONFIRMED (an invocation is quoted) · SUSPECTED (inferred, or told).
+Freshness: [how still-true gets confirmed, as an action, for every living source].
+Gaps stated in the work itself: [what cannot be established here, and what is cited instead].
+
+SCAFFOLD (all of it before the first worker): the conventions every worker follows · the
+exemplar file · the gates, created AND pointed at the new work (per-unit: [cmd] · assembly:
+[cmd] · [medium gate]: [cmd]), each smoke-tested once on a known-bad input · unit naming:
+[scheme — binding, because the gates key off it] · layout: [where captures, packs, units and
+tools live]
+
+PIPELINE — one block per role; every role gets one job and one fence:
+- Gatherers: [N] × [tier] at [effort]. Job: [topics + depth] → [path], written under per-unit
+  headings in the exact form [## §NN], each topic ending with a "What this does NOT achieve"
+  block. Reads: [its own slice]. Must NOT read: [what]. Fence: they do NOT build the product.
+- Makers: [N] × [tier — top where the job is adjudicating between conflicting sources, mid
+  where it is building from settled input] at [effort]. Read ONLY: the conventions, the
+  exemplar, ground truth, their own pack. Must NOT read: the corpus, each other's units
+  (exceptions declared in HANDOFFS). Grouping: correlated units share one maker, max [2–3].
+  Each unit passes [unit gate] before returning. Fence: they do NOT touch [the frame / other
+  units].
+- Mechanical workers (if any): [N] × small tier, no persona. Job: the compile-from-record parts
+  ([what]), straight from the captures. Fence: no judgement calls.
+- Assembler: persona: [name — the goal in one sentence]. Writes [the frame / opening / closing],
+  combines, and owns the [N] seams between maker groups. Fence: format and fit, NOT facts; never
+  overwrites a maker's substance. Delegation: [may it spawn report-only workers? may it choose
+  their tiers?]
+- Checker: persona: [name — the goal]. Method by claim type: [rerun … · recompute … ·
+  claim-fidelity against …]. Report-only shards emit findings as [location · exact current text ·
+  exact corrected text · evidence]; the Checker applies every fix personally and may decline a
+  finding with a stated, logged reason. Reads ground truth, NOT the makers' inputs. Fence:
+  information only, not shape or style.
+
+HANDOFFS: [Gatherer → its own Maker the moment it lands; no waiting on siblings.]
+Barrier at [the Assembler], and before any unit that reconciles against near-final peers
+([which ones]) — those get an explicit read-list: [which finished units].
+Cross-cutting threads: continuity bible at [path], read by every Maker regardless of group.
+Seams: [N] between groups, owned by [who], read end to end.
+END THE CHAIN: after [the Checker] — no re-verification. Present.
+
+PRESENT: lands at [where] · copies to [where] · revisions keep the same [target], never a new
+one. Presenting is part of the build, not an afterthought.
+
+CONSTRAINTS: [don't-touch list: systems, files, owned content] · [hard stops that reject the
+work unread] · [approval gates]
+TRAPS: see [path to the DOMAIN-labelled standing ledger] — pointed at, never retyped here.
+
+APPETITE: [budget, in the denominator that actually dominates this job — agent tokens, studio
+hours, freelancer days, licence fees] · worker cap: [N] · wall-clock tolerance: [what] ·
+[run-to-done | ask first at [which points]] · EXTERNAL DEADLINES: [the delivery date] AND every
+approval step between "done" and "delivered", each with its lead time — [who needs it, how
+early]. The real deadline is usually not the final one: a review that needs the packet five
+business days early IS the deadline.
+```
+
+**A note on the last slot.** APPETITE is a *declaration* — what you are willing to spend, and when
+the thing must be delivered. Writing the deadline as a chain of approval steps rather than as a
+single date has two consequences worth naming.
+
+First, **every approval step is a person in the work**, and a person's step is not a slower version
+of a worker's step: it does not settle on its own, it settles when somebody acts. Grillin's
+vocabulary for that already exists — `**Owner:** … human` — and what declaring it does to a task is
+owned by [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) §10a · *The two ways a person is in the
+plan, and they are not the same*. A gatekeeper with a lead time is that same shape, declared up front
+instead of discovered at the end.
+
+Second, **the declared budget and the measured spend are two different numbers.** Declaring one does
+not measure the other, and nothing in this repository reconciles them. If you need the actuals they
+come from whatever executed the work, not from this file — and a plan that quotes a spend it did not
+measure is doing the thing *Phase 1* forbids.
 
 ---
 

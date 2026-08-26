@@ -124,6 +124,13 @@ absence rather than a broken query. Same idea, and it is why the tool-missing fi
 
 **ENFORCED** — `check_instrument_fixture`, for any plan-local script a gate depends on.
 
+**A related failure: the instrument can be accurate about the wrong question.** Where a limit is
+expressed in one unit, gate that unit — not a proxy for it. A page cap is a rendered page count, so
+the gate renders the artefact and counts pages; a word count can pass while the typeset file
+overflows. `check_instrument_fixture` proves an instrument gets a known answer right. It does not
+confirm the instrument is answering the question the limit actually asks — that comparison stays a
+human's to make.
+
 ---
 
 ## 6 · Containment extends to derivatives
@@ -168,6 +175,17 @@ The checkable half is ownership: **the adversary's owner must appear nowhere els
 
 **ENFORCED** — `check_adversary`, at four tasks and above. Below that the method already runs
 reduced and a separately-staffed adversary costs more than it returns.
+
+### A side effect of starving the reader
+
+Contamination avoidance and input-starvation are the same design choice serving two different
+rules, and they share a failure mode: a reader kept from a gatherer's raw capture will sometimes
+flag a **genuine** capture as fabricated, purely because it cannot see where the number came from.
+That is not evidence the capture is wrong — it is evidence the reader was built correctly.
+
+**Resolve it mechanically, before spending anyone's judgement on it.** Search the gatherer's own
+output for each flagged item. If it is there, the finding closes on the search, not on a second
+opinion. Only an item genuinely absent from the gatherer output earns a human's attention.
 
 ### Staffing
 
@@ -247,6 +265,13 @@ have shipped the freeze.
 around X and finding it plausible is not a control. The test is a run of the system with X's state
 changed and the symptom observed, and both observations get recorded: what you changed, and what
 the symptom did.
+
+**Before attributing anything on a multi-worker run, read the per-worker logs — not just the
+summary.** A stage that reports an odd or an empty result is often reporting exactly what its own
+log shows, and the log is the fastest way to tell a real absence from a worker that silently reused
+a stale cache. Do not assume a cached result was non-empty because a cache exists; check it. This
+is upstream of the control test above — it can save you from running one on a symptom that was
+never real, only unread.
 
 **When the control test is not available.** Some defects cannot be restored (the data is gone) or
 cannot be removed safely (production, and no reproduction). The rule does not become a licence to
@@ -418,6 +443,56 @@ running every other ready task around it and stops only when the work left is yo
 
 ---
 
+> **Third source.** This section and the two after it come from a separate method — a long-form
+> writing playbook, stress-tested across two shipped builds and revised after a four-agent test —
+> not from either job measured above. The numbers below are that document's, not this repo's; they
+> are cited, not re-measured here.
+
+## 10c · Look at the thing
+
+**The rule.** Render the artefact the way its audience actually meets it, and look. A gate proves
+what it was told to check; it does not prove there is nothing else wrong.
+
+Across two builds, the three worst layout defects found — a closing section rendering 152 px wide,
+ragged column rules, a sideways scroll at phone width — each passed every numeric gate in the
+pipeline. Numbers check what you thought to check; looking checks the rest.
+
+**ADVISORY** — nothing in this repository renders and inspects an artefact for you; §11 records
+that honestly.
+
+---
+
+## 10d · Never modify a running or resumable orchestration script before resuming it
+
+**The rule.** A resume replays the longest unchanged prefix of a run. Editing a shared prompt
+block — even to fix it — invalidates that prefix from the first worker onward and re-runs
+everything after it, at full cost: measured once, 2.39M tokens for a run that should have cost a
+fraction of that to finish. To fix a subset of what a running script already produced, write a new,
+small script scoped to just those items — never edit the one still in flight.
+
+**Where this doesn't bite.** Smokin has no resident orchestrator to edit out from under a resume:
+every fact a `tick` needs lives on disk in the plan directory, and `tick` itself runs one pass and
+exits — there is no long-lived process holding a prefix in memory to invalidate. The rule is real,
+but it bites at the level of *your own harness* — an agent loop, a shell script, anything that
+holds state across a resume — not at Smokin, which was built without the state this rule warns
+about.
+
+**ADVISORY** — a property of whichever orchestration layer you bring, not of anything in this
+repo; §11 records that too.
+
+---
+
+## 10e · When a run must be cut, cut input breadth, never a gate
+
+**The rule.** Under budget pressure, the input a worker reads can shrink. What it is graded against
+cannot. Every gate in a plan exists because its absence shipped a defect once — cutting one to save
+the run just re-ships that defect on a schedule.
+
+**ADVISORY** — a discipline for whoever decides what to cut, not something `validate-plan.py` can
+see from outside that decision.
+
+---
+
 ## 11 · What is actually enforced
 
 Honest accounting. A rule a machine cannot check is a preference.
@@ -441,6 +516,9 @@ Honest accounting. A rule a machine cannot check is a preference.
 | A task whose failure has two readings carries `## If it fails` | ADVISORY | — · frozen with the contract when present |
 | A person's task is not dispatched to a model | **ENFORCED, ELSEWHERE** | `smokin` `route()` clause 0, on this file's `is_human_owned` |
 | A plan of 4+ tasks records that its shape was approved | **ENFORCED** | `check_brainstormed` — size-aware, band read from `SCALING.json` |
+| Look at the thing before shipping it | ADVISORY | — |
+| A running orchestration script is not edited before its own resume | ADVISORY | — · does not apply to Smokin, which holds no state across a resume to invalidate |
+| A cut run drops input breadth, never a gate | ADVISORY | — |
 
 ---
 

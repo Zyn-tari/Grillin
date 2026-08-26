@@ -25,6 +25,30 @@ mistake is visible from here.
 **0b is never skipped.** It takes two minutes and it is what tells you which of the
 rest applies.
 
+### 0a · Too small even for the table above? The Pocket form
+
+"Just do it" still goes better with seven lines written down first. Fill this in, keep it
+next to the work, delete it when you're done — no folder, no `PLAN.md`, no gate:
+
+```
+DO: [thing]
+BAR: like [reference]
+NUMBERS: [the floor or ceiling this is graded against, in the medium's own units — or the
+         reference to measure first, where no number exists yet]
+GROUND TRUTH: [what to quote instead of remembering]
+CONSTRAINTS: [don't touch …]
+DONE MEANS: [the gate/test/measurement that must pass — not a feeling]
+PRESENT: [where it lands]
+```
+
+**`DONE MEANS` is this whole method in one line.** Same rule as §4's `Done means` block below.
+`NUMBERS` is the same rule as *F2 · A number, or the reference to measure* in
+[`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md). Both are cited here, not restated.
+
+Outgrown these seven lines but still short of a plan directory? See ["The skeleton" in
+`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) — many workers, one artefact, still no plan
+directory.
+
 ### Before step 1 — argue the shape with a person
 
 The rows above are a size call. They do not tell you whether you are solving the right
@@ -183,11 +207,14 @@ correct to a human and did not match what the gate parses, and that one substitu
 caused most of her first run's findings. The gate reads fields, not intent.
 
 **Not every bold field in that template is enforced, and the template now says which.**
-`**Status:**` and `**Owner:**` are parsed and will fail your plan; `**Type:**` and
-`**Skills:**` are parsed by nothing and are still worth writing, because each one carries
-a decision from an earlier phase that is otherwise lost. The legend at the top of
-`templates/TASK.md.template` lists both registers. Do not read "unenforced" as
-"optional" — read it as "nothing will tell you it is missing".
+`**Status:**` and `**Owner:**` are parsed and will fail your plan; `**Type:**`, `**Skills:**`,
+`**Must not read:**`, `**Numbers:**` and `**Output shape:**` are parsed by nothing and are
+still worth writing, because each one carries a decision from an earlier phase that is
+otherwise lost. Every one of them is a **bold field** in the block at the top of the file,
+not a `##` heading — a curator who wrote `## Must not read` got a task no reader of the
+register could find. The legend at the top of `templates/TASK.md.template` lists both
+registers. Do not read "unenforced" as "optional" — read it as "nothing will tell you it
+is missing".
 
 Your `PLAN.md` must also declare **Size:** — one of `XS` (1-3 tasks), `S` (4-10),
 `M` (11-25), `L` (26-60), `XL` (61+). The gate fails if the count leaves the band,
@@ -229,6 +256,13 @@ gating anything, and an orchestrator will mark untouched work complete.
 that currently fails.
 
 ---
+
+> **A guard goes on every line, not just the first.** `test -s out.txt` followed by a bare
+> `grep -q OK out.txt` on the next line does not stop when the file is absent — the first line
+> fails, and the second *errors*. Put `|| exit 1` on each line, or join them with `&&`. Same
+> family: `! grep -q X missing` **succeeds**, because negating a grep that failed for want of a
+> file is success — write `grep -q X f && exit 1` instead. Both were found by a real plan whose
+> gates were green.
 
 ## 5 · Which files do two tasks both want?
 

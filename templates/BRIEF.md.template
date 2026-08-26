@@ -1,26 +1,19 @@
 <!-- BRIEF.md.template — ONE delegated task, handed to ONE agent, with no plan directory
      around it. Copy this file, fill the <angle brackets>, delete what does not apply, send it.
+     Delete every comment block from the copy you send.
 
-     DELETE EVERY COMMENT BLOCK BEFORE SENDING. They are notes to the author, not to the
-     agent. A brief that arrives carrying its own rationale about someone else's VPS is
-     longer, and the parts that matter are harder to find inside it.
+     This file is the FORM. The reasoning behind every rule in it — and the incidents that
+     bought them — lives in one place, and is cited here rather than repeated:
+     ../GRILLING-THE-PLAN.md § "The shared authoring rules — they hold with or without a plan
+     directory". Each section below names the part of that section it answers to.
 
-     WHERE IT CAME FROM. Six briefs written by hand in one afternoon against a live VPS —
-     BRIEF.md, FOLLOWUP.md, TLS.md, GRAPH.md, TRIM.md, CHART-DIAG.md, 665 lines total. The
-     operator had both Grillin and Smokin installed, produced no plan directory, and never
-     ran Smokin once. That is the fifth consecutive job where the ideas transferred and the
-     tools did not, and the artefacts show why: the job was one delegated task at a time, and
-     what Grillin shipped was a plan directory. The same shape got re-derived from a blank
-     file six times. This file is that shape, written down.
+     The one thing NOT cited out is the decision table directly under the title. Shipping a
+     brief template alongside a task template creates exactly one new failure mode — writing
+     the wrong one — so it is settled at the top, before anything else is read.
 
-     Its evidence is one afternoon, one operator, one VPS, one job shape. See "What this
-     does not solve" at the foot of the file before you rely on it for anything else. -->
+     Read "What this does not solve" at the foot of this file before you rely on it. -->
 
 # <Job title — verb first, name the artefact: "Attach the real domain and install the certificate">
-
-<!-- WHEN TO USE THIS FILE, AND WHEN NOT TO. Shipping a brief template alongside a task
-     template creates exactly one new failure mode: writing the wrong one. Settle it here,
-     at the top, before anything else is read. -->
 
 > **This is a BRIEF: one delegated task, no plan around it.** Nothing dispatches it, nothing
 > ticks it, no gate reads it. You hand it to an agent and the agent hands you back a report.
@@ -28,8 +21,9 @@
 > | You have | Use | Because |
 > |---|---|---|
 > | One job, one agent, one report, and **you are present while it runs** | **this file** | You are the continuity. There is no plan for this to be a task inside of. |
-> | Work that outlives the conversation, 4+ tasks, dependencies, or more than one worker | [`TASK.md.template`](TASK.md.template) in a plan directory — [`examples/one-task-plan`](../examples/one-task-plan) is the smallest one | Folder, owner, status and a re-runnable done-command are what let a **fresh context** resume from disk. A brief has none of them. |
-> | A brief that grew a second and third agent while you were writing it | Stop. Plan it. | The moment two agents can touch the same file, "what you own" stops being a paragraph and becomes a gate. |
+> | One artefact, still no plan directory, but more than one worker | [the skeleton](../GRILLING-THE-PLAN.md) — *The skeleton — many workers, one artefact, no plan directory* | Groups, seams and a barrier are declarations a single brief has nowhere to put. |
+> | Work that outlives the conversation, 4+ tasks, or dependencies between them | [`TASK.md.template`](TASK.md.template) in a plan directory — [`examples/one-task-plan`](../examples/one-task-plan) is the smallest one | Folder, owner, status and a re-runnable done-command are what let a **fresh context** resume from disk. A brief has none of them. |
+> | A brief that grew a status field, an owner column, or one worker waiting on another | Stop. Plan it. | Those three are the skeleton's own stop rule: a plan directory being written in the wrong file. |
 >
 > **The honest objection, and the answer.** [`QUICKSTART.md`](../QUICKSTART.md) §0b question 2
 > says to give every task a folder, owner, status and done-command even with one worker —
@@ -44,14 +38,8 @@
 
 ---
 
-<!-- 1 · THE JOB. One paragraph, then one sentence naming the boundary of "done". The six real
-     briefs all led with consequence, not activity: "You are deploying one landing page onto a
-     production server that already hosts live sites. The deploy itself is small. The risk is
-     entirely in what else is on that box." That sentence is what makes an agent careful, and
-     it is two lines long.
-
-     Say what done is NOT. The first brief said "Ready for a URL — not connected to one",
-     because "deploy the site" without that sentence licenses an agent to go find a domain. -->
+<!-- 1 · THE JOB. Lead with consequence, then say what done is NOT:
+     ../GRILLING-THE-PLAN.md § "What a declaration owes the worker". -->
 
 ## The job
 
@@ -63,26 +51,9 @@ state>", plus <what you hand the human instead of doing it for them>.>
 
 ---
 
-<!-- 2 · FACTS ALREADY ESTABLISHED. Without it the agent spends its first twenty tool calls
-     rediscovering which web server is running, whether PHP exists, and what else is on the
-     box — every one of which you already know.
-
-     TWO RULES, both paid for:
-
-     (a) A row goes in this table only if you ran a command, and the row carries THE COMMAND,
-         not the assurance. "Both names already resolve to 203.0.113.10; I checked" is a
-         claim; `dig +short newsite.example.com` → `203.0.113.10` is a fact. This is the same
-         bar check_confirmed_is_exercised enforces inside a plan, where CONFIRMED must quote
-         the invocation that produced it and not the subject it is about. Nothing enforces it
-         here. Anything you believe but did not run belongs in section 3, for the agent to
-         check — not in this table.
-
-     (b) Rows that name a FILE or an IDENTIFIER get checked against the artefact actually
-         deployed, not the bundle, the spec, or whoever wrote the request. This went wrong
-         three times in one afternoon, from two different authors: instructions said
-         `index.php` when the served file was `index.html` (twice), and named
-         `data-r="headcta"` on a button carrying no such attribute. Grep the deployed file
-         before you write the row. See OPERATING-THE-PLAN.md §10. -->
+<!-- 2 · FACTS ALREADY ESTABLISHED. What a row must carry, what belongs in section 3 instead,
+     what the table is buying, and why a row naming a file is checked against the artefact
+     actually deployed: ../GRILLING-THE-PLAN.md § "Facts, and what a fact costs to write down". -->
 
 ## Facts already established — do not re-derive these
 
@@ -96,22 +67,17 @@ state>", plus <what you hand the human instead of doing it for them>.>
 | <Capacity / size / count, as a number> | `<command>` → `<54 G free. Zip is 15 MB.>` |
 | <Convention already in force> | `<command>` → `<apps live at /opt/<name>/, served from a dist/ subdir>` |
 
-<!-- Add a "what is on this machine, not the target" block when the two are different. Two of
-     the six briefs lost time to the agent looking for a file on the wrong host. -->
+<!-- Include the next line only where the machine you are on is not the machine the work lands
+     on. Reason: ../GRILLING-THE-PLAN.md § "Facts, and what a fact costs to write down". -->
 
 **On this machine, not the <target>:** `<path>` — <what it contains, in one line, with counts:
 "23 files under a top-level `dist/`">.
 
 ---
 
-<!-- 3 · RESEARCH BEFORE YOU ACT. Ordered, and with an explicit NOT-list. The not-list is the
-     part people leave out. The real brief said: "You may read those four files in full. Do not
-     read the asset files, the vendored React, or the MP4 — you do not need their contents to
-     host them, and pulling 15 MB through your context helps nobody." A 14 MB mp4 read into
-     context is a brief that fails at step 4 for reasons that look like model error.
-
-     Order matters: put the file that decides section 4 LAST in the read list and name it as
-     the decision point, so the agent arrives at the gate having read what informs it. -->
+<!-- 3 · RESEARCH BEFORE YOU ACT. The declared read list, the must-not-read list, the ordering
+     rule that puts the deciding file last, and the two lawful exceptions:
+     ../GRILLING-THE-PLAN.md § "F1 · Starve the inputs, and declare the exceptions". -->
 
 ## Research before you act — this is a requirement, not advice
 
@@ -128,19 +94,9 @@ file / the lockfile>** — <one clause on why their contents are not needed to d
 
 ---
 
-<!-- 4 · THE DECISION POINT. This is the section that keeps a small instruction from
-     authorising a large irreversible act.
-
-     The original: the human asked to deploy "a website in PHP" onto a server with no PHP
-     runtime. The brief pre-decided both branches — deploy static if the .php is a shim; if it
-     is genuinely load-bearing, STOP and report. "Installing a language runtime on a production
-     server that runs someone else's live service is not something to do inside an instruction that said
-     'deploy this landing page'. That is the human's call, and it costs them one message."
-
-     Write BOTH branches. A gate with only the stop branch written reads as discouragement; an
-     agent that knows exactly what to do on the good branch will not talk itself onto the bad
-     one. And give the cost of stopping — "one message" — or the agent weighs a stop as
-     failure and proceeds. -->
+<!-- 4 · THE DECISION POINT. Write both branches, price the stop, and assign each reading its
+     meaning before it is taken:
+     ../GRILLING-THE-PLAN.md § "Decision points: write both branches before the reading is taken". -->
 
 ## <The decision> — STOP here if it goes the wrong way
 
@@ -157,10 +113,9 @@ Then the cost of asking: "That is the human's call, and it costs them one messag
 
 ---
 
-<!-- 5 · WHAT YOU OWN. Paths, not areas. Same rule as TASK.md: one owner per file, and name
-     explicitly what the agent does NOT own. In a brief there is no _RULES.md to lean on, so
-     the containment sentence must be here in full. The six briefs converged on one sentence
-     and repeated it verbatim in every follow-up. -->
+<!-- 5 · WHAT YOU OWN. Paths not areas, one owner per file, the neighbours named, and why the
+     containment sentence goes in here in full rather than into a rules file:
+     ../GRILLING-THE-PLAN.md § "What a declaration owes the worker". -->
 
 ## What you own
 
@@ -175,18 +130,9 @@ not own, **report it, do not fix it.**
 
 ---
 
-<!-- 6 · THE SPECIFIC TRAP. One job, one danger unique to it, spelled out with the mechanism —
-     not "be careful with nginx".
-
-     The original is the model: no `default_server` is declared anywhere on the box, so nginx
-     treats the first server block it loads for a port as the implicit default; sites-enabled
-     loads alphabetically; a file named `newsite` sorts before `zz-app` and would
-     silently become the catch-all for the entire server. Hence: name it `zz-newsite`,
-     never write `default_server`, give it a real `server_name`.
-
-     Mechanism, consequence, then the concrete rules that follow from it. An agent that
-     understands WHY the file is named `zz-` will not rename it in a later brief. One that was
-     only told the name, will. -->
+<!-- 6 · THE SPECIFIC TRAP. State the mechanism, not the prohibition; say "silently" where it
+     applies; one trap per block:
+     ../GRILLING-THE-PLAN.md § "What a declaration owes the worker". -->
 
 ## The <system> trap — read this twice
 
@@ -202,17 +148,14 @@ So:
 - **never** <the one attribute or flag that reactivates the trap>
 - <concrete rule 3 — the placeholder or scope that keeps it inert>
 
-<!-- Repeat this section per trap if the job has more than one. Do not merge two traps into one
-     paragraph; the agent needs to check them off separately. -->
+<!-- Repeat this whole section once per trap. Never merge two into one paragraph — reason in the
+     same section cited above. -->
 
 ---
 
-<!-- 7 · DO NOT. Each item with its reason attached where the reason is not obvious. "Do NOT
-     `systemctl restart nginx`. Use `nginx -t` then `systemctl reload nginx` — a reload does
-     not drop the live sites' connections; a restart does." An unexplained prohibition gets
-     reasoned around by a capable agent under pressure; an explained one does not.
-
-     Repeat the section 4 gate here. It is the one an agent forgets forty minutes in. -->
+<!-- 7 · DO NOT. Every prohibition carries its reason where the reason is not obvious, and the
+     section 4 gate is repeated here on purpose:
+     ../GRILLING-THE-PLAN.md § "What a declaration owes the worker". -->
 
 ## Do NOT
 
@@ -226,20 +169,9 @@ So:
 
 ---
 
-<!-- 8 · PROVE YOU BROKE NOTHING. `TASK.md` has "Done means" — evidence that your work worked.
-     This is the opposite check: evidence that everything you did NOT touch still behaves
-     identically.
-
-     The rule is BEFORE and AFTER with the IDENTICAL command. A reading taken only afterwards
-     proves nothing, because nobody knows what it was before. The original ran a two-host loop
-     before touching any config and the same loop after the reload, and every subsequent brief
-     re-ran it — including the certbot one, where it stopped being a formality, because certbot
-     rewrites nginx config in place.
-
-     The proof-of-your-own-work command must FAIL BEFORE THE WORK IS DONE. A command that
-     passes on an untouched system proves the system, not the change — QUICKSTART's rule for
-     a done-command, and it applies here for the same reason. Run it first and watch it fail;
-     if it passes, it is the wrong command. -->
+<!-- 8 · PROVE YOU BROKE NOTHING. Two different proofs needing two different commands — the
+     identical command before and after, and a proof command that must fail before the work is
+     done: ../GRILLING-THE-PLAN.md § "Proving you broke nothing, and proving you did something". -->
 
 ## Prove you broke nothing — before and after
 
@@ -261,7 +193,7 @@ Then prove your own work. Run this **before** you start and confirm it fails:
 <command that establishes your change is live, with an expected value>
 ```
 
-<!-- CONTROL TEST — include whenever this brief asserts a cause. -->
+<!-- CONTROL TEST — include the next block only where this brief asserts a cause. -->
 
 **On the cause.** <What this brief believes the cause is.> <Making it go away> is **necessary, not
 sufficient** — it does not prove <the symptom> is gone. <The control test that would falsify it:
@@ -271,21 +203,10 @@ report this as fixed on the strength of <a status code / a grep>. See OPERATING-
 
 ---
 
-<!-- 9 · THE REPORTING CONTRACT. Numbered, so the agent can check its own report against the
-     list before sending, and so you can tell at a glance which item is missing. This is also
-     the brief's only resumption artefact — see the note at the top of the file.
-
-     Two things the six briefs learned the hard way:
-
-     (a) Name the exact output path AND the exact notification command. A report written to a
-         path nobody reads is not a report.
-
-     (b) Item 5 must be written assuming it will be PASTED WITHOUT BEING READ AROUND. It was:
-         a `sed` command containing `YOURDOMAIN.com` was run literally, placeholder and all,
-         and the vhost went live reading `server_name YOURDOMAIN.com`. Never leave a
-         placeholder in a command you hand to a human. If the real value is not known yet,
-         write the command with the value visibly missing and the words "fill this in" — never
-         a plausible-looking fake. -->
+<!-- 9 · THE REPORTING CONTRACT. Why the list is numbered, why the exact path and the exact
+     notification command are both named, and why a command handed to a human never carries a
+     placeholder:
+     ../GRILLING-THE-PLAN.md § "Handing something back: reports, and commands a person will paste". -->
 
 ## Reporting
 
@@ -311,26 +232,27 @@ The report must contain, plainly:
 
 **Be accurate over reassuring. If something is half-done, say which half.**
 
-<!-- FOLLOW-UP BRIEFS. Every brief after the first appends rather than rewrites:
-     "Append to REPORT.md under a `## <heading>` heading — do not rewrite what is there."
-     The report is the only continuous record a brief-shaped job has; overwriting it is the
-     brief equivalent of losing the plan directory. Say it explicitly, because "write the
-     report" reads as "write the file" to an agent that did not write the first one.
-
-     And re-state the rails in the follow-up rather than referencing them: "Same rails as
-     before — nothing outside <path>, `nginx -t` then reload, re-run the neighbour loop at the
-     end." Two lines, and it survives a fresh context that never saw brief #1. -->
+<!-- FOLLOW-UP BRIEFS. On the second and later brief for the same job, the block above becomes an
+     append instruction and the rails are re-stated in full rather than pointed back at. Both
+     rules, with their reasons, are in
+     ../GRILLING-THE-PLAN.md § "Handing something back: reports, and commands a person will paste"
+     and § "What a declaration owes the worker". -->
 
 ---
 
 <!-- APPENDIX · DIAGNOSTIC BRIEFS. Delete unless this brief is asking someone to find out why
      something is broken. It replaces sections 3 and 4; the rest of the file stands.
 
-     Lifted from a designer's bug report that had no access to this method and converged on
-     the same shape independently. Every hypothesis in it was wrong and it was still the most
-     useful document in the repair, because it separated a WIRING MAP from an ORDERED
-     PROCEDURE and gave each observation its meaning in advance. An agent that knows what a
-     reading MEANS before taking it cannot rationalise the reading afterwards. -->
+     Lifted from a designer's bug report that had no access to this method and converged on the
+     same shape independently. Every hypothesis in it was wrong and it was still the most useful
+     document in the repair, because it separated a WIRING MAP from an ORDERED PROCEDURE.
+
+     Assigning each reading its meaning in advance is the general rule and lives in
+     ../GRILLING-THE-PLAN.md § "Decision points: write both branches before the reading is taken".
+
+     NOTE TO THE MAINTAINER: the map-versus-procedure separation, and the independent-convergence
+     provenance above, have no home outside this file. Do not delete them here without giving
+     them one. -->
 
 ## Appendix — for a diagnostic brief
 
@@ -361,7 +283,7 @@ anything.
 ---
 
 <!-- WHAT THIS DOES NOT SOLVE. Keep this block in the template; delete it from the brief you
-     send. It is here so the next person weighing this file knows what it is standing on. -->
+     send. It is about this file specifically, not about the method. -->
 
 ## What this does not solve
 
@@ -377,6 +299,9 @@ that self-certification is not acceptable, it is important enough for a plan dir
 is no contract hash, and nothing detects a brief that quietly dropped section 8.
 
 **The evidence is one afternoon.** Six briefs, one operator, one VPS, one job shape — a static
-site onto a server with neighbours. Whether this shape holds for jobs that are not deployments
-is untested. What is measured is narrower and worth stating exactly: the same nine sections were
-re-derived by hand six times in one day.
+site onto a server with neighbours. The six were `BRIEF.md`, `FOLLOWUP.md`, `TLS.md`, `GRAPH.md`,
+`TRIM.md` and `CHART-DIAG.md`, 665 lines in total. The operator had both Grillin and Smokin
+installed, produced no plan directory, and never ran Smokin once — the fifth consecutive job
+where the ideas transferred and the tools did not. Whether this shape holds for jobs that are not
+deployments is untested. What is measured is narrower and worth stating exactly: the same nine
+sections were re-derived by hand six times in one day.

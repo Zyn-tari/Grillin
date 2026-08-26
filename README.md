@@ -253,6 +253,7 @@ Small change (1–3 tasks): run **0, 3, 9, 10**. Real project (10–25 tasks): r
 |---|---|
 | **New to agentic coding** | [`WORKING-WITH-CLAUDE-CODE.md`](WORKING-WITH-CLAUDE-CODE.md) — habits before method, no Grillin required |
 | **Planning a real job** | **[`QUICKSTART.md`](QUICKSTART.md)** — twenty minutes, six steps, in order |
+| **Job too small for a folder** | [`QUICKSTART.md`](QUICKSTART.md), §0a — seven lines, no plan directory, no gate |
 | **Want to see one first** | [`examples/one-task-plan/`](examples/one-task-plan/) — copy it, change two files |
 | **Inside a plan that went wrong** | [`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md) — the other half |
 
@@ -262,8 +263,8 @@ Small change (1–3 tasks): run **0, 3, 9, 10**. Real project (10–25 tasks): r
 | File | What it is |
 |---|---|
 | **[`QUICKSTART.md`](QUICKSTART.md)** | **Start here.** What to do, in order, with the times. |
-| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The reasoning. Eleven phases, sixteen principles, scaling, anti-patterns. |
-| **[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md)** | **The other half** — being inside a plan after it turns out to be wrong. Every rule traces to a defect a real run produced. |
+| [`GRILLING-THE-PLAN.md`](GRILLING-THE-PLAN.md) | The reasoning. Eleven phases, sixteen principles, scaling, anti-patterns — plus *The shared authoring rules*, which hold with or without a plan directory, and *The skeleton* for many workers on one artefact. |
+| **[`OPERATING-THE-PLAN.md`](OPERATING-THE-PLAN.md)** | **The other half** — being inside a plan after it turns out to be wrong. Every rule traces to a defect a real run produced. Including §10c *Look at the thing*, §10d *never modify a running orchestration script before resuming it*, and §10e *cut input breadth, never a gate*. |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | Two runs: the one that produced the method, and the one that broke it. |
 | [`SCALING.json`](SCALING.json) | Machine-readable. Hand it to an agent as a planning brief. |
 | [`index.html`](index.html) | Visual map. **Download and open locally** — GitHub renders it as source. |

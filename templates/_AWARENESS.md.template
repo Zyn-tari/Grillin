@@ -210,6 +210,6 @@ They are not, for this problem. The failure being addressed is not disobedience,
 around it. Blocking a tool call does not restore that shape; it just stops the one action the
 harness happened to be able to pattern-match, while the frame stays gone.
 
-Enforcement has its place — file ownership, the deployed checkout, secrets — and that place is
-[`_RULES.md`](_RULES.md). This file is the other half: keeping the agent oriented, so the rules
-have something to be obeyed *in service of*.
+Enforcement has its place — file ownership, the deployed checkout, secrets, the standing trap
+ledger — and that place is [`_RULES.md`](_RULES.md) §3a. This file is the other half: keeping
+the agent oriented, so the rules have something to be obeyed *in service of*.
