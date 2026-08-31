@@ -155,6 +155,30 @@ chk("control · cd into a directory the task BUILDS is a clean fail", v, "PASS")
 v, _ = verdict("cd tasks && test -f T1/OUT.md")
 chk("control · cd into one that exists is a clean fail", v, "PASS")
 
+print("\n=== 7 · a task in flight is neither of this check's two states ===")
+# The rule is "work that is not done must fail its gate". It holds at NOT
+# STARTED and retires at DONE; in between, a done-command SHOULD start passing
+# part way through. Reported from a 232-task plan where the cost was concrete:
+# this gate is also the commit hook, so every commit taken during a long run was
+# refused for a transient condition, and the way out is GRILLIN_SKIP — the habit
+# the hook exists to prevent.
+v, line = verdict("true", status="IN PROGRESS")
+chk("a running task whose gate already passes is NOT a finding", v, "PASS")
+chk("...and the line says no ruling was made, not that it passed",
+    "no ruling is made" in line, True)
+v, _ = verdict("false", status="IN PROGRESS")
+chk("...and a running task whose gate fails is equally unruled", v, "PASS")
+
+# THE CONTROLS. This check exists to catch a gate that is green before the work
+# starts; making it blind to IN PROGRESS must not make it blind at NOT STARTED,
+# which is where the defect it was written for actually lives.
+v, _ = verdict("true", status="NOT STARTED")
+chk("control · NOT STARTED and already passing is still the original defect", v, "FAIL")
+v, _ = verdict("test -f tasks/T1/OUT.md", status="NOT STARTED")
+chk("control · NOT STARTED and failing cleanly is still fine", v, "PASS")
+v, _ = verdict("true", status="BLOCKED")
+chk("control · BLOCKED is not in flight — still ruled on", v, "FAIL")
+
 r = subprocess.run([sys.executable, str(GATE),
                     str(ROOT / "examples" / "minimal-passing-plan"), "--run-gates"],
                    capture_output=True, text=True, timeout=300)

@@ -477,6 +477,26 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
         status = m.group(1).strip() if m else "NOT STARTED"
         if status == "DONE":
             continue
+        # A RUNNING TASK IS NEITHER OF THIS CHECK'S TWO STATES. The rule is "work
+        # that is not done must fail its gate", and it holds at NOT STARTED and
+        # is retired at DONE. In between, a done-command SHOULD start passing
+        # part way through — that is what a done-command is for — so a gate run
+        # mid-flight reports a failure that resolves by itself.
+        #
+        # It costs more than a spurious line, because this gate IS the commit
+        # hook. Any commit taken during a long run is refused for a transient
+        # condition, and the way out of that is GRILLIN_SKIP — the habit the
+        # hook exists to prevent. Reported from a plan of 232 tasks where that
+        # was a daily occurrence.
+        #
+        # Reported rather than passed over in silence: a check that says nothing
+        # about a task is indistinguishable from one that stopped running, which
+        # is the whole reason SKIP exists in this gate.
+        if status == "IN PROGRESS":
+            f.ok("gate-fails-first",
+                 f"{tid}: IN PROGRESS — a running task's gate may legitimately "
+                 f"pass part way through, so no ruling is made on it here")
+            continue
         cmd = done_command(path)
         if not cmd:
             continue
