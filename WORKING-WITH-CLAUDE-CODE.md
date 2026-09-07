@@ -195,7 +195,7 @@ Claude Code ships a `brainstorming` skill, and it is the step in front of Grilli
 competitor to it. It classifies a request into one of three paths and refuses to write
 anything until you have approved a design. Grillin cannot do that job: this method starts
 once you have decided *what* to build, and its gate checks structure — a plan about entirely
-the wrong problem passes every one of the 25 checks.
+the wrong problem passes every one of the 26 checks.
 
 **The seam, and it matters.** On its architectural path that skill finishes by invoking its
 own `writing-plans` skill. Do not let it. Grillin **is** the plan-writing method; running
@@ -226,6 +226,60 @@ The shipped example `examples/a-real-first-plan` is a real first-time user hitti
 this — its `04-SHAPE.md` says, in its own words, *"This diagram has not been approved… I wrote
 the task contracts anyway."* That plan is this repository's **known-bad** calibration fixture,
 and `check_brainstormed` is now one of the reasons it fails.
+
+---
+
+## 6c · What changed with Claude 5, and what it means for your files
+
+Anthropic deleted **over 80% of Claude Code's own system prompt** for this model generation with
+no measurable loss on their coding evals, and told everyone else to do the same. The diagnosis
+was that they had been over-constraining the model. If you are coming to this method from an
+older set of instructions, four specific things are worth knowing, because two of them cost you
+money and two of them are free wins.
+
+**Stop telling it to check its own work.** This is the strongest one. Anthropic: *"Claude Opus 5
+verifies its own work without being told to. If your prompt contains explicit verification
+instructions... remove them: instructions like these cause over-verification... and removing them
+reduces wasted tokens with no loss in quality."* If your files say *double-check your answer* or
+*add a final verification step*, delete those lines — you are paying for behaviour you already
+have.
+
+**But do not delete the done-command, and do not delete the adversary.** Those are not
+instructions to a model. A done-command is a command someone else runs; an adversary is a
+different agent with fresh context judging a result it did not produce. Anthropic's most
+emphasised piece of advice for Claude Code is *give Claude a way to verify its work*, which is
+exactly what a done-command is. The rule of thumb: **if the same agent does the checking, cut it;
+if a different agent or a machine does, keep it.**
+
+**Plan mode is the free win, and this method was waiting for it.** Grillin's phases 0–4 produce
+no plan text at all — you count, you triage, you grill, you diagram, and you write nothing. That
+has always been an agreement. Plan mode makes it a fact: the tool layer refuses writes while it
+is on, so nobody in phase 1 can "just fix" the thing they were sent to count. Leaving plan mode
+is your approval, and it is the phase 4 → 5 boundary. Turn it on before phase 0 and off when you
+start writing tasks.
+
+**Interview before you plan, and use the tool for it.** Phase 0 used to be *restate and stop*.
+Restating finds the misunderstandings you can see; an interview finds the ones you cannot. Claude
+Code has `AskUserQuestion` for this, and asking for it explicitly is the difference between three
+questions and thirty. Two rounds — once before anything is shaped, once after the diagram and
+before any task is written — because the questions are different at those two points.
+
+**One file per task, and a second one beside it.** `TASK.md` is the contract: what to do, what
+done means, what not to touch. `CLAUDE.md` beside it is the calibration: how long to make the
+answer, how much to narrate, how far the scope reaches, when to delegate. Those four things
+stopped being free in this generation, and none of them belong in a task contract. The split is
+mechanical as much as editorial — Claude Code auto-loads a file named `CLAUDE.md` from its
+working directory and auto-loads nothing else, which is why Smokin copies the file into the
+worktree at dispatch rather than leaving it in the task folder to be read on request.
+
+**Some rules should stop being rules.** Anthropic's line is *"if Claude already does something
+correctly without the instruction, delete it or convert it to a hook"*, and this method's own
+version is older and blunter: **a rule a machine cannot check is a preference.** They agree. The
+worked example is `Do NOT spawn sub-agents`, which sat in the task template for a year doing
+nothing. Claude Code exposes real caps for it — and the shipped defaults are 20 concurrent
+subagents at spawn depth 3, which is not a number most people would choose on purpose. It is now
+four entries in Smokin's `runtimes.json`, and the prose that remains says *whether* to delegate
+rather than *how many*, because that is the half a model should still be exercising judgment on.
 
 ---
 

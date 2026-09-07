@@ -1,0 +1,94 @@
+<!-- Lives at tasks/<ID>/CLAUDE.md. Smokin copies it to the worktree root at dispatch, because
+     that is the only place a harness will load it from on its own.
+
+     WHY THIS FILE EXISTS AT ALL, given TASK.md is right beside it. TASK.md is the CONTRACT —
+     what to do, what done means, what not to touch. This file is the CALIBRATION — how the
+     model should behave while doing it. They were one file until Claude 5, when four
+     behaviours that used to be free stopped being free:
+
+       response length     effort no longer controls visible verbosity; it has to be asked for
+       narration cadence   the model narrates readily and will fill a transcript with it
+       scope               the model expands scope on its own initiative
+       delegation          the model reaches for subagents on tasks that do not need them
+
+     None of these are things a task contract can say. They are not about this task; they are
+     about every task, and they are here rather than in ../_RULES.md for one mechanical reason:
+     a harness auto-loads a file named CLAUDE.md from its working directory and does not
+     auto-load anything else. A rule that has to be read on request is a preference.
+
+     KEEP IT SHORT. Anthropic deleted over 80% of Claude Code's own system prompt for the
+     Claude 5 generation with no measurable loss, and named the failure mode this file is most
+     at risk of: "If your CLAUDE.md is too long, Claude ignores half of it because important
+     rules get lost in the noise." The line test for anything you add below is theirs — would
+     REMOVING it cause a mistake? If not, it does not go in.
+
+     DO NOT RESTATE ../_RULES.md HERE. That file is the plan's operating invariants and every
+     worker gets it. A second copy here is not emphasis, it is two files that will disagree
+     with each other in three weeks. Put the pointer, not the paragraph. -->
+
+# <ID> — how to work, not what to do
+
+**The contract is [`TASK.md`](TASK.md)** in this folder. **The plan's rules are
+[`../_RULES.md`](../_RULES.md).** This file adds only what neither of those can say.
+
+## Response length
+
+Keep responses focused, brief, and concise. Keep disclaimers and caveats short, and spend most
+of the response on the main answer. When asked to explain something, give a high-level summary
+unless an in-depth explanation is specifically requested.
+
+## Narration
+
+Before your first tool call, say in one sentence what you're about to do. While working, give a
+brief update only when you find something important or change direction. When you finish, lead
+with the outcome: your first sentence should answer "what happened" or "what did you find", with
+supporting detail after it.
+
+## Scope
+
+Deliver what was asked, at the scope intended. Make routine judgment calls yourself, and check
+in only when different readings of the request would lead to materially different work. If the
+request seems mistaken or a better approach exists, say so in a sentence and continue with the
+task as asked rather than quietly narrowing, widening, or transforming it. Finish the whole
+task, and stop short of actions that are clearly beyond what was asked.
+
+<!-- The plan's version of "check in" is not a chat message — it is `QUESTIONS.md` in this
+     folder, and `smokin run` is watching for the `ANSWER.md` that answers it. TASK.md says so
+     under "If reality diverges from this file". Not repeated here. -->
+
+## Delegation
+
+Delegate to a subagent only for large tasks that are genuinely independent and parallelizable,
+such as a wide multi-file investigation. Do not delegate work you can finish yourself in a
+handful of tool calls, and do not use subagents to verify or double-check your own work. If one
+subagent can complete the task, use one rather than several, and keep spawn counts low.
+
+<!-- THE PROSE IS THE JUDGMENT; THE CAP IS THE ENFORCEMENT, and it is not in this file.
+     Smokin sets CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS, CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH,
+     CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION and CLAUDE_CODE_SUBAGENT_MODEL_FORCE in the
+     dispatch environment from its runtimes row. That is why this section is a paragraph about
+     when delegating is a good idea rather than a "Do NOT spawn sub-agents" line: the line
+     could be ignored, the environment cannot. Paragraph and cap answer different questions —
+     the cap says how many, the paragraph says whether. -->
+
+## What you write
+
+Match the length of written documents to what the task needs: cover the substance, but do not
+pad with filler sections, redundant summaries, or boilerplate.
+
+<!-- FINDINGS.md is graded on what it establishes, not on how much of it there is. The
+     research Done-means block in TASK.md already names the four things it must answer, in
+     order; a fifth section summarising the first four is the padding this line refuses. -->
+
+## Task-specific calibration
+
+<!-- OPTIONAL, and usually empty. Add a line here ONLY for a behaviour this task needs that
+     the sections above get wrong — a task that genuinely must be verbose, a task where
+     narration is the deliverable, a task that is the rare legitimate fan-out. If you are
+     writing a rule about WHAT to do, it belongs in TASK.md instead; this section is only for
+     overriding HOW.
+
+     If you find yourself writing the same override into three tasks, it is not task-specific.
+     Move it to ../_RULES.md and delete all three. -->
+
+<none — delete this line and say what differs, or leave the section out entirely>

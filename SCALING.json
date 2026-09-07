@@ -45,8 +45,8 @@
       "type": "ASK",
       "highValue": false,
       "producesPlanText": false,
-      "summary": "Restate the ask in your own words. Name what is missing. Flag what would change the plan's shape. Then stop.",
-      "output": "A paragraph and two or three flags.",
+      "summary": "Restate the ask in your own words. Name what is missing. Interview the requester on the hard parts — a structured question tool where the harness has one, multiple choice rather than open questions. Flag what would change the plan's shape. Then stop.",
+      "output": "A paragraph, two or three flags, and the interview's answers.",
       "minSize": "XS"
     },
     {
@@ -919,6 +919,7 @@
     "rulings",
     "size-declared",
     "status",
+    "stripped",
     "worktree-disjoint"
   ],
   "researchTask": "A task whose job is to find something out, not to change something. Declared **Kind:** research with a **Timebox:**; graded on the FINDINGS file it writes, never on what it found, because 'I understand it now' is not checkable by anyone. Hitting the timebox without an answer is a reportable result -- 'could not establish X, here is what it would take' -- and the next task is planned from that as readily as from an answer. One question per task; a second question is a second task. Whatever it built to answer the question is evidence, not the implementation. Use it when the system is real but this planner cannot reach it, or when the request names a symptom nobody has measured; phase 1's count and phase 9's environment check become its steps rather than being skipped or faked. ENFORCED by check_research_task, which can see the timebox and the done-command and cannot see whether the findings are any good.",
@@ -1007,5 +1008,6 @@
       "selfVerifies": "claude-opus-5 verifies its own work unprompted, and telling it to self-verify causes over-verification. This does NOT repeal principle 8: an adversary who did not write the work is a different mechanism from an author re-reading their own.",
       "delegatesReadily": "It reaches for subagents readily, which is why _RULES.md section 2's explicit onward-delegation policy is load-bearing rather than boilerplate."
     }
-  }
+  },
+  "planMode": "Phases 0-4 produce no plan text, and where the harness has a plan mode they run inside it, which turns that from an agreement into an enforcement: the tool layer refuses writes, so a phase-1 worker cannot 'just fix' the thing it was sent to count. Leaving plan mode is the phase 4 to 5 boundary and is a human approval. NOT CHECKABLE and never will be -- no artefact records which mode a phase ran in, so the gate has no check for it and it is listed among the advisory rules. On a harness without one, phases 0-4 are agreed rather than enforced, exactly as before; say which you had, because a reader who assumes enforcement that was not there trusts the inventory more than it has earned."
 }

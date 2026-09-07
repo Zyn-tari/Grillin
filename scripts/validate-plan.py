@@ -98,6 +98,7 @@ SILENT_BECAUSE = {
                            "opt-in by file and its absence is not a defect",
     "size-declared":       "not applicable: this plan has no PLAN.md — plan-truth owns that "
                            "failure",
+    "stripped":            "turned off: the config does not set require_stripped_contract; or\n                           this plan has no tasks at all — layout owns that failure",
     "status":              _ALWAYS,
 }
 # A name with no registered reason still gets a line. Silence is the one state
@@ -1453,6 +1454,74 @@ def check_paths_disjoint(f: Findings, tasks: dict, cfg: dict):
 RE_WORKTREE = re.compile(r"\*\*Worktree:\*\*\s*`?([^`·\n]+?)`?\s*(?=\*\*|·|$)", re.M | re.I)
 
 
+# The template's own commentary, and how much of it there is. Both numbers are
+# measured rather than asserted: MAX_COMMENT_LINES is the rule, and the message
+# quotes the block that broke it so the fix is a deletion the reader can see.
+RE_HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
+MAX_COMMENT_LINES = 6
+
+
+def check_stripped_contract(f: Findings, tasks: dict, cfg: dict):
+    """
+    The file a worker reads must not still be the file a curator wrote.
+
+    `templates/TASK.md.template` is deliberately heavy: well over half of it is
+    `<!-- -->` commentary explaining why each field exists, which failure bought
+    it, and what happens if it is dropped. That commentary is load-bearing FOR
+    THE CURATOR — this project has repeatedly found that deleting the "why"
+    is how an old defect gets reintroduced — and it is pure noise for the worker,
+    who reaches its first instruction several hundred lines in.
+
+    The template has told authors to delete it since the beginning. Nothing
+    checked, which by this method's own rule (OPERATING-THE-PLAN.md §11) made it
+    a preference rather than a rule, and preferences are what a curator under
+    time pressure drops first.
+
+    IT MATTERS MORE NOW THAN IT DID. Anthropic's guidance for the Claude 5
+    generation names this exact failure: "If your CLAUDE.md is too long, Claude
+    ignores half of it because important rules get lost in the noise", and their
+    own remedy was to delete over 80% of Claude Code's system prompt with no
+    measurable loss. A task contract that ships 200 lines of meta-commentary
+    about the gate's history is not a thorough contract. It is a contract whose
+    real instructions are competing with an essay for attention.
+
+    WHAT THIS CHECKS, AND WHAT IT DELIBERATELY DOES NOT. It fails a single
+    comment block longer than MAX_COMMENT_LINES lines. It does NOT ban comments:
+    a curator's own `<!-- TODO: confirm the path with Ana -->` is a legitimate
+    note to a colleague and stays. The threshold is where it is because every
+    block in the template is far above it and every hand-written note seen in a
+    real plan is far below, so the two do not overlap — but it means a short
+    template fragment left behind will pass. That is the safe direction to be
+    wrong in for this check specifically, and it is the opposite of the direction
+    `paths-disjoint` chose: there, a missed collision ships and clobbers, so
+    over-claiming is correct. Here, a false failure would teach curators that
+    the gate objects to them writing anything down at all, and the thing being
+    protected is attention, which a two-line leftover does not measurably spend.
+    """
+    if not cfg.get("require_stripped_contract", True):
+        return
+    bad = 0
+    for tid, path in sorted(tasks.items()):
+        text = path.read_text(errors="replace")
+        for m in RE_HTML_COMMENT.finditer(text):
+            n = m.group(0).count("\n") + 1
+            if n <= MAX_COMMENT_LINES:
+                continue
+            bad += 1
+            first = m.group(0).splitlines()[0][:72]
+            f.fail("stripped", f"{path}:{line_of(path, m.group(0))}",
+                   f"{tid}: a {n}-line comment block survived into the shipped "
+                   f"contract — {first!r}. Template commentary is written for the "
+                   f"curator, not the worker; delete every <!-- --> block before "
+                   f"this file is dispatched. A contract whose instructions are "
+                   f"outnumbered by notes about the contract is the documented "
+                   f"way for the instructions to get ignored.")
+            break            # one finding per task; the fix is the same deletion
+    if not bad and tasks:
+        f.ok("stripped", f"{len(tasks)} task contracts carry no block of "
+                         f"template commentary over {MAX_COMMENT_LINES} lines")
+
+
 def check_worktree_disjoint(f: Findings, tasks: dict, cfg: dict):
     """
     Where git itself serialises, the plan must impose an order.
@@ -2345,6 +2414,7 @@ def main():
     check_rollback_real(f, plan, tasks, cfg)
     check_paths_disjoint(f, tasks, cfg)
     check_worktree_disjoint(f, tasks, cfg)
+    check_stripped_contract(f, tasks, cfg)
     check_persona_model(f, plan, tasks, cfg)
     check_size_declared(f, plan, tasks, cfg)
     check_done_self_reference(f, plan, tasks, cfg)

@@ -27,8 +27,11 @@ the output contract (§4) files into it, and the state reporter globs `tasks/*/T
 A task file living loose, or two tasks sharing a folder, breaks all three at once.
 
 ```
-tasks/<ID>/TASK.md · FINDINGS.md · CHANGES.md · QUESTIONS.md · <fragments>
+tasks/<ID>/TASK.md · CLAUDE.md · FINDINGS.md · CHANGES.md · QUESTIONS.md · <fragments>
 ```
+
+`TASK.md` is the **contract** — what to do. `CLAUDE.md` is the **calibration** — how to behave
+while doing it, and the only one of the two a harness loads by itself (§1b).
 
 Every agent also inherits `<inventory folder>` — the frozen map of what already exists. **No agent
 re-derives it.** If an agent starts searching for something already in there, the prompt failed.
@@ -46,6 +49,33 @@ cited from the inventory, the briefing failed** — there is no ambient context 
 
 An agent that reads its skills after it starts has already made the decisions the skill existed
 to inform.
+
+## 1b · The calibration file, and the caps behind it
+
+`tasks/<ID>/CLAUDE.md` carries four behaviours that a task contract cannot state because they are
+not about the task: **response length**, **narration cadence**, **scope**, and **delegation**.
+They are in a file named `CLAUDE.md` for one mechanical reason — a harness auto-loads that name
+from its working directory and auto-loads nothing else. Every other file in the folder has to be
+read on request, and a rule that has to be requested is a preference.
+
+<!-- WHY THESE FOUR AND NOT OTHERS. They are the four things that stopped being free in the
+     Claude 5 generation. Effort no longer controls visible verbosity, so length has to be asked
+     for; the model narrates readily; it expands scope on its own initiative; and it reaches for
+     subagents on work that does not need them. Earlier generations needed none of these lines
+     and this file correctly did not carry them. -->
+
+**Do not restate this file inside it.** The calibration file says how to behave; these rules say
+how the work is run. A second copy of §2a or §3 in ninety task folders is ninety files that will
+disagree with this one, and the disagreement will be discovered by a worker who followed the
+wrong one.
+
+**The delegation cap is not in that file, and that is the point.** The runner sets it in the
+dispatch environment from its runtimes row — on Claude Code, `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`,
+`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` and
+`CLAUDE_CODE_SUBAGENT_MODEL_FORCE`. Prose says *whether* delegating is a good idea and can be
+ignored; the environment says *how many* and cannot. Principle 11's rule applies to this file as
+much as to a plan: a rule a machine cannot check is a preference, so the half that can be checked
+is checked, and only the judgment stays in prose.
 
 ## 2 · Model tiers
 
@@ -67,8 +97,18 @@ context and no sight of the first. One independent pass is a filter, not a proof
 **Declare the tier out loud** when you fan out — publish an agent→model table. The requester
 cannot see a subagent's tier and must not have to ask.
 
-**State onward-delegation policy explicitly**: either "do NOT spawn sub-agents" or the tier
-sub-agents must use. An agent that spawns its own picks their models itself.
+**Onward delegation is capped in the environment, not stated in prose** — §1b, and the runner's
+`runtimes.json` `env` block. This line used to say to write *"do NOT spawn sub-agents"* into each
+task file, which is where that sentence spent a year doing nothing: it named no mechanism, and
+an agent that spawns its own sub-agents picks their models itself unless something stops it.
+Something now does. Set the caps once, at the runtime, and let the calibration file carry the
+judgment about *whether* a fan-out is worth it at all.
+
+Two things still belong here rather than in a cap. Say which tier a sub-agent should run at when
+this plan wants one different from the runtime's forced default — the cap pins a model, it cannot
+know that this plan's fan-outs are adversarial reads that need the higher tier. And say when
+delegation is forbidden for a reason a number cannot express: read-only, one per source file,
+never per finding.
 
 ## 2b · Substrate
 
@@ -153,14 +193,31 @@ Task **status** is not an output file — it is a line inside each `TASK.md`, up
      They are not — they are agreed rather than enforced, which is a different thing, and the
      heading now says which. Same trade as the parsed/not-parsed register in TASK.md.template. -->
 
-**Converge loop** — do → verify → **fix** → **confirm the fix, by someone who did not make it** →
-re-verify, with a stated cap. Hitting the cap is a stop-and-report. Earned wherever the work can
-come back wrong: a repair, a build that either compiles or does not, anything measured. A task
-with one observable outcome and no way to partially succeed does not need one, and padding it
-with a loop that can only run once makes the contract longer and less read.
+**Converge loop** — do → **the done-command runs** → **fix** → **confirm the fix, by someone who
+did not make it** → **the done-command runs again**, with a stated cap. Hitting the cap is a
+stop-and-report. Earned wherever the work can come back wrong: a repair, a build that either
+compiles or does not, anything measured. A task with one observable outcome and no way to
+partially succeed does not need one, and padding it with a loop that can only run once makes the
+contract longer and less read.
+
+<!-- THE MIDDLE STEPS USED TO SAY "verify" AND "re-verify", AND THAT NOW COSTS MONEY. Read by a
+     Claude 5 generation model those are instructions to check its own work, and Anthropic's
+     guidance for that generation is explicit: "Claude Opus 5 verifies its own work without being
+     told to. If your prompt contains explicit verification instructions... remove them:
+     instructions like these cause over-verification... and removing them reduces wasted tokens
+     with no loss in quality."
+
+     Nothing about the loop's SHAPE was wrong — what was wrong was who the two verify steps
+     addressed. They were never meant to ask the worker to re-read its own output; they were
+     always the done-command, which is a machine running a command and costs no prompt tokens at
+     all. So they now name it. What survives is the half Anthropic endorses and this method was
+     built on: a fresh reader judging a result it did not produce. -->
 
 The confirm step is not ceremony. An agent that repairs a defect and then declares it repaired is
-self-certifying one level down from the rule in §3, and it is the level nobody watches.
+self-certifying one level down from the rule in §3, and it is the level nobody watches. That step
+is a DIFFERENT reader, which is why it is not covered by the deletion above: an agent
+double-checking itself is what the guidance removes, and an independent judgment of a result is
+what it recommends.
 
 **Watch loop** — only for genuinely slow external state.
 

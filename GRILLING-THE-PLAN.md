@@ -49,6 +49,40 @@ likely to be stale.
 
 ## The eleven phases
 
+### Phases 0–4 run in plan mode, and leaving it is the approval
+
+The premise above says three phases produce no plan text at all and are the highest-value
+phases. That has always been an honour system. Nothing stopped a worker in phase 1 from
+"just fixing" the thing it was sent to count, and phase 1's whole value is that its output is
+frozen and nobody acted on it — a count taken after somebody started changing things is not a
+count of what existed.
+
+**Where the harness has a plan mode, use it, and the honour system becomes a mechanism.** Claude
+Code's is the reference implementation: while it is on, the tool layer refuses writes, so the
+read-only claim is enforced by the thing running the tools rather than promised by the thing
+using them. Leaving plan mode is a single, explicit, human-approved act — which is exactly the
+boundary phase 4 needed and never had. Phase 5 is the first phase that writes; it is also the
+first phase that should be outside plan mode.
+
+| | Without plan mode | With it |
+|---|---|---|
+| Phases 0–4 write nothing | agreed | enforced by the tool layer |
+| Phase 4 → 5 is a decision point | implied by the phase numbering | an explicit approval a person gives |
+| A phase-1 worker "just fixes" something | discovered later, in the diff | refused at the tool call |
+
+This is principle 11 applied to the method itself: a rule a machine cannot check is a preference,
+and until a harness could enforce this one it was a preference. Two things follow. The phases are
+unchanged — plan mode is not a new phase and does not move a boundary that already existed; it
+makes an existing boundary real. And **the gate cannot see any of this.** No artefact records
+which mode a phase ran in, so `validate-plan.py` has no check for it and will never have one;
+it is listed among the advisory rules in `OPERATING-THE-PLAN.md` for that reason.
+
+On a harness with no plan mode, phases 0–4 are agreed rather than enforced, exactly as before.
+Say which one you had. A plan whose reader assumes enforcement it did not have is worse off than
+one that knows the inventory was taken on trust.
+
+---
+
 ### Phase 0 — Acknowledge, flag, stop
 
 Restate the ask in your own words. Name what you still need. Flag anything that would **change
@@ -57,7 +91,29 @@ the shape** of the plan. Then stop.
 Do not start work at the acknowledgement. The restatement is the cheapest place to find out you
 heard it differently.
 
-**Output:** a paragraph, two or three flags, and the five answers below.
+**Then interview, rather than guessing.** The restatement finds the misunderstandings you can see.
+An interview finds the ones you cannot — the edge case nobody mentioned, the constraint that is
+obvious to the requester and invisible to you, the tradeoff that has already been decided
+somewhere else. Where the harness has a structured question tool, use it; Claude Code's is
+`AskUserQuestion`, and the published shape of the request is:
+
+> I want to build [brief description]. Interview me in detail using the AskUserQuestion tool.
+> Ask about technical implementation, UI/UX, edge cases, concerns, and tradeoffs. Don't ask
+> obvious questions, dig into the hard parts I might not have considered. Keep interviewing until
+> we've covered everything, then write a complete spec.
+
+Two rounds, not one: the first before anything is shaped, the second after phase 4 has a diagram
+and before phase 5 writes a single task. The questions are different at those two points, and a
+plan that asks them all at the start asks half of them too early to be answerable.
+
+**Multiple choice beats an open question here.** An open question is answered with what the
+requester happens to think of; a small set of named options with their consequences is answered
+with a decision, and the rejected options are then written down as rejected rather than never
+considered. Where a question has a conventional answer, pick it, say which you picked, and keep
+going — an interview that stops on every routine judgment is a questionnaire.
+
+**Output:** a paragraph, two or three flags, the answers to the interview, and the five answers
+below.
 
 #### What kind of plan does this need? — five questions
 

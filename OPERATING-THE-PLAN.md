@@ -519,6 +519,9 @@ Honest accounting. A rule a machine cannot check is a preference.
 | Look at the thing before shipping it | ADVISORY | — |
 | A running orchestration script is not edited before its own resume | ADVISORY | — · does not apply to Smokin, which holds no state across a resume to invalidate |
 | A cut run drops input breadth, never a gate | ADVISORY | — |
+| Phases 0–4 run in plan mode | ADVISORY | — · **and permanently so.** No artefact records which mode a phase ran in, so nothing readable from a plan directory could ever check it. Where the harness has a plan mode it is ENFORCED BY THE HARNESS, at the tool layer, which is stronger than anything this gate could do — and invisible to it. |
+| Template commentary is deleted before a contract is dispatched | **ENFORCED** | `check_stripped_contract` |
+| Subagent counts are capped | **ENFORCED, ELSEWHERE** | the runner's `runtimes.json` `env` block; prose says whether to delegate, the environment says how many |
 
 ---
 

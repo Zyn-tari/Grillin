@@ -1,5 +1,17 @@
 <!-- Lives at tasks/<ID>/TASK.md. This folder is your briefing and your output location:
-     everything you need is here, everything you produce goes here. One folder per task. -->
+     everything you need is here, everything you produce goes here. One folder per task.
+
+     THIS FILE IS THE CONTRACT — what to do, what done means, what not to touch. `CLAUDE.md`
+     beside it is the CALIBRATION — how to behave while doing it: response length, narration,
+     scope, delegation. Two files because they answer different questions and because only one
+     of the two names gets auto-loaded by a harness. See ../_RULES.md §1b.
+
+     BEFORE THIS FILE IS SHIPPED, DELETE EVERY `<!-- -->` BLOCK IN IT. They are notes to the
+     curator writing the task, not to the worker doing it, and there are more lines of them here
+     than there is contract. A worker handed both reads several hundred lines about the gate's
+     own history before reaching its first instruction — which is the documented failure mode for
+     an over-long instructions file: the important rules get lost in the noise. `check_stripped`
+     fails a plan that ships them, so this is enforced rather than hoped for. -->
 
 # <ID> — <Short title>
 
@@ -278,12 +290,26 @@ sentence in the file.>
 
 ## Loop
 
-**Converge, cap <N>.** <Cycle: do → verify → fix → confirm the fix → re-verify.> Exit when
-<condition someone else can check>. Hitting the cap is a **stop-and-report**, never a silent
-partial.
+<!-- THE TWO MIDDLE STEPS NAME A MACHINE, NOT YOU, AND THEY USED TO NAME YOU. This line read
+     `do → verify → fix → confirm the fix → re-verify`, which asks the worker to check its own
+     output twice. On a Claude 5 generation model that is the documented over-verification
+     trigger — Anthropic: "If your prompt contains explicit verification instructions... remove
+     them... removing them reduces wasted tokens with no loss in quality."
+
+     The step was never supposed to mean that. It is the done-command below, run by whoever is
+     running this plan, and it costs no prompt tokens. The plan-level version in ../_RULES.md §5
+     always carried the clause this copy dropped — "by someone who did not make it" — so for as
+     long as the two disagreed, the file the worker actually reads was the one asking for the
+     behaviour that now costs the most. They agree now. -->
+
+**Converge, cap <N>.** <Cycle: do → the **Done means** command runs → fix → **confirm the fix, by
+someone who did not make it** → the command runs again.> Exit when <condition someone else can
+check>. Hitting the cap is a **stop-and-report**, never a silent partial.
 
 **You do not confirm your own repair.** A fix you made is checked by someone who did not make it —
-same rule as the work itself, one level down.
+same rule as the work itself, one level down. This is the one reading step that survived the
+deletion above, because it is not you re-reading your own work: it is a different reader judging a
+result, which is the thing the guidance recommends rather than the thing it removes.
 
 ## Done means
 
@@ -361,12 +387,27 @@ See OPERATING-THE-PLAN.md §9.
 
 - Do NOT <the specific trap for this task>.
 - Do NOT <the pattern that looks helpful and is not>.
-- Do NOT spawn sub-agents. *(or: sub-agents must run at `<tier>`)*
+<!-- THE SUB-AGENT LINE MOVED, AND DID NOT SIMPLY GO. It used to sit here as
+     `Do NOT spawn sub-agents`, which is a rule nothing could check, in the file with the least
+     room for one. It is now enforced in two places that can hold it: the runner sets
+     `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`, `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`,
+     `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` in the
+     dispatch environment, and `CLAUDE.md` beside this file carries the paragraph on when
+     delegating is worth it at all. Deleting the prose was only safe BECAUSE the enforcement
+     landed first — see ../_RULES.md §1b.
+
+     Put a line back here ONLY to say something the cap cannot: "the fan-out on this task must be
+     read-only", say, or "one subagent per source file, never per finding". A bare "do not spawn
+     sub-agents" is already covered and adds nothing but length. -->
 - Everything in `../_RULES.md` §<universal do-NOT list>.
 
 ## Outputs
 
 `FINDINGS.md` · `CHANGES.md` (if code changed) · `QUESTIONS.md` (if blocked) · `<fragments>`
+
+<!-- `TASK.md` and `CLAUDE.md` are INPUTS to this folder and are not listed above. `MEMORY.md`
+     is neither: the runner writes it before dispatch when an earlier occupant of this persona
+     left something worth carrying, and it arrives marked SUSPECTED. Do not write it yourself. -->
 
 All of them written **into this folder** (`tasks/<ID>/`), never anywhere else. A worker that lost
 its context recovers by re-reading this directory — so if it is not in here, it does not exist.

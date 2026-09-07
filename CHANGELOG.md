@@ -1,6 +1,82 @@
 # Changelog
 
 
+## Unreleased — Claude 5 · 2026-09-07
+
+Anthropic deleted over 80% of Claude Code's own system prompt for the Claude 5 generation with no
+measurable loss on their coding evals, and published the diagnosis: they had been
+over-constraining the model. This is Grillin's half of that. **26 gate checks, up from 25.**
+
+The headline is what did NOT change. The guidance says to strip explicit verification
+instructions out of prompts because Opus 5 already verifies its own work and instructions to do
+it again cause over-verification. Read carelessly that retires the method. It does not: a
+done-command is a command a machine runs, an adversary is a different agent judging a result it
+did not produce, and Anthropic's most emphasised advice for Claude Code is *give Claude a way to
+verify its work*. The rule that separates the two — **cut it if the same agent does the checking,
+keep it if a different agent or a machine does** — is now written down in
+WORKING-WITH-CLAUDE-CODE.md §6c.
+
+### The converge loop asked for the wrong thing, in the file that matters most
+
+`TASK.md.template` read `do → verify → fix → confirm the fix → re-verify`, which asks the worker
+to re-read its own output twice — the documented over-verification trigger. The plan-level copy
+in `_RULES.md` §5 always carried the clause this one had dropped, *"by someone who did not make
+it"*, so for as long as the two disagreed, **the file the worker actually reads was the one asking
+for the behaviour that now costs the most.** Both now name the done-command for those two steps,
+which is what they always meant, and the independent-confirm step is untouched.
+
+### `check_stripped_contract` — the 26th check
+
+`TASK.md.template` is over 370 lines and more than half is `<!-- -->` commentary written for the
+curator. It has said *"deleted before the file reaches the worker"* since the beginning and
+nothing checked, which by this method's own rule made it a preference. The failure mode it
+guards is now named by Anthropic: *"If your CLAUDE.md is too long, Claude ignores half of it
+because important rules get lost in the noise."*
+
+Fails any shipped `TASK.md` carrying a comment block over 6 lines. **It deliberately does not ban
+comments** — a curator's own one-line note to a colleague is legitimate and stays. A short
+template fragment left behind therefore passes; that limit is asserted out loud in
+`tests/test-stripped-contract.py`, because a check that overstated its own enforcement is the
+exact defect the field register was rewritten to stop.
+
+### Phases 0–4 run in plan mode, and the honour system becomes a mechanism
+
+The premise has always said the first phases produce no plan text and are the highest-value
+phases. Nothing enforced it. Where the harness has a plan mode the tool layer refuses writes, so
+a phase-1 worker cannot "just fix" the thing it was sent to count, and leaving plan mode is the
+phase 4 → 5 boundary as an explicit human approval. **Not checkable and never will be** — no
+artefact records which mode a phase ran in — so it is registered ADVISORY in
+`OPERATING-THE-PLAN.md` §11 with that reason stated.
+
+### Phase 0 interviews instead of guessing
+
+Was *restate and stop*. Restating finds the misunderstandings you can see. Two rounds now, using
+a structured question tool where the harness has one, multiple choice rather than open questions:
+once before anything is shaped, once after the diagram and before phase 5 writes a task.
+
+### `templates/CLAUDE.md.template` — the calibration file
+
+New, and short on purpose. `TASK.md` is the contract — what to do. `CLAUDE.md` beside it is the
+calibration — response length, narration cadence, scope, delegation. Four behaviours that were
+free before this generation and are not now, and none of them are about the task. It is named
+`CLAUDE.md` because a harness auto-loads that name from its working directory and auto-loads
+nothing else; Smokin copies it to the worktree at dispatch, since that is where it gets read.
+
+### `Do NOT spawn sub-agents` is gone from the template, and enforced instead
+
+It sat there for a year as a line nothing could check. Read out of the installed bundle
+(`@anthropic-ai/claude-code` 2.1.263), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` falls back to **20**
+and `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` to **3**. The prose is now a paragraph on *whether*
+delegating is worth it; *how many* is four entries in Smokin's `runtimes.json`. The prose was
+deleted only because the enforcement landed first, which is the order that rule requires.
+
+### Also
+
+- The `--version` check count in `tests/test-check-accounting.py` was the third hardcoded literal
+  to break on a new check — `24` when `worktree-disjoint` landed, `25` when this one did. Derived
+  now, so it cannot break again.
+
+
 
 ## v1.2.0 — 2026-08-20
 

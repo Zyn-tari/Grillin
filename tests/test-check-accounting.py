@@ -96,7 +96,12 @@ chk("...and the distinct names printed equal the declared set",
     sorted(v), sorted(G.GATE_CHECK_NAMES))
 r = subprocess.run([sys.executable, str(GATE), "--version"],
                    capture_output=True, text=True, timeout=60)
-has("--version claims 25 checks", r.stdout, "25 checks")   # 24 until worktree-disjoint landed 2026-08-26
+# DERIVED, and it was a literal until it broke twice — "24 checks" on the day
+# worktree-disjoint landed, "25 checks" on the day stripped did. The number is
+# the one thing in this file that changes every time the gate grows, so it is
+# the one thing that must not be written down here.
+has(f"--version claims {len(G.GATE_CHECK_NAMES)} checks", r.stdout,
+    f"{len(G.GATE_CHECK_NAMES)} checks")
 chk("...the same number the run accounts for",
     f"gate: {n_declared} checks" in r.stdout, True)
 
