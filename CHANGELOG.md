@@ -1,6 +1,45 @@
 # Changelog
 
 
+## Unreleased — parked items · 2026-09-08
+
+### `check-index.py` reads the gating relation — check 5
+
+A plan of plans has edges between its MEMBERS, not just inside them, and nothing
+read them. A task-level dependency cycle fails the gate; a plan-level one does not
+fail at all — the runner dispatches nothing and looks idle, which is
+indistinguishable from work in progress and the most expensive symptom in the file
+to diagnose.
+
+Opt-in via `--gates-re`, capturing (name, blockers). It refuses a gating row naming
+a shard the index links nowhere (the common defect: a track renamed on one side
+only, leaving an edge that points at nothing and silently stops gating), a shard
+blocked by itself, and any cycle — printing the path rather than only its
+existence. Same reasoning as `check_graph`, one level up, and it lives in the
+pointable tool rather than the self-check because it is decidable from an index
+file alone and is not specific to Grillin's own surfaces.
+
+Harness 14 → 20 checks. A self-gate briefly produced two findings — the dedicated
+message and the cycle walk — and 8d now asserts it produces one.
+
+### Two standing offers, both refused, both recorded
+
+Neither was a defect; both were open because nobody had written down the decision,
+which is how the same question gets asked a third time.
+
+**Removing drift block 2b** — refused on evidence from the run that offered it. The
+argument was that `--version` now derives its count, so nothing hardcodes it. True
+of the script, false of the prose: adding the 26th check left README twice and
+WORKING-WITH-CLAUDE-CODE still saying 25, and 2b is what caught all three. A
+numeral written into a sentence cannot derive from anything.
+
+**Narrowing the What-you-own harvest** — refused, and the reasoning is now in
+`check_paths_disjoint`'s docstring. The error direction is asymmetric (a false
+collision is loud, a missed one clobbers at merge time and no later run finds it),
+the escape already costs one word, and the pain was never the harvest — it was that
+nobody was told about the marker. Both surfaces that could tell them now do.
+
+
 ## Unreleased — Claude 5 · 2026-09-07
 
 Anthropic deleted over 80% of Claude Code's own system prompt for the Claude 5 generation with no

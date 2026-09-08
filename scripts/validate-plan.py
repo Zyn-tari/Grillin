@@ -1414,6 +1414,28 @@ def check_paths_disjoint(f: Findings, tasks: dict, cfg: dict):
     Concurrent means: neither task can reach the other through the dependency
     graph. Ordering is what makes shared ownership safe, so tasks in sequence
     are exempt.
+
+    NARROWING THE HARVEST WAS THE OTHER CANDIDATE, AND IT IS REFUSED. The
+    complaint is real: `_owned_paths` treats every backticked path in
+    `## What you own` as a claim, so a task naming a neighbour it must not break
+    is read as claiming it, and two tasks that merely CITE the same path fail as
+    a collision. The proposed fix was to harvest fewer paths.
+
+    Three things argue against it, and together they close the question rather
+    than defer it. The direction of error is asymmetric — a false collision is
+    loud and gets argued with in the same minute, a missed one ships and clobbers
+    at merge time, and no gate run afterwards can find it. The escape already
+    exists and costs one word: `read-only`, `reference only`, `for reference`,
+    `context only`, any of which keeps the path written down while dropping the
+    claim. And the pain the narrowing was meant to relieve was never the harvest
+    — it was that nobody was TOLD about the escape. Both places that could tell
+    them now do: `## What you own` in TASK.md.template teaches the marker, and
+    the failure message below names it at the moment an author hits it.
+
+    So the remaining case for narrowing is an author who reads a failure that
+    tells them the fix and does not apply it. That is not a defect in the
+    harvest. Same disposition as `check_persona_model`'s size-awareness: a
+    refusal with reasons, not an open item.
     """
     if not cfg.get("require_paths_disjoint", True):
         return

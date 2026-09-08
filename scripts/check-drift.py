@@ -296,6 +296,15 @@ def main() -> int:
     # read any of them. Adding the 25th check silently left all three saying 24,
     # in the same commit that added a checker for two OTHER unread surfaces. The
     # rule this file exists for does not exempt the file's own author.
+    #
+    # REMOVAL WAS OFFERED AND IS REFUSED, on evidence from the run that offered
+    # it. The argument for dropping this block was that `--version` now derives
+    # its count from the emitted names, so nothing hardcodes it any more. That is
+    # true of the SCRIPT and false of the PROSE. Adding the 26th check on
+    # 2026-09-07 left README twice and WORKING-WITH-CLAUDE-CODE still saying 25,
+    # and this block is what caught all three — the same failure as the 25th, one
+    # release later, with the derivation already in place. A numeral written into
+    # a sentence cannot derive from anything; it can only be checked.
     for name in ("README.md", "WORKING-WITH-CLAUDE-CODE.md", "index.html"):
         try:
             body = (ROOT / name).read_text()

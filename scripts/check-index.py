@@ -26,6 +26,8 @@ WHAT IT CHECKS, and the fourth one is theirs:
      This is the pair a downstream consumer keys on, and the one most likely to
      be "improved" on one side only.
   4. where the index states a count, the shard holds that many entries
+  5. where the index states which shard BLOCKS which, that relation names only
+     shards it links, gates nothing on itself, and has no cycle
 
 SCOPE. This checks that two surfaces agree. It cannot tell you either of them is
 right, and a matching pair of wrong facts passes.
@@ -51,6 +53,11 @@ def main() -> int:
                     help="over index lines, captures (name, count). Omit to skip check 4")
     ap.add_argument("--entry-re", default=r"^\s*[-*] ",
                     help="what counts as one entry inside a shard (default: a bullet)")
+    ap.add_argument("--gates-re", default=None,
+                    help="over index lines, captures (name, blockers) — the shards that "
+                         "must finish before this one starts. Blockers are split on "
+                         "commas, spaces and middots; a dash or 'none' means no blocker. "
+                         "Omit to skip check 5")
     a = ap.parse_args()
 
     if not a.index.is_file():
@@ -64,6 +71,7 @@ def main() -> int:
         link = re.compile(a.link_re)
         count_re = re.compile(a.count_re) if a.count_re else None
         entry = re.compile(a.entry_re, re.M)
+        gates_re = re.compile(a.gates_re) if a.gates_re else None
     except re.error as e:
         print(f"check-index: bad pattern — {e}", file=sys.stderr)
         return 2
@@ -176,6 +184,89 @@ def main() -> int:
                            + ("" if got else
                               ". Zero matches usually means the wrong --entry-re, "
                               "not an empty shard"))
+
+    # ── 5 · the gating relation between shards ──────────────────────────────
+    # THE SAME CHECK AS validate-plan.py's `check_graph`, ONE LEVEL UP. A plan of
+    # plans has edges between its members — hermes cannot start until ares has
+    # landed — and until now nothing read them. A task-level dependency cycle
+    # fails the gate; a PLAN-level one deadlocks a program instead, and the
+    # symptom is not an error. It is a runner that dispatches nothing and looks
+    # idle, which is the single most expensive thing to diagnose because it is
+    # indistinguishable from work in progress.
+    #
+    # WHY IT LIVES HERE rather than in validate-plan.py. This is decidable from
+    # the index file alone, before anything runs, and it is not specific to
+    # Grillin's own surfaces — the same reason the rest of this script is a tool
+    # you can point at your own files rather than a self-check.
+    #
+    # A NAME THAT IS NOT A SHARD IS THE COMMON DEFECT, not the cycle. A program
+    # renames a track, updates the link, and leaves the old name in a Blocked-by
+    # column; the edge then points at nothing and silently stops gating.
+    if gates_re:
+        NOTHING = {"", "-", "—", "–", "none", "n/a", "na", "nothing"}
+        edges, seen_at = {}, {}
+        for i, line in enumerate(lines, 1):
+            m = gates_re.search(line)
+            if not m:
+                continue
+            try:
+                name, raw = m.group(1).strip(), m.group(2)
+            except IndexError:
+                bad.append(f"{a.index}:{i}  --gates-re matched but did not capture "
+                           f"(name, blockers)")
+                continue
+            deps = [d.strip().strip("`") for d in re.split(r"[,\s·]+", raw or "")]
+            deps = [d for d in deps if d.lower() not in NOTHING]
+            edges[name] = deps
+            seen_at[name] = i
+
+        for name, deps in sorted(edges.items()):
+            ln = seen_at[name]
+            if name not in linked:
+                bad.append(f"{a.index}:{ln}  a gating row names {name!r}, which the index "
+                           f"links nowhere — the row gates a shard that does not exist")
+            for d in deps:
+                if d == name:
+                    bad.append(f"{a.index}:{ln}  {name!r} is blocked by itself. Nothing "
+                               f"can ever start it, and no error will say so")
+                elif d not in linked:
+                    bad.append(f"{a.index}:{ln}  {name!r} is blocked by {d!r}, which the "
+                               f"index links nowhere. The edge points at nothing, so it "
+                               f"silently stops gating — the usual cause is a shard that "
+                               f"was renamed on one side only")
+
+        # Depth-first, reporting the cycle rather than only its existence: "there
+        # is a cycle" sends a reader to re-read the whole table, and the path is
+        # the entire fix.
+        WHITE, GREY, BLACK = 0, 1, 2
+        colour = {n: WHITE for n in edges}
+        found = []
+
+        def walk(n, path):
+            colour[n] = GREY
+            for d in edges.get(n, []):
+                if d not in colour or d == n:
+                    # `d not in colour`: already reported as unlinked.
+                    # `d == n`: a self-gate, already reported above with a better
+                    # message than this walk can produce — it says nothing can
+                    # ever start it, where the cycle line would just print the
+                    # name twice. Without this the same defect yielded TWO
+                    # findings, and one defect gets one finding.
+                    continue
+                if colour[d] == GREY:
+                    found.append(path[path.index(d):] + [d] if d in path
+                                 else path + [d])
+                elif colour[d] == WHITE:
+                    walk(d, path + [d])
+            colour[n] = BLACK
+
+        for n in sorted(edges):
+            if colour[n] == WHITE:
+                walk(n, [n])
+        for cyc in found[:3]:
+            bad.append(f"{a.index}  gating cycle: {' → '.join(cyc)}. A program with one "
+                       f"does not fail — it dispatches nothing and looks idle, which is "
+                       f"the most expensive symptom to diagnose in this whole file")
 
     if bad:
         print(f"DRIFT — {a.index} and {a.shard_dir} disagree:\n")

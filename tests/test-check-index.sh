@@ -120,6 +120,47 @@ out="$(run --entry-re 'ZZZ_NEVER_MATCHES')"
 case "$out" in *"Zero matches usually means the wrong --entry-re"*) ok "7b · zero matches names the likely cause" ;;
   *) bad "7b · zero-match hint" "not shown" ;; esac
 
+# 8 · the gating relation. A plan of plans has edges between its MEMBERS, and a
+#     cycle there does not fail — the runner dispatches nothing and looks idle,
+#     which is indistinguishable from work in progress. Same check as the gate's
+#     `check_graph`, one level up.
+GATES='^- \[(W[0-9]+)\][^|]*\| blocked by: ([^|]*)\|'
+gplan() {   # $1 = W0's blockers, $2 = W1's
+  rm -rf "$LAB"; mkdir -p "$LAB/CHANGELOG"
+  {
+    echo "# Program"; echo
+    echo "- [W0](CHANGELOG/W0.md) — 2 entries | blocked by: $1 |"
+    echo "- [W1](CHANGELOG/W1.md) — 3 entries | blocked by: $2 |"
+  } > "$LAB/CHANGELOG.md"
+  printf '## W0\n\n- first thing\n- second thing\n' > "$LAB/CHANGELOG/W0.md"
+  printf '## W1\n\n- a\n- b\n- c\n' > "$LAB/CHANGELOG/W1.md"
+}
+
+gplan "—" "W0"; out="$(run --gates-re "$GATES")"; rc=$?
+case "$rc$out" in 0*) ok "8 · CONTROL · a well-formed gating relation passes" ;;
+  *) bad "8 · clean gating" "rc=$rc :: $out" ;; esac
+
+gplan "—" "W9"; out="$(run --gates-re "$GATES")"
+case "$out" in *"links nowhere"*) ok "8b · a blocker naming no shard is caught" ;;
+  *) bad "8b · dangling blocker" "not reported — the edge would silently stop gating" ;; esac
+
+gplan "W0" "—"; out="$(run --gates-re "$GATES")"
+n=$(printf '%s' "$out" | grep -c '^  ·')
+case "$out" in *"blocked by itself"*) ok "8c · a self-gate is caught" ;;
+  *) bad "8c · self-gate" "not reported" ;; esac
+case "$n" in 1) ok "8d · ...and yields ONE finding, not a self-gate plus a cycle" ;;
+  *) bad "8d · one defect one finding" "got $n findings" ;; esac
+
+gplan "W1" "W0"; out="$(run --gates-re "$GATES")"
+case "$out" in *"gating cycle: "*"→"*) ok "8e · a cycle is caught and its PATH is printed" ;;
+  *) bad "8e · cycle path" "no path in the message" ;; esac
+
+# 8f · CONTROL · the whole check is opt-in. Without --gates-re nothing about
+#      gating is read, so an index that states no relation cannot fail on one.
+gplan "W1" "W0"; out="$(run)"; rc=$?
+case "$out" in *"gating"*) bad "8f · gating is opt-in" "fired without --gates-re" ;;
+  *) ok "8f · CONTROL · no --gates-re, no gating findings" ;; esac
+
 echo
 echo "  $pass passed, $fail failed"
 rm -rf "$LAB"
