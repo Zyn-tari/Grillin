@@ -370,6 +370,14 @@ _MISSING_PATTERNS = (
     r"No such file or directory: '([^']+)'",                      # FileNotFoundError
     r"can't open file '([^']+)'",                                 # python3 foo.py
     r"cannot open '?([^'\n:]+)'?",                                # various
+    # A TEST RUNNER SAYING THE TARGET IS ABSENT. `python3 -m pytest tests/` on
+    # unstarted work prints "ERROR: file or directory not found: tests/" — which
+    # is the gate WORKING, because tests/ is what the task will produce. It was
+    # read as a broken gate by the bare `not found` alternative below, with no
+    # inside-or-outside-the-plan test applied, and that is the same defect as the
+    # `grep` trap this file already documents: a correct failure on absent work,
+    # reported as an unanchored gate.
+    r"(?:file or directory|no tests ran in) (?:not found|matching): ?([^\n]+)",
 )
 
 
@@ -425,6 +433,45 @@ INTERPRETERS = {"bash", "sh", "zsh", "dash", "python", "python2", "python3",
 RE_SCRIPT_SUFFIX = re.compile(r"\.(?:py|sh|js|mjs|ts|rb|pl|R|bash)$")
 
 
+# A FLAG'S VALUE IS NOT A SCRIPT, and reading it as one was a false positive
+# reported from the field: `python3 -m pytest` was refused because no file named
+# `pytest` exists. The old loop took the first argument that did not start with
+# `-`, which is right for `python3 build.py` and wrong for every flag that
+# CONSUMES the next word.
+#
+# Two kinds, and they need different answers:
+#
+#   NO_SCRIPT   the value is a module name or inline code, so the command runs
+#               no script at all and there is nothing to look for. `-m pytest`,
+#               `-c 'code'`, `node -e '...'`. Returning the value here is what
+#               produced the report.
+#   TAKES_VALUE the value is neither the script nor code, so it must be stepped
+#               over and the search continues. `python3 -X dev build.py` looked
+#               for a script called `dev`.
+#
+# Same shape as Smokin's VARIADIC_FLAGS, which exists because a launch string
+# ending in one swallowed the dispatch line. A flag that eats the next word is
+# the thing both tools kept getting wrong.
+NO_SCRIPT = {"-m", "-c", "-e", "--eval", "--command", "--module", "-p", "-E"}
+TAKES_VALUE = {"-X", "-W", "--check-prefix", "-I", "-r", "--require"}
+
+
+def _interpreter_script(args):
+    """The script an interpreter runs, or None when it runs a module or code."""
+    it = iter(range(len(args)))
+    for i in it:
+        a = args[i]
+        if a in NO_SCRIPT or any(a.startswith(f + "=") for f in NO_SCRIPT):
+            return None                   # a module or inline code — no script
+        if a in TAKES_VALUE:
+            next(it, None)                # step over the value and keep looking
+            continue
+        if a.startswith("-"):
+            continue                      # a bare switch
+        return a
+    return None
+
+
 def _missing_prereq(cmd: str, plan: Path):
     """A prerequisite the command needs before it can grade anything, or None."""
     for seg in re.split(r"&&|\|\||;|\|", cmd):
@@ -448,11 +495,7 @@ def _missing_prereq(cmd: str, plan: Path):
             continue
         script = None
         if head in INTERPRETERS:
-            for a in argv[1:]:
-                if a.startswith("-"):
-                    continue
-                script = a
-                break
+            script = _interpreter_script(argv[1:])
         elif RE_SCRIPT_SUFFIX.search(argv[0]) and "/" in argv[0]:
             script = argv[0]
         if script:
@@ -532,8 +575,18 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
         if r.returncode in (126, 127):
             blew_up = f"exit {r.returncode} — not found or not executable"
         else:
+            # `\bnot found\b` USED TO BE HERE ON ITS OWN AND IT WAS TOO WEAK.
+            # It matched a test runner reporting that the directory it was told
+            # to collect does not exist yet — "ERROR: file or directory not
+            # found: tests/" — and failed the plan for a gate that was doing
+            # exactly its job. The words are ambiguous: "command not found" names
+            # a missing binary, and "file or directory not found" names a missing
+            # FILE, which is the case this check already knows how to reason
+            # about by asking whether the path is inside the plan. So the
+            # specific spellings stay here and the bare phrase moves to the
+            # ambiguous branch below.
             m2 = re.search(
-                r"command not found|\bnot found\b|ModuleNotFoundError|ImportError|"
+                r"command not found|ModuleNotFoundError|ImportError|"
                 r"Permission denied|unbound variable|syntax error", err, re.I)
             if m2:
                 blew_up = m2.group(0)
@@ -553,7 +606,7 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
         if blew_up is None:
             missing = re.search(
                 r"FileNotFoundError|No such file or directory|cannot open|"
-                r"can't open file", err, re.I)
+                r"can't open file|\bnot found\b", err, re.I)
             if missing:
                 where = _missing_path(err, cmd)
                 if where is None or not _inside(where, plan):

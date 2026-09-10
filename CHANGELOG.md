@@ -1,6 +1,48 @@
 # Changelog
 
 
+## Unreleased — a false positive from the field · 2026-09-10
+
+**Reported:** `python3 -m pytest` refused as a missing script. **Two defects were
+behind the one report**, and the first hypothesis — read off the code before
+reproducing — was the wrong one of the two.
+
+### A flag's value is not a script
+
+`_missing_prereq` took the first argument not starting with `-` as the script an
+interpreter runs. That is right for `python3 build.py` and wrong for every flag
+that CONSUMES the next word. `python3 -m pytest` looked for a file called
+`pytest`; so did `python3 -m unittest`, `python3 -m pip`, `node -e '…'`,
+`bash -c '…'`, and `python3 -X dev build.py`, which looked for `dev`.
+
+Split into two cases, because they need different answers. `-m`, `-c`, `-e` and
+friends take a module name or inline code, so there is no script and the search
+stops. `-X`, `-W` and friends take a value that is neither, so it is stepped over
+and the search continues — which is what keeps the check alive rather than
+blinded. Same shape as Smokin's `VARIADIC_FLAGS`: a flag that eats the next word
+is the thing both tools kept getting wrong.
+
+### A test runner's own "not found" is not a broken gate
+
+Found only by reproducing, and it is the one that actually fired on the reported
+command. `\bnot found\b` sat in the unambiguous blow-up list with no
+inside-or-outside-the-plan test. `python3 -m pytest tests/` on unstarted work
+prints *"ERROR: file or directory not found: tests/"* — and `tests/` is what the
+task produces, so that is the gate **working**.
+
+This is the `grep` trap again on a different phrase, with the same cost: the
+documented way out of a false "your gate is unanchored" is a weaker gate. The
+specific spellings that name a missing binary (`command not found`) stay
+unambiguous; the bare phrase moved to the branch that asks *which* file, which
+this file has had since the `grep` fix and simply was not wired to it.
+
+`tests/test-gate-fails-first.py` +13 cases, four of them controls proving the
+check was not blinded. Two of my own fixtures were wrong before they were right —
+one named `python`, which does not exist on this box, so it measured a missing
+interpreter and blamed the tool; the other was appended below the summary line,
+so the harness printed success before running it.
+
+
 ## Unreleased — parked items · 2026-09-08
 
 ### `check-index.py` reads the gating relation — check 5

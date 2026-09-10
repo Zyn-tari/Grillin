@@ -195,6 +195,52 @@ chk("...and T3 is now reported as the more serious defect it actually has",
         for l in r.stdout.splitlines()), True)
 
 print()
+print("\n=== 8 · a flag's VALUE is not a script — reported from the field ===")
+# `python3 -m pytest` was refused because no file named `pytest` exists. The old
+# search took the first argument not starting with `-`, which is right for
+# `python3 build.py` and wrong for every flag that CONSUMES the next word. Two
+# defects were behind the one report and both are exercised here: this one, and
+# the runner's own "file or directory not found" being read as a broken gate
+# (section 9). Same shape as Smokin's VARIADIC_FLAGS.
+v, line = verdict("python3 -m pytest tests/")
+chk("`python3 -m pytest tests/` is a CLEAN FAIL", v, "PASS")
+chk("...and nothing claims a script called 'pytest' is missing",
+    "'pytest'" in line, False)
+v, _ = verdict("python3 -m unittest discover")
+# NOT `python`. This box has only python3, so the first version of this case was
+# measuring a missing interpreter (exit 127) and reporting the tool wrong for
+# catching it. The harness found it, which is the whole reason a control exists.
+chk("`python3 -m unittest discover` is clean", v, "PASS")
+v, _ = verdict("node -e \"process.exit(1)\"")
+chk("`node -e` runs code, not a file called 'process.exit(1)'", v, "PASS")
+v, _ = verdict("bash -c 'exit 1'")
+chk("`bash -c` likewise", v, "PASS")
+
+print("\n=== 8b · CONTROL · a real missing script is still caught ===")
+# The whole value of section 8 is that it did not blind the check. A flag that
+# takes a value must be STEPPED OVER, not treated as an exit from the search.
+v, line = verdict("python3 /nonexistent/checker.py")
+chk("a script that is really absent still FAILS", v, "FAIL")
+chk("...and the message names it", "/nonexistent/checker.py" in line, True)
+v, line = verdict("python3 -X dev /nonexistent/checker.py")
+chk("...and a value-taking flag before it does not hide it", v, "FAIL")
+chk("...naming the script, not the flag's value 'dev'", "'dev'" in line, False)
+
+print("\n=== 9 · a test runner's own 'not found' is not a broken gate ===")
+# `\bnot found\b` sat in the unambiguous list with no inside-or-outside-the-plan
+# test, so a runner reporting that the directory it was told to collect does not
+# exist yet failed the plan. tests/ is what the task PRODUCES: that is the gate
+# working. Same defect as the `grep` trap in section 1, on a different phrase.
+v, line = verdict("python3 -m pytest tasks/T1/tests/")
+chk("a runner pointed at a directory the task will create is clean", v, "PASS")
+chk("...and no 'could not run here' verdict", "could not run here" in line, False)
+
+print("\n=== 9b · CONTROL · 'command not found' still means what it said ===")
+# The specific spelling names a missing BINARY and stays unambiguous. Only the
+# bare phrase moved.
+v, line = verdict("sh -c 'definitely-not-a-real-binary'")
+chk("a missing binary inside a subshell still FAILS", v, "FAIL")
+
 if fails:
     print(f"\033[31m{fails} failed\033[0m")
 else:
