@@ -65,8 +65,9 @@ subagent can complete the task, use one rather than several, and keep spawn coun
 
 <!-- THE PROSE IS THE JUDGMENT; THE CAP IS THE ENFORCEMENT, and it is not in this file.
      Smokin sets CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS, CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH,
-     CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION and CLAUDE_CODE_SUBAGENT_MODEL_FORCE in the
-     dispatch environment from its runtimes row. That is why this section is a paragraph about
+     CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION in the dispatch environment from its runtimes
+     row, and pins every subagent to this task's own model (CLAUDE_CODE_SUBAGENT_MODEL,
+     with CLAUDE_CODE_SUBAGENT_MODEL_FORCE on). That is why this section is a paragraph about
      when delegating is a good idea rather than a "Do NOT spawn sub-agents" line: the line
      could be ignored, the environment cannot. Paragraph and cap answer different questions —
      the cap says how many, the paragraph says whether. -->

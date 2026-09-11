@@ -26,7 +26,7 @@
      PARSED BY validate-plan.py — spelling and placement matter, and a plan fails without them:
        Status · Model · Effort · Blocked by · Blocks ·
        Reader · Context (adversary only) · Kind · Timebox (research only) ·
-       Reversible · Rollback · Delivered (human-owned tasks only)
+       Reversible · Rollback · Delivered (human-owned tasks only) · Branch
 
      PARSED, BUT ONE OF THE PAIR IS ENOUGH — and this line used to lie about it:
        Owner · Agent. The gate resolves an owner from EITHER, preferring Owner when both
@@ -41,7 +41,7 @@
        floor raised sets `require_owner` in its config and the gate demands a literal Owner.
 
      NOT PARSED BY ANYTHING — notes for the human and the worker who read this file:
-       Type · Skills · Mandatory downstream · Wave · Branch ·
+       Type · Skills · Mandatory downstream · Wave ·
        Must not read · Numbers · Output shape
 
      PARSED AS OF 2026-08-26 — `Worktree` moved OUT of the list above, and this note is
@@ -51,6 +51,13 @@
      the XL band: one persona held five ready tasks, the runner dispatched them together,
      five branches went into one worktree, and a concurrent task committed another task's
      staged files while both reported success.
+
+     PARSED AS OF 2026-09-11 — `Branch` moved out too, for the same reason this note
+     exists. A declared branch now obliges an integration task downstream of it whose
+     done-command names it (`check_integration`), and Smokin will not call a plan
+     complete while one has none. Every contract here says "Do NOT merge"; until this,
+     nothing on the graph did either, and a plan could verify every task and report
+     complete with all of its work still on branches.
 
      "Not parsed" is not "decorative". Type and Skills each carry a decision made in an earlier
      phase, and dropping them loses the decision, not just the line — see each field below.
@@ -99,8 +106,19 @@ it is the progress record, and it is the only one that survives a lost conversat
      effort are what it is actually made of. Both come from ../_ROSTER.md, which carries the
      reason for each pairing. Real model identifiers, never tier words: an orchestrator
      cannot dispatch "mid". Effort is never below `high` — the misses that cost most in this
-     method's history were on work that had been priced as routine. -->
-**Agent:** `<persona — must appear in ../_ROSTER.md>` · **Model:** `<claude-opus-5 | claude-sonnet-5>` · **Effort:** <high | xhigh | max>
+     method's history were on work that had been priced as routine.
+
+     ONE EXCEPTION, AND THE API MAKES IT: `claude-haiku-4-5` rejects the effort parameter
+     outright — it errors, it is not ignored. So a Haiku task declares NO Effort, and the
+     gate refuses one that does: a pairing that cannot be applied, recorded as though it
+     had been, is the false record this method exists to stop.
+
+     THE MODEL IS ALSO WHAT THIS TASK'S SUBAGENTS RUN ON. The runner pins them to it —
+     from `_personas/<persona>.md`'s `model:` if that file has one, from this line
+     otherwise — and switches the subagent `model` parameter off, so a worker cannot
+     quietly escalate its own helpers. If the persona file and this line disagree, the
+     gate fails the plan rather than letting the runner pick one. -->
+**Agent:** `<persona — must appear in ../_ROSTER.md>` · **Model:** `<claude-opus-5 | claude-sonnet-5 | claude-haiku-4-5>` · **Effort:** <high | xhigh | max — omit on claude-haiku-4-5>
 **Blocked by:** <ids> · **Blocks:** <ids>
 **Mandatory downstream:** <adversarial passes — TWO, the second with fresh context, on money/authz? integrator?>
 
@@ -235,6 +253,14 @@ reading them before.
      one — `**Blocked by:**` / `**Blocks:**` — and the graph then states the order git was
      already enforcing. Sharing a worktree between ORDERED tasks is correct and is the whole
      reason to keep one per persona: later tasks land where earlier ones did. -->
+<!-- INTEGRATION — only on the task that MERGES. `**Kind:** integration` makes this task
+     the node where declared branches land. check_integration requires every task that
+     declares a **Branch:** to be upstream of one, and that one's done-command to NAME
+     each branch it merges — a merge gate that never mentions the branches cannot be
+     grading them. The roster's `integrator` persona is the natural owner; a person is
+     fine too, and then the contract freezes on delivery like any human task.
+**Kind:** integration
+-->
 **Wave:** <W#> · see [`../_WORKTREES.md`](../_WORKTREES.md)
 **Branch:** `<prefix>/<ID>-<slug>` · **Worktree:** `<path>`
 
@@ -391,8 +417,8 @@ See OPERATING-THE-PLAN.md §9.
      `Do NOT spawn sub-agents`, which is a rule nothing could check, in the file with the least
      room for one. It is now enforced in two places that can hold it: the runner sets
      `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`, `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`,
-     `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` in the
-     dispatch environment, and `CLAUDE.md` beside this file carries the paragraph on when
+     `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION`, and pins every subagent to this task's own
+     **Model:** (CLAUDE_CODE_SUBAGENT_MODEL, with _FORCE on), all in the dispatch environment, and `CLAUDE.md` beside this file carries the paragraph on when
      delegating is worth it at all. Deleting the prose was only safe BECAUSE the enforcement
      landed first — see ../_RULES.md §1b.
 
@@ -406,7 +432,9 @@ See OPERATING-THE-PLAN.md §9.
 `FINDINGS.md` · `CHANGES.md` (if code changed) · `QUESTIONS.md` (if blocked) · `<fragments>`
 
 <!-- `TASK.md` and `CLAUDE.md` are INPUTS to this folder and are not listed above. `MEMORY.md`
-     is neither: the runner writes it before dispatch when an earlier occupant of this persona
+     is neither, and nor is `debriefs/` — a cheap model's four-section summary of each
+     subagent or worker session that finishes here, written by a hook, marked SUSPECTED.
+     `MEMORY.md` the runner writes before dispatch when an earlier occupant of this persona
      left something worth carrying, and it arrives marked SUSPECTED. Do not write it yourself. -->
 
 All of them written **into this folder** (`tasks/<ID>/`), never anywhere else. A worker that lost

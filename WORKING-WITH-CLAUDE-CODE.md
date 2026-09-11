@@ -187,6 +187,13 @@ Structure is a cost. Pay it where it earns its keep.
 **Most work is in the first two rows.** If you take one thing from this guide, take section 4's first
 three habits and stop there.
 
+**For rows two and three, borrow two skills rather than a method.** Anthropic's `superpowers`
+plugin ships `using-git-worktrees` — an isolated checkout for one piece of work, so an
+experiment cannot dirty your main branch — and `finishing-a-development-branch`, which closes
+that work out on purpose: merge it, open a PR, keep it, or discard it, instead of leaving it on
+a branch nobody remembers. Grillin's own worktree guidance is sized for a fleet; for one person
+and one feature, those two are the right size.
+
 ---
 
 ## 6b · The skill that runs before this one
@@ -195,7 +202,7 @@ Claude Code ships a `brainstorming` skill, and it is the step in front of Grilli
 competitor to it. It classifies a request into one of three paths and refuses to write
 anything until you have approved a design. Grillin cannot do that job: this method starts
 once you have decided *what* to build, and its gate checks structure — a plan about entirely
-the wrong problem passes every one of the 26 checks.
+the wrong problem passes every one of the 28 checks.
 
 **The seam, and it matters.** On its architectural path that skill finishes by invoking its
 own `writing-plans` skill. Do not let it. Grillin **is** the plan-writing method; running
@@ -250,6 +257,15 @@ different agent with fresh context judging a result it did not produce. Anthropi
 emphasised piece of advice for Claude Code is *give Claude a way to verify its work*, which is
 exactly what a done-command is. The rule of thumb: **if the same agent does the checking, cut it;
 if a different agent or a machine does, keep it.**
+
+**What that means for `verification-before-completion`.** The superpowers plugin ships a skill
+by that name, and its principle is this method's: evidence before claims, and an agent's "done"
+checked independently rather than believed. Its own lines — *"Agent said success → Verify
+independently"*, *"Revert fix → Run (MUST FAIL)"* — are Smokin's receipt and verdict and
+Grillin's gate-fails-first. What Claude 5 retires is not that idea but loading it as a standing
+instruction: a model that already checks its own work, told to check again at every
+completion, over-checks. Keep the principle where a machine runs it — in the done-command — and
+do not keep the skill on as a reflex.
 
 **Plan mode is the free win, and this method was waiting for it.** Grillin's phases 0–4 produce
 no plan text at all — you count, you triage, you grill, you diagram, and you write nothing. That

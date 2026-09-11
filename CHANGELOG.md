@@ -1,6 +1,69 @@
 # Changelog
 
 
+## Unreleased — compared against the superpowers skills · 2026-09-11
+
+A research agent compared all fourteen of Anthropic's `superpowers` skills against this method.
+Every actionable claim it returned was re-checked before anything was built on it, and the
+re-checking changed the result: two of its gaps were overstated, one proposal could not work,
+and the finding it scored as its own miss turned out to be the most important thing in the
+report. **28 gate checks, up from 26.**
+
+### The integrator was declared, and wired to nothing
+
+Phase 7's output includes "an integrator role", the M band adds one, the roster prices one as
+the persona that "merges work it did not write", and every contract says "Do NOT merge". No
+check read any of it and the runner never reached it, so a plan could verify every task and
+report complete with all of its work still on branches. The agent concluded nothing decides
+what happens to branches after a plan verifies. It had missed the integrator *role*; its
+conclusion was right anyway, because a role wired to nothing is indistinguishable from no role.
+
+`check_integration`: a plan whose tasks declare a **Branch:** must have a `**Kind:** integration`
+task downstream of each — by reachability, not adjacency — whose done-command names each
+branch it merges. `Branch` moves from the unparsed list to the parsed one, announced in the
+register. Smokin's half refuses `complete` in the same state.
+
+### Placeholders — `check_no_placeholders`, and the owner check
+
+Probed against a clean control before a line was written: `TODO: fill in details.` in Steps,
+`implement later` in Steps, and an Owner left as the template's `<agent id, …>` all passed.
+The first two are now refused in Steps and Done means — outside code, inline code, quoted
+text and comments, because a known-bad fixture's own contract says `no "TBD"` and the first
+draft failed it for the mention. The owner check now consults `RE_PLACEHOLDER`, which already
+refused that exact string in three other fields and was simply never asked here. The vaguer
+half of the writing-plans list ("add appropriate error handling") needs a reader and is
+stated as unchecked.
+
+### Haiku takes no effort; a persona file and its task name one model
+
+Haiku 4.5 **rejects** the effort parameter at the API, and the floor demanded one anyway. A
+Haiku task now declares no Effort, and one that does is refused — an unappliable pairing
+recorded as if applied is the false record this gate exists to stop. And since the runner now
+pins a task's subagents from its persona file's `model:` first and its **Model:** second, the
+two must agree by family, or the gate fails the plan rather than let the runner pick one.
+
+### Also
+
+- **The fix ladder** (`_RULES` §5): rounds 1–3 the same worker, 4–5 a fresh one with **Model:**
+  amended a tier up, then adjudicate. From `subagent-driven-development`, moved from inside a
+  session to across dispatches, where the model choice lives.
+- **Every finished agent is debriefed** (`_RULES` §1c) — by Haiku, into the task's `debriefs/`,
+  in four fixed sections, marked SUSPECTED, grading nothing. Installed from Smokin.
+- **Pointers**, not adoptions, in `WORKING-WITH-CLAUDE-CODE.md`: `using-git-worktrees` and
+  `finishing-a-development-branch` for work below the method's threshold; and
+  `verification-before-completion`, whose principle is this method's and whose use as a
+  standing instruction is what Claude 5 retires.
+- **Refused:** a check for the brainstorming → writing-plans seam. When writing-plans is used
+  instead of Grillin there is no plan directory, so no gate runs; and looking for its output
+  means reading the project, which the gate's boundary forbids.
+- **`stripped` shipped on 2026-09-07 with a harness CI never ran and no probe** — the shape of
+  the check that shipped dead before it, repeated by the same author. Both added; all 37
+  probes replayed locally before trusting CI with them, 0 dead.
+- A control caught a real defect in the new check before it shipped: the template's own
+  `<prefix>/<ID>-<slug>` read as a real branch, because `RE_PLACEHOLDER` only recognises a
+  value that is one `<…>` end to end. Any angle brackets now mean unfilled, as for Model.
+
+
 ## Unreleased — a false positive from the field · 2026-09-10
 
 **Reported:** `python3 -m pytest` refused as a missing script. **Two defects were

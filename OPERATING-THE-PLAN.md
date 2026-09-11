@@ -521,6 +521,10 @@ Honest accounting. A rule a machine cannot check is a preference.
 | A cut run drops input breadth, never a gate | ADVISORY | — |
 | Phases 0–4 run in plan mode | ADVISORY | — · **and permanently so.** No artefact records which mode a phase ran in, so nothing readable from a plan directory could ever check it. Where the harness has a plan mode it is ENFORCED BY THE HARNESS, at the tool layer, which is stronger than anything this gate could do — and invisible to it. |
 | Template commentary is deleted before a contract is dispatched | **ENFORCED** | `check_stripped_contract` |
+| Steps and Done means carry no TODO / TBD / 'implement later' | **ENFORCED** | `check_no_placeholders` — the vaguer half of the rule ("add appropriate error handling") needs a reader and is not checked |
+| An owner is a name, not the template's placeholder | **ENFORCED** | `check_owner_status` |
+| Every declared branch is merged by a downstream task that names it | **ENFORCED** | `check_integration`; and Smokin refuses `complete` while a declared branch has no integration task downstream |
+| A Haiku task declares no effort; a persona file and its task name one model | **ENFORCED** | `check_persona_model` |
 | Subagent counts are capped | **ENFORCED, ELSEWHERE** | the runner's `runtimes.json` `env` block; prose says whether to delegate, the environment says how many |
 
 ---

@@ -98,6 +98,10 @@ SILENT_BECAUSE = {
                            "opt-in by file and its absence is not a defect",
     "size-declared":       "not applicable: this plan has no PLAN.md — plan-truth owns that "
                            "failure",
+    "integration":         "not applicable: no task declares a **Branch:**, so there is "
+                           "nothing to merge; or require_integration is off",
+    "placeholders":        "turned off: the config does not set require_no_placeholders; "
+                           "or this plan has no tasks — layout owns that failure",
     "stripped":            "turned off: the config does not set require_stripped_contract; or\n                           this plan has no tasks at all — layout owns that failure",
     "status":              _ALWAYS,
 }
@@ -296,6 +300,20 @@ def check_owner_status(f: Findings, tasks: dict, cfg: dict):
             missing_owner.append(tid)
             f.fail("owner", f"{path}:1",
                    f"{tid} names no owner — an orchestrator cannot dispatch it")
+        # A TEMPLATE PLACEHOLDER IS NOT AN OWNER. This check asked only whether
+        # the line was non-empty, and `<agent id, a person's name, or `human`>` is
+        # not empty — a task copied from the template and never filled in passed
+        # as owned. Found by probing the gate against a clean control on
+        # 2026-09-11, while comparing it to writing-plans' "No Placeholders" list.
+        # RE_PLACEHOLDER already refused exactly this string in three other
+        # fields; it simply was never consulted here.
+        elif (cfg.get("require_owner", True)
+              and RE_PLACEHOLDER.match(owner_of(text).strip().strip("`"))):
+            missing_owner.append(tid)
+            f.fail("owner", f"{path}:1",
+                   f"{tid}'s owner is still the template placeholder "
+                   f"({owner_of(text).strip()[:48]!r}) — an orchestrator cannot "
+                   f"dispatch to it, and nobody is accountable for it")
         if cfg.get("require_status", True):
             m = RE_STATUS.search(text)
             if not m:
@@ -1309,6 +1327,50 @@ RE_PERSONA = re.compile(r"\*\*(?:Agent|Persona):\*\*\s*`?([^`·\n]+?)`?\s*(?=\*\
 # re-export shims dead modules, and a CONFIRMED read out of a binary's strings.
 # Neither was a knowledge failure; both were attention failures.
 VALID_EFFORT = {"high", "xhigh", "max"}
+# WHICH MODELS TAKE AN EFFORT AT ALL. Haiku 4.5 rejects the `effort` parameter
+# at the API — it errors, it is not ignored (Anthropic's model table, read
+# 2026-09-11: "effort ... errors on Sonnet 4.5 / Haiku 4.5"). So on Haiku the
+# effort floor above does not apply, and a declared effort is worse than a
+# missing one: it is a pairing that cannot be applied, recorded as if it had
+# been. That is the defect class this whole gate exists to refuse.
+EFFORT_UNSUPPORTED = {"haiku"}
+
+
+def model_family(model: str):
+    """opus / sonnet / haiku / fable / mythos, from an id OR an alias; else None.
+
+    An alias (`haiku`, the form a Claude Code agent file's `model:` usually takes)
+    and an identifier (`claude-haiku-4-5`) name the same family, and comparing
+    them as strings would report every correctly-aliased persona as a mismatch.
+    """
+    m = (model or "").lower()
+    for fam in ("fable", "mythos", "opus", "sonnet", "haiku"):
+        if fam in m:
+            return fam
+    return None
+
+
+def persona_file_model(plan: Path, persona: str):
+    """`model:` from a persona file's frontmatter, and the file. (None, None) if none.
+
+    The persona file is the one Smokin appends to a worker's system prompt —
+    `<plan>/<persona_dir>/<name>.md`, `_personas` unless SMOKIN.json says
+    otherwise. It lives inside the plan directory, so reading it is reading the
+    plan, not the project.
+    """
+    pdir = "_personas"
+    try:
+        pdir = json.loads((plan / "SMOKIN.json").read_text()).get("persona_dir", pdir)
+    except (OSError, ValueError):
+        pass
+    pf = plan / pdir / f"{persona}.md"
+    if not pf.is_file():
+        return None, None
+    m = re.match(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", pf.read_text(errors="replace"), re.S)
+    if not m:
+        return None, pf
+    mm = re.search(r"^model:\s*['\"]?([^'\"\n#]+?)['\"]?\s*(?:#.*)?$", m.group(1), re.M)
+    return (mm.group(1).strip() if mm else None), pf
 TIER_WORDS = {"cheap", "mid", "top", "low", "medium", "default", "fast", "smart"}
 
 
@@ -1597,6 +1659,199 @@ def check_stripped_contract(f: Findings, tasks: dict, cfg: dict):
                          f"template commentary over {MAX_COMMENT_LINES} lines")
 
 
+# What a plan still has not decided, written where a worker will read it as an
+# instruction. The list is writing-plans' "No Placeholders" rule reduced to the
+# part a machine can see — the rest of that list ("add appropriate error
+# handling", "similar to Task N") needs a reader, and pretending a regex can
+# judge it would make this the check that cries wolf.
+RE_UNDECIDED = re.compile(r"\b(TODO|TBD|FIXME|implement later|fill in(?: details)?)\b", re.I)
+PLACEHOLDER_SECTIONS = re.compile(r"^#+\s*(Steps|Done means)\b", re.I)
+
+
+def _undecided_lines(text: str):
+    """(line number, match, line) for each placeholder in Steps / Done means.
+
+    Skipped on purpose, and each skip has a case behind it:
+      · fenced code — a done-command may legitimately grep for "TODO"
+      · inline code — `TODO` named as a string is not a TODO
+      · double-quoted text — a known-bad fixture's own contract says
+        'four decisions, no "TBD"', which is a MENTION of the word, and the first
+        draft of this check failed it for that
+      · HTML comments — curator notes, which check_stripped_contract owns
+    """
+    body = re.sub(r"<!--.*?-->", lambda m: "\n" * m.group(0).count("\n"), text, flags=re.S)
+    out, in_sec, fence = [], False, False
+    for i, line in enumerate(body.splitlines(), 1):
+        if line.strip().startswith("```"):
+            fence = not fence
+            continue
+        if not fence and re.match(r"^#+\s", line):
+            in_sec = bool(PLACEHOLDER_SECTIONS.match(line))
+            continue
+        if not in_sec or fence:
+            continue
+        bare = re.sub(r'`[^`]*`|"[^"\n]*"|“[^”\n]*”', "", line)
+        m = RE_UNDECIDED.search(bare)
+        if m:
+            out.append((i, m.group(0), line.strip()))
+    return out
+
+
+def check_no_placeholders(f: Findings, tasks: dict, cfg: dict):
+    """
+    A step that says TODO is a decision the plan did not make, delivered as an
+    instruction.
+
+    Found by a clean-control probe on 2026-09-11, while comparing this gate to
+    the superpowers `writing-plans` skill: `TODO: fill in details.` in Steps and
+    `implement later` in Steps both passed every check. The plan was
+    structurally perfect and one of its instructions was an admission that
+    nobody had worked out the instruction.
+
+    SCOPED TO Steps AND Done means, the two sections a worker executes. Why and
+    What you own are prose a reader argues with; a TODO there is untidy, not an
+    unmade decision handed to someone who will act on it.
+
+    NOT CHECKED, and stated: the vaguer half of writing-plans' list — "add
+    appropriate error handling", "handle edge cases", "similar to Task N". Each
+    is a real failure and each needs a reader to judge. A regex for them would
+    fail good plans often enough to get this check switched off, and a check
+    that is switched off catches nothing at all.
+    """
+    if not cfg.get("require_no_placeholders", True) or not tasks:
+        return
+    bad = 0
+    for tid, path in sorted(tasks.items()):
+        hits = _undecided_lines(path.read_text(errors="replace"))
+        if hits:
+            bad += 1
+            ln, word, line = hits[0]
+            more = f" (and {len(hits) - 1} more)" if len(hits) > 1 else ""
+            f.fail("placeholders", f"{path}:{ln}",
+                   f"{tid}: {word!r} in a section a worker executes — {line[:80]!r}"
+                   f"{more}. That is a decision the plan did not make, handed over "
+                   f"as an instruction. Make it, or turn it into a research task "
+                   f"whose finding is the decision.")
+    if not bad:
+        f.ok("placeholders", f"{len(tasks)} contracts carry no TODO / TBD / "
+                             f"'implement later' in Steps or Done means")
+
+
+RE_BRANCH = re.compile(r"\*\*Branch:\*\*\s*`?([^`·\n]+?)`?\s*(?=\*\*|·|$)", re.M | re.I)
+
+
+def _branch_of(text: str):
+    m = RE_BRANCH.search(text)
+    if not m:
+        return None
+    v = m.group(1).strip()
+    # `<prefix>/<ID>-<slug>` is three placeholders in one value, and RE_PLACEHOLDER
+    # recognises only a value that is ONE `<...>` end to end — so the template's
+    # own unfilled Branch line read as a real branch and demanded an integrator.
+    # Same rule persona-model applies to **Model:**: angle brackets anywhere mean
+    # the field was never filled in.
+    return None if (not v or RE_PLACEHOLDER.match(v) or ("<" in v and ">" in v)) else v
+
+
+def check_integration(f: Findings, tasks: dict, cfg: dict):
+    """
+    Every branch a plan produces has a task that merges it, downstream of it,
+    whose done-command names it.
+
+    WHAT WAS MISSING. The method has always had an integrator: phase 7's output
+    includes "an integrator role", the M band adds one, the roster prices one as
+    the persona that "merges work it did not write", and every task contract
+    says "Do NOT merge". Nothing connected any of that to the graph. No check
+    read it and the runner never reached it, so a plan could verify every task
+    and report complete with every branch still unmerged — "complete" meant
+    every branch verified, none integrated. A research agent comparing this
+    method to the superpowers skills concluded that nothing decides what happens
+    to branches after a plan verifies. It had missed the integrator ROLE; its
+    conclusion was right anyway, because a role wired to nothing is
+    indistinguishable from no role. That is the finding.
+
+    THE FIX IS A TASK, NOT A MECHANISM. A merge declared as a task — `**Kind:**
+    integration` — is a node on the graph like any other: it has an owner, a
+    done-command and edges, and the runner already dispatches the last node
+    last. Same division as the adversary: this gate checks the declaration, the
+    runner runs the actor. Smokin's half refuses to call a plan complete while a
+    declared branch has no integration task downstream of it, for the plan that
+    reaches it without passing through here.
+
+    THREE THINGS, all readable from the files:
+      1 · a plan with a declared **Branch:** has at least one integration task
+      2 · each branch-declaring task is upstream of one — ordering is the point;
+          an integrator that can run concurrently with the branch it merges is
+          merging a branch that is still being written
+      3 · that integration task's done-command NAMES the branch. A merge gate
+          that does not mention the branches it grades cannot be grading them,
+          and `git branch --merged | grep -c .` passes on a repository where
+          none of this plan's work landed.
+
+    NOT CHECKED: whether the merge is correct. That is the integrator's work and
+    the adversary's reading, not a property of a file.
+    """
+    if not cfg.get("require_integration", True):
+        return
+    info = {}
+    for tid, path in tasks.items():
+        text = path.read_text(errors="replace")
+        mb = RE_BLOCKED_BY.search(text)
+        mk = RE_KIND.search(text)
+        info[tid] = {
+            "path": path,
+            "branch": _branch_of(text),
+            "integrates": bool(mk and re.search(r"\bintegrat", mk.group(1), re.I)),
+            "blocked_by": {d for d in (RE_TASK_ID.findall(mb.group(1)) if mb else [])
+                           if d in tasks},
+            "done": done_command(path) or "",
+        }
+    branched = {tid: i for tid, i in info.items() if i["branch"] and not i["integrates"]}
+    if not branched:
+        return                                   # nothing to merge; SILENT_BECAUSE says so
+    integrators = [tid for tid, i in info.items() if i["integrates"]]
+
+    def upstream(tid, seen=None):
+        seen = set() if seen is None else seen
+        for d in info[tid]["blocked_by"]:
+            if d not in seen:
+                seen.add(d)
+                upstream(d, seen)
+        return seen
+
+    if not integrators:
+        names = ", ".join(f"{t} ({i['branch']})" for t, i in sorted(branched.items()))
+        f.fail("integration", str(next(iter(branched.values()))["path"]),
+               f"{len(branched)} task(s) declare a branch — {names} — and no task "
+               f"declares **Kind:** integration. Every contract says 'Do NOT merge', "
+               f"so nothing in this plan merges anything: it can verify every task "
+               f"and report complete with all of it still on branches. Add an "
+               f"integration task blocked by each of them, whose done-command names "
+               f"each branch.")
+        return
+    ups = {i: upstream(i) for i in integrators}
+    bad = 0
+    for tid, i in sorted(branched.items()):
+        downstream = [g for g in integrators if tid in ups[g]]
+        if not downstream:
+            bad += 1
+            f.fail("integration", f"{i['path']}:1",
+                   f"{tid} declares branch {i['branch']!r}, and no integration task "
+                   f"is blocked by it — directly or through the graph. An integrator "
+                   f"that can run at the same time as the branch it merges is "
+                   f"merging work that is still being written.")
+        elif not any(i["branch"] in info[g]["done"] for g in downstream):
+            bad += 1
+            f.fail("integration", f"{info[downstream[0]]['path']}:1",
+                   f"{', '.join(downstream)} integrates {tid}, but no done-command "
+                   f"among them names {tid}'s branch {i['branch']!r}. A merge gate "
+                   f"that does not mention the branches it grades cannot be grading "
+                   f"them.")
+    if not bad:
+        f.ok("integration", f"{len(branched)} branch(es) each merged by a downstream "
+                            f"integration task whose done-command names it")
+
+
 def check_worktree_disjoint(f: Findings, tasks: dict, cfg: dict):
     """
     Where git itself serialises, the plan must impose an order.
@@ -1760,6 +2015,7 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
             continue
 
         mm = RE_MODEL.search(text)
+        model = mm.group(1).strip() if mm else ""
         if not mm:
             bad += 1
             f.fail("persona-model", f"{path}:1",
@@ -1779,7 +2035,17 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
                        f"{tid}'s model is still the template placeholder")
 
         me = RE_EFFORT.search(text)
-        if not me:
+        no_effort = model_family(model) in EFFORT_UNSUPPORTED
+        if no_effort and me:
+            bad += 1
+            f.fail("persona-model", f"{path}:{line_of(path, me.group(0))}",
+                   f"{tid} runs on {model!r}, which rejects the effort parameter at "
+                   f"the API, and still declares **Effort:** {me.group(1)!r}. A "
+                   f"pairing that cannot be applied, recorded as though it were, is "
+                   f"the false record this gate exists to refuse. Delete the line.")
+        elif no_effort:
+            pass                      # Haiku: no effort, and none is owed
+        elif not me:
             bad += 1
             f.fail("persona-model", f"{path}:1", f"{tid} names no **Effort:**")
         else:
@@ -1800,6 +2066,24 @@ def check_persona_model(f: Findings, plan: Path, tasks: dict, cfg: dict):
                        f"{tid} names persona {persona!r}, which is not in "
                        f"{roster_path.name}. A persona invented in a task file is one "
                        f"nobody priced — add it to the roster with its reason first.")
+
+        # THE PERSONA FILE AND THE TASK MUST NAME ONE MODEL. The runner pins a
+        # worker's subagents to that model, and it reads the persona file's
+        # `model:` first and this task's **Model:** second. Two places holding
+        # one fact is one fact that will eventually be two, and the runner would
+        # then silently pin to whichever it read — so the two must agree, by
+        # family, since an alias and an identifier are the same choice written
+        # two ways. `inherit` pins nothing and agrees with anything.
+        if mp and model and "<" not in mp.group(1):
+            fm, pf = persona_file_model(plan, mp.group(1).strip())
+            if (fm and fm.lower() != "inherit"
+                    and model_family(fm) != model_family(model)):
+                bad += 1
+                f.fail("persona-model", f"{path}:{line_of(path, mm.group(0))}",
+                       f"{tid} declares **Model:** {model!r} but its persona file "
+                       f"{pf.relative_to(plan)} says model: {fm!r}. The runner pins "
+                       f"subagents from the persona file first, so this task would "
+                       f"run under a model its own contract does not name.")
 
     # ── the same persona is the same pairing, everywhere ────────────────────
     # A persona is a role, and a role has one price. Two tasks naming `recon`
@@ -2490,6 +2774,8 @@ def main():
     check_paths_disjoint(f, tasks, cfg)
     check_worktree_disjoint(f, tasks, cfg)
     check_stripped_contract(f, tasks, cfg)
+    check_no_placeholders(f, tasks, cfg)
+    check_integration(f, tasks, cfg)
     check_persona_model(f, plan, tasks, cfg)
     check_size_declared(f, plan, tasks, cfg)
     check_done_self_reference(f, plan, tasks, cfg)

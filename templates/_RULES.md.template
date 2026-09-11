@@ -71,11 +71,29 @@ wrong one.
 
 **The delegation cap is not in that file, and that is the point.** The runner sets it in the
 dispatch environment from its runtimes row — on Claude Code, `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`,
-`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` and
-`CLAUDE_CODE_SUBAGENT_MODEL_FORCE`. Prose says *whether* delegating is a good idea and can be
+`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` —
+and it pins every subagent to the task's own model: `CLAUDE_CODE_SUBAGENT_MODEL`, filled per
+dispatch from the persona file's `model:` or the task's **Model:**, with
+`CLAUDE_CODE_SUBAGENT_MODEL_FORCE` on so a worker cannot ask for another. (FORCE is a switch,
+not a model; set to a model name on its own it pins nothing, and this template said otherwise
+for four days.) Prose says *whether* delegating is a good idea and can be
 ignored; the environment says *how many* and cannot. Principle 11's rule applies to this file as
 much as to a plan: a rule a machine cannot check is a preference, so the half that can be checked
 is checked, and only the judgment stays in prose.
+
+## 1c · Every agent that finishes is debriefed — by a model that did not do the work
+
+When a subagent or a fan-out agent finishes, and when a dispatched task's own worker does, a
+hook hands its transcript to `claude-haiku-4-5`, which writes four sections into this task's
+`debriefs/` folder: **Key points of success** · **Unfinished business, marked defects or
+failures** · **Important notes** · **Full chat workflow flaws**.
+
+Two properties make it worth having, and both come from who writes it. The summariser did not
+do the work, so it has no stake in the work looking finished; and it is the same cheap model
+every time, so a hundred debriefs can be compared with each other, which a hundred self-reports
+never can. **It is a note, not a verdict** — SUSPECTED until somebody checks it against the
+transcript, and nothing grades a task on it. Installed from Smokin:
+`templates/debrief-on-subagent-stop.sh`.
 
 ## 2 · Model tiers
 
@@ -218,6 +236,21 @@ self-certifying one level down from the rule in §3, and it is the level nobody 
 is a DIFFERENT reader, which is why it is not covered by the deletion above: an agent
 double-checking itself is what the guidance removes, and an independent judgment of a result is
 what it recommends.
+
+**The fix ladder — what happens between the first failure and the cap.** Five rounds, spent in
+this order:
+
+| Rounds | Who fixes | Why |
+|---|---|---|
+| 1–3 | the same worker, resumed | it holds the context a fresh one would spend rounds rebuilding |
+| 4–5 | a fresh worker, **Model:** amended one tier up, re-dispatched | three failed rounds on one model is evidence the model is the ceiling |
+| the cap | nobody fixes: each open finding is adjudicated — fixed, accepted with a reason, or escalated | a sixth round is the loop refusing to stop |
+
+The step up happens at the TASK, never inside the worker. The runner pins a worker's subagents
+to the task's own model and switches their `model` parameter off, so escalation is a change to
+the contract — visible, dated, and followed by the pin — rather than a helper quietly spawned on
+a bigger model. From the superpowers `subagent-driven-development` skill, which runs the same
+ladder inside one session; here it spans dispatches, because that is where the model choice lives.
 
 **Watch loop** — only for genuinely slow external state.
 

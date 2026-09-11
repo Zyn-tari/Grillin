@@ -111,6 +111,16 @@ jobs:
           # them could have been told they had got it wrong.
           probe research-no-timebox  research-task       "sed -i '0,/^\*\*Status:/s//**Kind:** research\n**Status:/' tasks/T1/TASK.md"
           probe research-no-artefact research-task       "sed -i '0,/^\*\*Status:/s//**Kind:** research · **Timebox:** 90 minutes\n**Status:/' tasks/T1/TASK.md"
+          # 2026-09-11 — each found by probing the gate against a clean control while
+          # comparing it to the superpowers skills, before a line of the check existed.
+          probe placeholder-todo     placeholders        "sed -i '0,/^## Steps/s//## Steps\n\nTODO: fill in details./' tasks/T1/TASK.md"
+          probe owner-placeholder    owner               "sed -i 's/^\*\*Owner:\*\* worker-a/**Owner:** <agent id>/' tasks/T1/TASK.md"
+          probe branch-unmerged      integration         "sed -i '0,/^\*\*Status:/s//**Branch:** feat-T1-x\n**Status:/' tasks/T1/TASK.md"
+          probe haiku-with-effort    persona-model       "sed -i 's/\`claude-opus-5\`/\`claude-haiku-4-5\`/' tasks/T1/TASK.md"
+          probe persona-file-drift   persona-model       "mkdir -p _personas && printf -- '---\\nmodel: haiku\\n---\\n' > _personas/recon.md"
+          # `stripped` shipped on 2026-09-07 with a harness and NO probe here — the exact
+          # shape of the check that shipped dead before it, repeated by the same author.
+          probe comment-block        stripped            "printf '<!--\\n1\\n2\\n3\\n4\\n5\\n6\\n7\\n-->\\n' >> tasks/T1/TASK.md"
           exit $fail
 
       - name: owner resolution and disclaimed paths
@@ -142,6 +152,12 @@ jobs:
 
       - name: two concurrent tasks may not share one git worktree
         run: python3 tests/test-worktree-disjoint.py
+
+      - name: template commentary never reaches the worker
+        run: python3 tests/test-stripped-contract.py
+
+      - name: placeholders, owners, integration, and a model that takes no effort
+        run: python3 tests/test-integration-and-placeholders.py
 
       - name: the human-worker example is a valid plan
         run: ./scripts/validate-plan.py examples/human-worker-plan --run-gates
