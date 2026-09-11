@@ -72,7 +72,7 @@ wrong one.
 **The delegation cap is not in that file, and that is the point.** The runner sets it in the
 dispatch environment from its runtimes row — on Claude Code, `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`,
 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` —
-and it pins every subagent to the task's own model: `CLAUDE_CODE_SUBAGENT_MODEL`, filled per
+and it launches the worker on the task's own model and pins every subagent to it: `CLAUDE_CODE_SUBAGENT_MODEL`, filled per
 dispatch from the persona file's `model:` or the task's **Model:**, with
 `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` on so a worker cannot ask for another. (FORCE is a switch,
 not a model; set to a model name on its own it pins nothing, and this template said otherwise

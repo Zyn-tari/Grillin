@@ -113,7 +113,8 @@ it is the progress record, and it is the only one that survives a lost conversat
      gate refuses one that does: a pairing that cannot be applied, recorded as though it
      had been, is the false record this method exists to stop.
 
-     THE MODEL IS ALSO WHAT THIS TASK'S SUBAGENTS RUN ON. The runner pins them to it —
+     THE MODEL IS WHAT THE WORKER AND ITS SUBAGENTS RUN ON. The runner launches the worker
+     on it and pins every subagent to it —
      from `_personas/<persona>.md`'s `model:` if that file has one, from this line
      otherwise — and switches the subagent `model` parameter off, so a worker cannot
      quietly escalate its own helpers. If the persona file and this line disagree, the

@@ -53,6 +53,10 @@ two must agree by family, or the gate fails the plan rather than let the runner 
   `finishing-a-development-branch` for work below the method's threshold; and
   `verification-before-completion`, whose principle is this method's and whose use as a
   standing instruction is what Claude 5 retires.
+- **The worker follows its persona's model, not only its helpers** — decided the same day.
+  Smokin launched every worker on the runtime's default and recorded the pairing as
+  "requested, not applied"; once subagents were pinned, a Haiku persona meant Opus doing the
+  work with Haiku helpers. The template and `_RULES` §1b now say the model governs both.
 - **Refused:** a check for the brainstorming → writing-plans seam. When writing-plans is used
   instead of Grillin there is no plan directory, so no gate runs; and looking for its output
   means reading the project, which the gate's boundary forbids.
