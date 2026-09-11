@@ -113,6 +113,10 @@ it is the progress record, and it is the only one that survives a lost conversat
      gate refuses one that does: a pairing that cannot be applied, recorded as though it
      had been, is the false record this method exists to stop.
 
+     THE EFFORT IS WHAT THE WORKER RUNS AT. The runner passes it as `--effort`. Until
+     2026-09-11 it went nowhere, which made the floor above a declaration nothing applied;
+     on Haiku it is withheld, and the dispatch record says so.
+
      THE MODEL IS WHAT THE WORKER AND ITS SUBAGENTS RUN ON. The runner launches the worker
      on it and pins every subagent to it —
      from `_personas/<persona>.md`'s `model:` if that file has one, from this line

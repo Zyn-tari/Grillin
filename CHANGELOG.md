@@ -57,6 +57,9 @@ two must agree by family, or the gate fails the plan rather than let the runner 
   Smokin launched every worker on the runtime's default and recorded the pairing as
   "requested, not applied"; once subagents were pinned, a Haiku persona meant Opus doing the
   work with Haiku helpers. The template and `_RULES` §1b now say the model governs both.
+- **…and runs at its declared Effort.** The `high` floor had never reached a worker — Smokin
+  passed no effort at all — so it was a declaration nothing applied. It is passed as
+  `--effort` now, and withheld on Haiku, where the API rejects it.
 - **Refused:** a check for the brainstorming → writing-plans seam. When writing-plans is used
   instead of Grillin there is no plan directory, so no gate runs; and looking for its output
   means reading the project, which the gate's boundary forbids.
