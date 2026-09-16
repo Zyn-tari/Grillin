@@ -1,6 +1,25 @@
 # Changelog
 
 
+## Unreleased — the done-command timeout can be shortened · 2026-09-16
+
+Every done-command `--run-gates` executes is killed after 60 seconds and reported as a hanging
+gate. That limit was a literal (`timeout=60`), so the one check proving "a hanging gate still
+FAILS" had to wait a full minute on every run: `tests/test-gate-fails-first.py` took 63.5s, and
+60.1s of it was that single wait, locally and in CI alike (measured 2026-09-16).
+
+- **`GRILLIN_GATE_TIMEOUT`** sets the limit in seconds. Unset, it is 60, exactly as before.
+- **It may shorten the limit and never lengthen it** — anything that is not a number above 0 and
+  at most 60 is refused, and the gate exits 2 before reading the plan. Same rule as `--config`,
+  which may only tighten the floors: a shorter limit fails more gates, a longer one would pass
+  gates that fail today.
+- The timeout message now names the limit it hit.
+- `test-gate-fails-first.py` runs its hanging gate at 2s and checks the message says so; it also
+  checks the default is still 60 and that `0`, `-5`, `61`, `600` and `soon` are all refused.
+  Harness 63.5s → 5.6s. With the variable ignored, nine of its checks fail.
+
+All 15 harnesses and all 26 CI steps pass.
+
 ## Unreleased — compared against the superpowers skills · 2026-09-11
 
 A research agent compared all fourteen of Anthropic's `superpowers` skills against this method.

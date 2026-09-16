@@ -33,6 +33,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -50,7 +52,7 @@ def chk(label, got, want):
         print(f"  \033[31mFAIL\033[0m  {label} — want {want!r}, got {got!r}")
 
 
-def verdict(done_cmd, status="NOT STARTED", name="p"):
+def verdict(done_cmd, status="NOT STARTED", name="p", env=None):
     """Build a one-task plan around `done_cmd` and return (verdict, message).
 
     Everything except the done-command is held constant, so the ONLY thing any
@@ -67,7 +69,8 @@ def verdict(done_cmd, status="NOT STARTED", name="p"):
         "# plan\n\n**Size:** XS\n**Workers:** human\n\n"
         "| ID | Task | Blocked by |\n|---|---|---|\n| T1 | x | — |\n")
     r = subprocess.run([sys.executable, str(GATE), str(p), "--run-gates"],
-                       capture_output=True, text=True, timeout=180)
+                       capture_output=True, text=True, timeout=180,
+                       env=dict(os.environ, **(env or {})))
     line = next((l for l in r.stdout.splitlines() if "gate-fails-first" in l), "")
     return ("PASS" if line.startswith("PASS") else
             "FAIL" if line.startswith("FAIL") else "NONE"), line
@@ -116,8 +119,39 @@ chk("the same words on stderr about an outside path DO count", v, "FAIL")
 print("\n=== 4 · silent controls — the parts that must not have moved ===")
 v, _ = verdict("test -s tasks/T1/OUT.md", status="DONE")
 chk("a DONE task is skipped entirely", v, "NONE")
-v, _ = verdict("sleep 90")
+# SHORTENED ON PURPOSE, and only here. The claim is that a hanging gate FAILS,
+# not how long the limit is, and waiting out the default 60s made this one check
+# 60 of the harness's 64 seconds. The default itself is checked right after,
+# without running anything for a minute.
+_t = time.monotonic()
+v, line = verdict("sleep 90", env={"GRILLIN_GATE_TIMEOUT": "2"})
 chk("a hanging gate still FAILS on timeout", v, "FAIL")
+chk("...and the message names the limit it hit", "after 2s" in line, True)
+chk("...which was the 2s asked for, not the default", time.monotonic() - _t < 30, True)
+
+# The default, and the refusals, read straight from the gate module.
+import importlib.machinery, importlib.util  # noqa: E401,E402
+_spec = importlib.util.spec_from_loader(
+    "vp", importlib.machinery.SourceFileLoader("vp", str(GATE)))
+VP = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(VP)
+_saved = os.environ.pop("GRILLIN_GATE_TIMEOUT", None)
+chk("with nothing set, the limit is still 60s", VP.gate_timeout(), 60.0)
+for bad in ("0", "-5", "61", "600", "soon"):
+    os.environ["GRILLIN_GATE_TIMEOUT"] = bad
+    try:
+        VP.gate_timeout()
+        refused = False
+    except ValueError:
+        refused = True
+    chk(f"GRILLIN_GATE_TIMEOUT={bad} is refused", refused, True)
+os.environ.pop("GRILLIN_GATE_TIMEOUT", None)
+if _saved is not None:
+    os.environ["GRILLIN_GATE_TIMEOUT"] = _saved
+r = subprocess.run([sys.executable, str(GATE), str(LAB)], capture_output=True, text=True,
+                   env=dict(os.environ, GRILLIN_GATE_TIMEOUT="600"))
+chk("...and the gate exits 2 on it, before looking at any plan", r.returncode, 2)
+chk("...saying why", "may shorten the limit, never lengthen it" in r.stderr, True)
 
 print("\n=== 5 · the shipped fixtures ===")
 print("\n=== 5 · a command's own PREREQUISITES are not deliverables ===")

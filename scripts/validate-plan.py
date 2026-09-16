@@ -490,6 +490,32 @@ def _interpreter_script(args):
     return None
 
 
+# HOW LONG A DONE-COMMAND MAY RUN BEFORE IT COUNTS AS HANGING. Sixty seconds is
+# the default and the CEILING: `GRILLIN_GATE_TIMEOUT` may shorten it and may not
+# lengthen it, for the same reason `--config` may only tighten the floors — a
+# shorter limit fails more gates, a longer one would pass gates that fail today.
+# It exists because proving "a hanging gate still fails" cost the test suite a
+# full minute of waiting on every run, and CI the same (measured 2026-09-16:
+# test-gate-fails-first 63.5s, 60.1s of it this one wait).
+GATE_TIMEOUT_DEFAULT = 60.0
+
+
+def gate_timeout() -> float:
+    """The done-command timeout, or raises ValueError naming what was wrong."""
+    raw = os.environ.get("GRILLIN_GATE_TIMEOUT", "").strip()
+    if not raw:
+        return GATE_TIMEOUT_DEFAULT
+    try:
+        v = float(raw)
+    except ValueError:
+        raise ValueError(f"GRILLIN_GATE_TIMEOUT={raw!r} is not a number of seconds")
+    if not 0 < v <= GATE_TIMEOUT_DEFAULT:
+        raise ValueError(f"GRILLIN_GATE_TIMEOUT={raw!r} must be above 0 and at most "
+                         f"{GATE_TIMEOUT_DEFAULT:g} — it may shorten the limit, never "
+                         f"lengthen it")
+    return v
+
+
 def _missing_prereq(cmd: str, plan: Path):
     """A prerequisite the command needs before it can grade anything, or None."""
     for seg in re.split(r"&&|\|\||;|\|", cmd):
@@ -563,12 +589,12 @@ def check_gates_fail_first(f: Findings, plan: Path, tasks: dict):
         if not cmd:
             continue
         try:
-            r = subprocess.run(cmd, shell=True, cwd=plan, timeout=60,
+            r = subprocess.run(cmd, shell=True, cwd=plan, timeout=gate_timeout(),
                                capture_output=True, text=True)
         except subprocess.TimeoutExpired:
             f.fail("gate-fails-first", f"{path}",
-                   f"{tid}'s done-command timed out after 60s — an orchestrator "
-                   f"would hang on it")
+                   f"{tid}'s done-command timed out after {gate_timeout():g}s — an "
+                   f"orchestrator would hang on it")
             continue
         except OSError as e:
             f.fail("gate-fails-first", f"{path}", f"{tid}'s done-command could not run: {e}")
@@ -2741,6 +2767,14 @@ def main():
             return 2
         print(f"sha256:{contract_hash(p)[:12]}")
         return 0
+
+    # Refused up front, not half-way through a run: a bad value is the caller's
+    # mistake, and reporting it as a failed gate would blame the plan.
+    try:
+        gate_timeout()
+    except ValueError as e:
+        print(f"validate-plan: {e}", file=sys.stderr)
+        return 2
 
     plan = Path(args.plan).resolve()
     if not plan.is_dir():
