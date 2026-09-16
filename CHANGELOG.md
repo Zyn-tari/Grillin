@@ -1,6 +1,17 @@
 # Changelog
 
 
+## Unreleased — the timeout test ignores the caller's environment · 2026-09-16
+
+Found by the review of the change below (T14 in the suite-timing plan): `test-gate-fails-first.py`
+passed its own environment to every gate it ran, so a `GRILLIN_GATE_TIMEOUT=soon` exported in the
+caller's shell failed 43 checks unrelated to the timeout. The harness now clears the variable at
+start; the checks that want a limit set their own. Verified with `soon`, `600` and an empty value
+exported: 0 failures each.
+
+Noted by the same review and left as it is: a refused `GRILLIN_GATE_TIMEOUT` exits 2, the code CI
+also reads as INCOMPLETE; only the message on stderr tells them apart.
+
 ## Unreleased — the done-command timeout can be shortened · 2026-09-16
 
 Every done-command `--run-gates` executes is killed after 60 seconds and reported as a hanging

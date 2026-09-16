@@ -41,6 +41,10 @@ ROOT = Path(__file__).resolve().parent.parent
 GATE = ROOT / "scripts" / "validate-plan.py"
 fails = 0
 LAB = Path(tempfile.mkdtemp(prefix="grillin-gff."))
+# A GRILLIN_GATE_TIMEOUT exported by the caller would reach every gate this
+# harness runs and change what it proves — or, if invalid, fail 43 checks that
+# have nothing to do with it. Each check that wants a limit sets its own.
+os.environ.pop("GRILLIN_GATE_TIMEOUT", None)
 
 
 def chk(label, got, want):
