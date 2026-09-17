@@ -516,9 +516,39 @@ def gate_timeout() -> float:
     return v
 
 
+_GUARD_FLAGS = {"-f", "-e", "-s", "-x"}
+
+
+def _guarded_path(argv):
+    """The path a `test -f X` / `[ -f X ]` / `[[ -f X ]]` segment checks, or None."""
+    if len(argv) == 3 and argv[0] == "test" and argv[1] in _GUARD_FLAGS:
+        return argv[2]
+    if (len(argv) == 4 and argv[1] in _GUARD_FLAGS
+            and (argv[0], argv[3]) in (("[", "]"), ("[[", "]]"))):
+        return argv[2]
+    return None
+
+
 def _missing_prereq(cmd: str, plan: Path):
-    """A prerequisite the command needs before it can grade anything, or None."""
-    for seg in re.split(r"&&|\|\||;|\|", cmd):
+    """A prerequisite the command needs before it can grade anything, or None.
+
+    A GUARDED RUN IS A CLEAN FAIL. `test -f tasks/T1/run.py && python3
+    tasks/T1/run.py` cannot reach the script while it is missing — the guard
+    fails first, which is exactly what a gate should do on unstarted work. This
+    used to be flagged like the unguarded form, and a real plan reshaped its
+    check around the rule rather than use the honest one (suite-timing T10,
+    2026-09-16). A guard counts only for the SAME path and only while every
+    operator between it and the script is `&&`: after `||`, `;` or `|` the
+    script runs whether or not the guard passed.
+    """
+    parts = re.split(r"(&&|\|\||;|\|)", cmd)
+    guarded = set()
+    op = "&&"
+    for i in range(0, len(parts), 2):
+        seg = parts[i]
+        if op != "&&":
+            guarded = set()               # the chain of guards is broken
+        op = parts[i + 1] if i + 1 < len(parts) else ""
         try:
             argv = shlex.split(seg.strip())
         except ValueError:
@@ -526,6 +556,10 @@ def _missing_prereq(cmd: str, plan: Path):
         while argv and "=" in argv[0] and not argv[0].startswith("-"):
             argv = argv[1:]               # leading VAR=value assignments
         if not argv:
+            continue
+        g = _guarded_path(argv)
+        if g is not None:
+            guarded.add(g if g.startswith("/") else str(plan / g))
             continue
         head = Path(argv[0]).name
         if head in ("cd", "pushd") and len(argv) > 1:
@@ -544,7 +578,7 @@ def _missing_prereq(cmd: str, plan: Path):
             script = argv[0]
         if script:
             sp = Path(script) if script.startswith("/") else (plan / script)
-            if not sp.exists():
+            if not sp.exists() and str(sp) not in guarded:
                 return (f"the script it runs, {script!r}, does not exist — a gate "
                         f"that is not there is not a gate that fails cleanly")
     return None
@@ -2743,8 +2777,15 @@ def check_invariants(f: Findings, plan: Path, tasks: dict, cfg: dict):
                            f"reading, a reason, and a command that is not a task's own gate")
 
 
+class _Parser(argparse.ArgumentParser):
+    """argparse exits 2 on a usage error, which is INCOMPLETE's code here."""
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(3, f"{self.prog}: error: {message}\n")
+
+
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
+    ap = _Parser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--version", action="version",
                     version=f"grillin {__version__} ({INSTALLED_FROM})\n"
@@ -2764,22 +2805,28 @@ def main():
         p = Path(args.contract_hash)
         if not p.is_file():
             print(f"validate-plan: {p} is not a file", file=sys.stderr)
-            return 2
+            return 3
         print(f"sha256:{contract_hash(p)[:12]}")
         return 0
 
     # Refused up front, not half-way through a run: a bad value is the caller's
     # mistake, and reporting it as a failed gate would blame the plan.
+    #
+    # EXIT CODES. 0 operable · 1 FAIL · 2 INCOMPLETE (gates not run) ·
+    # 3 the CALLER got something wrong — a bad path, an unreadable --config, a
+    # refused GRILLIN_GATE_TIMEOUT, an unknown option. Caller mistakes used to
+    # exit 2 as well, so a CI step reading only the code could not tell "you
+    # skipped --run-gates" from "you typed the path wrong" (2026-09-17).
     try:
         gate_timeout()
     except ValueError as e:
         print(f"validate-plan: {e}", file=sys.stderr)
-        return 2
+        return 3
 
     plan = Path(args.plan).resolve()
     if not plan.is_dir():
         print(f"validate-plan: {plan} is not a directory", file=sys.stderr)
-        return 2
+        return 3
 
     cfg = dict(FLOORS)
     if args.config:
@@ -2787,7 +2834,7 @@ def main():
             cfg.update(json.loads(Path(args.config).read_text()))
         except (OSError, ValueError) as e:
             print(f"validate-plan: unreadable config: {e}", file=sys.stderr)
-            return 2
+            return 3
 
     f = Findings()
     self_check(f, cfg)

@@ -154,8 +154,50 @@ if _saved is not None:
     os.environ["GRILLIN_GATE_TIMEOUT"] = _saved
 r = subprocess.run([sys.executable, str(GATE), str(LAB)], capture_output=True, text=True,
                    env=dict(os.environ, GRILLIN_GATE_TIMEOUT="600"))
-chk("...and the gate exits 2 on it, before looking at any plan", r.returncode, 2)
+chk("...and the gate exits 3 on it, before looking at any plan", r.returncode, 3)
 chk("...saying why", "may shorten the limit, never lengthen it" in r.stderr, True)
+
+print("\n=== caller mistakes exit 3; INCOMPLETE keeps 2 ===")
+# Exit 2 used to cover both "gates were not run" and "you called it wrongly",
+# so a CI step reading only the code could not tell them apart (2026-09-17).
+def gate_rc(*args):
+    return subprocess.run([sys.executable, str(GATE), *args], capture_output=True,
+                          text=True, timeout=60).returncode
+chk("a plan path that is not a directory exits 3", gate_rc(str(LAB / "no-such-plan")), 3)
+chk("an unreadable --config exits 3",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--config", str(LAB / "nope.json")), 3)
+chk("a missing --contract-hash file exits 3",
+    gate_rc(str(LAB), "--contract-hash", str(LAB / "nope.md")), 3)
+chk("an unknown option exits 3", gate_rc(str(LAB), "--no-such-option"), 3)
+chk("control · a sound plan without --run-gates still exits 2 (INCOMPLETE)",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan")), 2)
+chk("control · the known-bad example still exits 1",
+    gate_rc(str(ROOT / "examples" / "a-real-first-plan"), "--run-gates"), 1)
+
+print("\n=== a guarded script is a clean fail; an unguarded one is not ===")
+# `test -f X && python3 X` cannot reach X while it is missing. It used to be
+# flagged like the bare form, and a real plan reshaped its check around that
+# (suite-timing T10). The guard counts only for the SAME path, and only while
+# every operator between it and the script is `&&`.
+v, _ = verdict("test -f tasks/T1/run.py && python3 tasks/T1/run.py")
+chk("`test -f X && python3 X` is a CLEAN FAIL", v, "PASS")
+v, _ = verdict("[ -f tasks/T1/run.py ] && python3 tasks/T1/run.py")
+chk("`[ -f X ] && python3 X` is a CLEAN FAIL", v, "PASS")
+v, _ = verdict("test -s tasks/T1/run.sh && bash tasks/T1/run.sh")
+chk("`test -s X && bash X` is a CLEAN FAIL", v, "PASS")
+v, _ = verdict("test -f tasks/T1/other.py && python3 tasks/T1/run.py")
+chk("a guard on a DIFFERENT path still FAILS", v, "FAIL")
+v, _ = verdict("test -f tasks/T1/run.py || python3 tasks/T1/run.py")
+chk("a guard joined by || still FAILS", v, "FAIL")
+v, _ = verdict("test -f tasks/T1/run.py; python3 tasks/T1/run.py")
+chk("a guard joined by ; still FAILS", v, "FAIL")
+v, _ = verdict("test -f tasks/T1/a.py && python3 tasks/T1/a.py && python3 tasks/T1/b.py")
+chk("a second, unguarded script after a guarded one still FAILS", v, "FAIL")
+# `[[` is bash, and gates run under /bin/sh, so it is checked at the parser only.
+chk("`[[ -f X ]] && python3 X` is recognised as guarded",
+    VP._missing_prereq("[[ -f tasks/T1/run.py ]] && python3 tasks/T1/run.py", LAB), None)
+chk("...and a pipe breaks the guard",
+    VP._missing_prereq("test -f tasks/T1/run.py | python3 tasks/T1/run.py", LAB) is None, False)
 
 print("\n=== 5 · the shipped fixtures ===")
 print("\n=== 5 · a command's own PREREQUISITES are not deliverables ===")

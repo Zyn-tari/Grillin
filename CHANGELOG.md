@@ -1,6 +1,36 @@
 # Changelog
 
 
+## Unreleased — a guarded script is a clean fail; caller mistakes exit 3 · 2026-09-17
+
+Two older issues, confirmed against the code and decided by the owner.
+
+**`test -f X && python3 X` is no longer flagged.** `gate-fails-first` refused any done-command that
+runs a script which does not exist yet, including one behind a guard that makes the command fail
+cleanly — and a real plan reshaped its check around the rule rather than use the honest form
+(suite-timing T10). `_missing_prereq` now accepts a script that an earlier clause checks with
+`test -f|-e|-s|-x` or `[ … ]` / `[[ … ]]`, but only for the **same path** and only while every
+operator in between is `&&`. A guard on another path, a guard joined by `||`, `;` or `|`, and a
+second unguarded script after a guarded one are all still flagged.
+
+**Caller mistakes exit 3.** Exit 2 meant both INCOMPLETE (gates not run) and "you called it wrongly",
+so a CI step reading only the code could not tell them apart. Now:
+
+| exit | meaning |
+|---|---|
+| 0 | structurally operable |
+| 1 | FAIL — findings |
+| 2 | INCOMPLETE — `--run-gates` not given |
+| 3 | the caller got something wrong — a plan path that is not a directory, an unreadable `--config`, a missing `--contract-hash` file, a refused `GRILLIN_GATE_TIMEOUT`, an unknown option |
+
+The repo's `.githooks/pre-commit` names exit 3 in its own message; the installed hook already
+treats any non-zero code as a refusal. `gate.yml`'s INCOMPLETE calibration (exit 2) is unchanged.
+
+`test-gate-fails-first.py` gains both sections — each caller mistake, the INCOMPLETE and FAIL
+controls, and nine guard cases. With the guard skip removed, four checks fail; with `||`/`;`/`|`
+no longer breaking the guard, three fail; with argparse's own exit back, one fails. All 15
+harnesses and all 26 CI steps pass.
+
 ## Unreleased — the timeout test ignores the caller's environment · 2026-09-16
 
 Found by the review of the change below (T14 in the suite-timing plan): `test-gate-fails-first.py`

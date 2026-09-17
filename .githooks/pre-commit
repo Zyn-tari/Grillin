@@ -90,6 +90,7 @@ for p in $plans; do
   case $rc in
     0) ;;
     2) echo "grillin: INCOMPLETE on ${p#$REPO/} — gates did not execute." >&2; fail=1 ;;
+    3) echo "grillin: validate-plan was called wrongly on ${p#$REPO/} (exit 3) — see its message above." >&2; fail=1 ;;
     *) fail=1 ;;
   esac
 done
