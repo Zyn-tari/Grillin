@@ -199,6 +199,68 @@ chk("`[[ -f X ]] && python3 X` is recognised as guarded",
 chk("...and a pipe breaks the guard",
     VP._missing_prereq("test -f tasks/T1/run.py | python3 tasks/T1/run.py", LAB) is None, False)
 
+print("\n=== the guard is read the way sh reads it (T20) ===")
+# The first version split on a regex. T20 found three gates it accepted that
+# run the missing script: a guard behind `||`, a guard inside quotes, and a
+# script on the next line. Each is now a FAIL, end to end, under /bin/sh.
+v, _ = verdict("true || test -f tasks/T1/run.py && python3 tasks/T1/run.py")
+chk("`true || test -f X && python3 X` FAILS — sh skips the guard", v, "FAIL")
+v, _ = verdict('echo "x && test -f tasks/T1/run.py && y" && python3 tasks/T1/run.py')
+chk("a guard inside quotes FAILS — it is not a command", v, "FAIL")
+v, _ = verdict("test -f tasks/T1/run.py && echo ok" + chr(10) + "python3 tasks/T1/run.py")
+chk("a script on the next line FAILS — a newline ends the guarded list", v, "FAIL")
+flagged = {
+    "test -f X && cd sub && python3 X": "a cd between guard and script",
+    "! test -f X && python3 X": "a negated guard",
+    "[ ! -f X ] && python3 X": "a negated [ ] guard",
+    "test -d X && python3 X": "a -d test",
+}
+for cmd, why in flagged.items():
+    c = cmd.replace("X", "tasks/T1/run.py")
+    chk(f"{why} is still flagged", VP._missing_prereq(c, LAB) is None, False)
+accepted = {
+    "test -f ./X && python3 X": "a ./ prefix on the guard",
+    "A || B && test -f X && python3 X": "a guard after `A || B &&` — sh reads ((A||B) && G) && S",
+    "test -f X && echo hi >&2 && python3 X": "a redirection between guard and script",
+    "test -f X && \\" + chr(10) + "  python3 X": "a backslash-newline continuation",
+    "true; test -f X && python3 X": "a guard that starts a new list",
+}
+for cmd, why in accepted.items():
+    c = cmd.replace("X", "tasks/T1/run.py")
+    chk(f"{why} is accepted", VP._missing_prereq(c, LAB), None)
+
+# Heredoc bodies are data and redirections are not arguments. Splitting on
+# newlines without knowing that read `<<'EOF'` as a script and hid the known-bad
+# example's real T3 finding; the control above ("more serious defect") catches it.
+NL = chr(10)
+chk("`python3 - <<'EOF'` with a body is not a missing script",
+    VP._missing_prereq("python3 - <<'EOF'" + NL + "import os" + NL + "EOF", LAB), None)
+chk("...nor is a command written inside the heredoc body",
+    VP._missing_prereq("python3 - <<EOF" + NL + "python3 tasks/T1/run.py" + NL + "EOF", LAB), None)
+chk("...but a script on the line after the heredoc is still flagged",
+    VP._missing_prereq("cat <<EOF" + NL + "x" + NL + "EOF" + NL + "python3 tasks/T1/run.py", LAB) is None, False)
+chk("a redirection does not hide an unguarded script",
+    VP._missing_prereq("python3 tasks/T1/run.py 2>/dev/null", LAB) is None, False)
+chk("a guard with a redirection still counts",
+    VP._missing_prereq("test -f tasks/T1/run.py 2>/dev/null && python3 tasks/T1/run.py", LAB), None)
+
+print("\n=== the rest of the caller mistakes exit 3 (T20) ===")
+for n, body in enumerate(("42", "[1]")):
+    cfg = LAB / f"cfg-{n}.json"
+    cfg.write_text(body)
+    chk(f"a --config holding {body} exits 3",
+        gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--config", str(cfg)), 3)
+locked = LAB / "locked-task.md"
+locked.write_text("# x\n")
+locked.chmod(0)
+chk("an unreadable --contract-hash file exits 3", gate_rc(str(LAB), "--contract-hash", str(locked)), 3)
+locked.chmod(0o644)
+shut = LAB / "shut-plan"
+shut.mkdir(exist_ok=True)
+shut.chmod(0)
+chk("an unreadable plan directory exits 3", gate_rc(str(shut)), 3)
+shut.chmod(0o755)
+
 print("\n=== 5 · the shipped fixtures ===")
 print("\n=== 5 · a command's own PREREQUISITES are not deliverables ===")
 # Found by the first real XL-band run: ten done-commands ran a script that did

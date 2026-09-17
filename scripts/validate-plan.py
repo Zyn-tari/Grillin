@@ -529,6 +529,89 @@ def _guarded_path(argv):
     return None
 
 
+def _sh_segments(cmd: str):
+    """Split a command where `sh` would, as (text, operator-before) pairs.
+
+    Unquoted `&&`, `||`, `;`, `|`, `&` and newline separate commands; quotes are
+    respected, a backslash-newline joins lines, `>&2`/`2>&1`/`&>` stay inside
+    their command, and an unquoted `#` after whitespace starts a comment. The
+    first version split with a regex that ignored all of this, so a guard inside
+    quotes counted and a second line joined the guarded command (T20).
+    """
+    out, buf, op_before = [], [], None
+    i, n, quote = 0, len(cmd), None
+    heredocs = []                                   # delimiters waiting for their body
+    while i < n:
+        c = cmd[i]
+        if quote:
+            buf.append(c)
+            if c == "\\" and quote == '"' and i + 1 < n:
+                buf.append(cmd[i + 1]); i += 2; continue
+            if c == quote:
+                quote = None
+            i += 1; continue
+        if c == "\\" and i + 1 < n:
+            if cmd[i + 1] == "\n":
+                i += 2; continue
+            buf.append(c); buf.append(cmd[i + 1]); i += 2; continue
+        if c in "'\"":
+            quote = c; buf.append(c); i += 1; continue
+        if cmd.startswith("<<", i) and not cmd.startswith("<<<", i):
+            m = re.match(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1", cmd[i:])
+            if m:
+                heredocs.append((m.group(2), cmd[i + 2:i + 3] == "-"))
+                buf.append(m.group(0)); i += len(m.group(0)); continue
+        if c == "#" and (not buf or buf[-1] in " \t"):
+            j = cmd.find("\n", i)
+            i = n if j < 0 else j
+            continue
+        two = cmd[i:i + 2]
+        if two in ("&&", "||"):
+            out.append(("".join(buf), op_before)); buf = []; op_before = two; i += 2; continue
+        if c == "&" and ((buf and buf[-1] in "<>") or cmd[i + 1:i + 2] == ">"):
+            buf.append(c); i += 1; continue          # a redirection, not an operator
+        if c == "\n" and heredocs:
+            # A HEREDOC BODY IS DATA, NOT COMMANDS. Skip to each delimiter line.
+            j = i + 1
+            for word, strip_tabs in heredocs:
+                while j < n:
+                    k = cmd.find("\n", j)
+                    line = cmd[j:] if k < 0 else cmd[j:k]
+                    j = n if k < 0 else k + 1
+                    if (line.lstrip("\t") if strip_tabs else line) == word:
+                        break
+            heredocs = []
+            out.append(("".join(buf), op_before)); buf = []; op_before = ";"
+            i = j; continue
+        if c in ";|&\n":
+            out.append(("".join(buf), op_before)); buf = []
+            op_before = ";" if c == "\n" else c
+            i += 1; continue
+        buf.append(c); i += 1
+    out.append(("".join(buf), op_before))
+    return out
+
+
+_RE_REDIR = re.compile(r"^(?:\d*|&)(?:<<-?|<<<|<>|<&|>&|>>|>\||<|>)(.*)$")
+
+
+def _drop_redirections(argv):
+    """`python3 - <<EOF`, `cmd 2>/dev/null`, `cmd > out` — the redirection and
+    its target are not arguments, and `<<EOF` is not a script. A bare operator
+    (`>`, `2>`) takes the next token as its target."""
+    out, skip = [], False
+    for tok in argv:
+        if skip:
+            skip = False
+            continue
+        m = _RE_REDIR.match(tok)
+        if m:
+            skip = (m.group(1) == "")
+            continue
+        out.append(tok)
+    return out
+
+
 def _missing_prereq(cmd: str, plan: Path):
     """A prerequisite the command needs before it can grade anything, or None.
 
@@ -537,31 +620,35 @@ def _missing_prereq(cmd: str, plan: Path):
     fails first, which is exactly what a gate should do on unstarted work. This
     used to be flagged like the unguarded form, and a real plan reshaped its
     check around the rule rather than use the honest one (suite-timing T10,
-    2026-09-16). A guard counts only for the SAME path and only while every
-    operator between it and the script is `&&`: after `||`, `;` or `|` the
-    script runs whether or not the guard passed.
+    2026-09-16).
+
+    WHEN A GUARD COUNTS. `sh` groups `&&` and `||` left to right with equal
+    precedence, so `A || G && S` is `(A || G) && S`: G is skipped whenever A
+    succeeds, and S runs anyway. A guard counts only if it certainly runs —
+    nothing before it, or `;`, `&`, `&&` — and only for a script reached from
+    it through `&&` alone, with no `cd` in between, on the same normalised path.
     """
-    parts = re.split(r"(&&|\|\||;|\|)", cmd)
     guarded = set()
-    op = "&&"
-    for i in range(0, len(parts), 2):
-        seg = parts[i]
+    for seg, op in _sh_segments(cmd):
         if op != "&&":
-            guarded = set()               # the chain of guards is broken
-        op = parts[i + 1] if i + 1 < len(parts) else ""
+            guarded = set()               # the chain from any earlier guard is broken
         try:
             argv = shlex.split(seg.strip())
         except ValueError:
             continue                      # unbalanced quotes — not ours to judge
         while argv and "=" in argv[0] and not argv[0].startswith("-"):
             argv = argv[1:]               # leading VAR=value assignments
+        argv = _drop_redirections(argv)
         if not argv:
             continue
         g = _guarded_path(argv)
         if g is not None:
-            guarded.add(g if g.startswith("/") else str(plan / g))
+            if op in (None, ";", "&", "&&"):
+                guarded.add(os.path.normpath(g if g.startswith("/") else str(plan / g)))
             continue
         head = Path(argv[0]).name
+        if head in ("cd", "pushd"):
+            guarded = set()               # relative paths mean something else now
         if head in ("cd", "pushd") and len(argv) > 1:
             # _inside takes the STRING form, not a Path. A directory the plan
             # itself builds is a clean fail and must stay one; only one outside
@@ -578,7 +665,7 @@ def _missing_prereq(cmd: str, plan: Path):
             script = argv[0]
         if script:
             sp = Path(script) if script.startswith("/") else (plan / script)
-            if not sp.exists() and str(sp) not in guarded:
+            if not sp.exists() and os.path.normpath(str(sp)) not in guarded:
                 return (f"the script it runs, {script!r}, does not exist — a gate "
                         f"that is not there is not a gate that fails cleanly")
     return None
@@ -2806,7 +2893,11 @@ def main():
         if not p.is_file():
             print(f"validate-plan: {p} is not a file", file=sys.stderr)
             return 3
-        print(f"sha256:{contract_hash(p)[:12]}")
+        try:
+            print(f"sha256:{contract_hash(p)[:12]}")
+        except OSError as e:
+            print(f"validate-plan: cannot read {p}: {e.strerror or e}", file=sys.stderr)
+            return 3
         return 0
 
     # Refused up front, not half-way through a run: a bad value is the caller's
@@ -2827,14 +2918,22 @@ def main():
     if not plan.is_dir():
         print(f"validate-plan: {plan} is not a directory", file=sys.stderr)
         return 3
+    if not os.access(plan, os.R_OK | os.X_OK):
+        print(f"validate-plan: cannot read the plan directory {plan}", file=sys.stderr)
+        return 3
 
     cfg = dict(FLOORS)
     if args.config:
         try:
-            cfg.update(json.loads(Path(args.config).read_text()))
+            loaded = json.loads(Path(args.config).read_text())
         except (OSError, ValueError) as e:
             print(f"validate-plan: unreadable config: {e}", file=sys.stderr)
             return 3
+        if not isinstance(loaded, dict):
+            print(f"validate-plan: --config must hold a JSON object, not "
+                  f"{type(loaded).__name__}", file=sys.stderr)
+            return 3
+        cfg.update(loaded)
 
     f = Findings()
     self_check(f, cfg)

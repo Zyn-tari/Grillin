@@ -92,6 +92,7 @@ Use it:
 
   Exit 0 = the plan is operable.  1 = it is not.  2 = INCOMPLETE, because
   without --run-gates nothing proved a single gate would fail on unstarted work.
+  3 = the command itself was wrong (a bad path, option, config or setting).
 
   A green gate means OPERABLE, not correct. On the one job measured end to end
   the gate caught 2 defects and the readers caught 50 — so run it, and then

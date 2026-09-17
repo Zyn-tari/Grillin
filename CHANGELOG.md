@@ -1,6 +1,34 @@
 # Changelog
 
 
+## Unreleased — the guard is read the way sh reads it · 2026-09-17
+
+The adversarial review of `0c039cd` (T20 in the suite-timing plan) found three gates the new guard
+rule accepted that run the missing script, and three caller mistakes still exiting 1. All fixed.
+
+**The done-command is now split the way `sh` splits it** (`_sh_segments`): quotes are respected, an
+unquoted newline separates commands, a backslash-newline continues a line, `>&2`/`2>&1` stay inside
+their command, `#` after whitespace starts a comment, and a heredoc's body is skipped as data.
+Redirections are dropped before looking for a script, so `python3 - <<'EOF'` no longer reads
+`<<EOF` as a script (that misreading surfaced the moment newlines were honoured, and hid the
+known-bad example's real T3 finding until it was fixed).
+
+**A guard counts only if it certainly runs** — nothing before it, or `;`, `&`, `&&` — and only for
+a script reached from it through `&&` alone, with no `cd` between, on the same normalised path.
+`sh` groups `&&` and `||` left to right, so `true || test -f X && python3 X` skips the guard and
+runs the script: now flagged. So are a guard inside quotes, a script on the next line, a negated
+guard and a `-d` test. `A || B && test -f X && python3 X` stays accepted — it is
+`((A || B) && G) && S`.
+
+**The remaining caller mistakes exit 3:** a `--config` that is valid JSON but not an object (`42`,
+`[1]`), an unreadable `--contract-hash` file, an unreadable plan directory. `install.sh`'s exit-code
+legend now lists 3.
+
+`test-gate-fails-first.py`: T20's three cases end to end, eleven more at the parser, the heredoc and
+redirection cases, and the four exit-3 cases. Undoing each piece fails its checks — quotes 1,
+newlines 1, the `||` rule 1, heredoc skipping 1, the config-type check 2. All 15 harnesses and all
+26 CI steps pass.
+
 ## Unreleased — a guarded script is a clean fail; caller mistakes exit 3 · 2026-09-17
 
 Two older issues, confirmed against the code and decided by the owner.
