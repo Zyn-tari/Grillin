@@ -474,9 +474,22 @@ RE_SCRIPT_SUFFIX = re.compile(r"\.(?:py|sh|js|mjs|ts|rb|pl|R|bash)$")
 # the thing both tools kept getting wrong.
 NO_SCRIPT = {"-m", "-c", "-e", "--eval", "--command", "--module", "-p", "-E"}
 TAKES_VALUE = {"-X", "-W", "--check-prefix", "-I", "-r", "--require"}
+# A BARE `-` DOES NOT MEAN THE SAME THING TO EVERY INTERPRETER. `python3 -`,
+# `node -`, `perl -` and `ruby -` read the program from stdin, so nothing on the
+# line is a script. A SHELL is the opposite: POSIX makes `-` the end-of-options
+# marker, so `sh - tasks/T1/run.sh` RUNS run.sh. Treating the two alike let a
+# missing script through under every shell (T26, 2026-09-22). The mutation that
+# should have caught it probed `python3 - build.py` only — it proved the rule
+# fired and never asked whether it was true of every interpreter it applied to.
+SHELLS = {"bash", "sh", "zsh", "dash"}
+# A shell's bundled short options: `sh -ec '<code>'` is `-e -c`, so the next word
+# is CODE, and `bash -euo pipefail -c '<code>'` ends in `-o`, which takes
+# `pipefail` as its value. Without this the first reported "the script it runs,
+# 'pipefail', does not exist" — a false statement about the plan's own files.
+RE_SHELL_BUNDLE = re.compile(r"^-[A-Za-z]+$")
 
 
-def _interpreter_script(args):
+def _interpreter_script(args, shell: bool = False):
     """The script an interpreter runs, or None when it runs a module or code."""
     it = iter(range(len(args)))
     for i in it:
@@ -484,9 +497,17 @@ def _interpreter_script(args):
         if a in NO_SCRIPT or any(a.startswith(f + "=") for f in NO_SCRIPT):
             return None                   # a module or inline code — no script
         if a == "-":
+            if shell:
+                continue                  # end of options — the script is still ahead
             return None                   # the program comes from stdin — no script
         if re.match(r"^\d*[<>]", a):
             continue                      # a redirection (`<<EOF`, `2>/dev/null`) is not a script
+        if shell and RE_SHELL_BUNDLE.fullmatch(a) and len(a) > 2:
+            if "c" in a[1:]:
+                return None               # inline code is bundled in there
+            if a.endswith("o"):
+                next(it, None)            # `-o` takes the next word
+            continue
         if a in TAKES_VALUE:
             next(it, None)                # step over the value and keep looking
             continue
@@ -504,7 +525,12 @@ def _interpreter_script(args):
 # full minute of waiting on every run, and CI the same (measured 2026-09-16:
 # test-gate-fails-first 63.5s, 60.1s of it this one wait).
 GATE_TIMEOUT_DEFAULT = 60.0
-CONFIG_MAX_BYTES = 1 << 20
+# A FILE NAMED ON THE COMMAND LINE IS READ WHOLE, so it needs a ceiling before
+# it is opened. `--config` had one; `--contract-hash` did not, and a 2 GiB
+# TASK.md gave a MemoryError traceback and exit 1 — FAIL's code (T26). Both use
+# this now. A TASK.md or a config larger than this is a caller mistake.
+ARG_FILE_MAX_BYTES = 1 << 20
+CONFIG_MAX_BYTES = ARG_FILE_MAX_BYTES        # the name the config path was written with
 
 
 def gate_timeout() -> float:
@@ -531,8 +557,41 @@ def gate_timeout() -> float:
 # quotes, before a newline, heredoc delimiters, `$((1<<N))`, `&>` in dash) and
 # honest ones it flagged. Predicting a shell from its text is an arms race, so
 # the strict rule is back: a done-command that runs a script which does not exist
-# is flagged, guarded or not. Write the gate so it does not name a script that
-# the task itself produces.
+# is flagged, and no guard excuses it. Write the gate so it does not name a
+# script that the task itself produces.
+#
+# WHAT THE RULE ACTUALLY READS, stated plainly because the unqualified version
+# of that sentence was not true (T26, 2026-09-22). It reads the head of each
+# segment, after stripping a closed list of command wrappers. It therefore does
+# NOT see a script hidden by `sh`'s GRAMMAR — inside `( … )`, `{ …; }`, a
+# one-line `if`, or handed to `xargs` — and it resolves a script path against
+# the plan root, never against a directory an earlier `cd` moved to. Those are
+# pre-existing and deliberately left (D15f): closing them means modelling the
+# shell again, which is what this comment exists to prevent.
+
+
+# A WORD IN FRONT OF THE INTERPRETER USED TO HIDE IT. `exec python3 run.py`,
+# `timeout 5 python3 run.py` and `env FOO=1 python3 run.py` all run the script
+# and none was seen, because the rule reads the head of a segment (T26). These
+# are the wrappers whose remaining words are themselves a command; each is
+# lexical, none is grammar. Stripping one can only make the check look DEEPER,
+# which is the direction it is allowed to err in.
+WRAPPERS = {"exec", "env", "nohup", "stdbuf", "command", "nice", "ionice",
+            "setsid", "time", "timeout"}
+RE_DURATION = re.compile(r"^\d+(?:\.\d+)?[smhd]?$")
+
+
+def _strip_wrappers(argv):
+    """Drop leading command wrappers, with their own options and values."""
+    seen = 0
+    while argv and Path(argv[0]).name in WRAPPERS and seen < len(WRAPPERS):
+        seen += 1
+        argv = argv[1:]
+        while argv and (argv[0].startswith("-")
+                        or ("=" in argv[0] and not argv[0].startswith("-"))
+                        or RE_DURATION.fullmatch(argv[0])):
+            argv = argv[1:]               # `-o0`, `FOO=1`, `timeout`'s `5`
+    return argv
 
 
 def _missing_prereq(cmd: str, plan: Path):
@@ -552,6 +611,7 @@ def _missing_prereq(cmd: str, plan: Path):
             continue                      # unbalanced quotes — not ours to judge
         while argv and "=" in argv[0] and not argv[0].startswith("-"):
             argv = argv[1:]               # leading VAR=value assignments
+        argv = _strip_wrappers(argv)
         if not argv:
             continue
         head = Path(argv[0]).name
@@ -566,7 +626,7 @@ def _missing_prereq(cmd: str, plan: Path):
             continue
         script = None
         if head in INTERPRETERS:
-            script = _interpreter_script(argv[1:])
+            script = _interpreter_script(argv[1:], shell=head in SHELLS)
         elif RE_SCRIPT_SUFFIX.search(argv[0]) and "/" in argv[0]:
             script = argv[0]
         if script:
@@ -2797,14 +2857,21 @@ def main():
     # A CALLER MISTAKE IS EXIT 3, NEVER A TRACEBACK. Examining a path can itself
     # raise — a directory the caller cannot enter, a name too long, a symlink
     # loop — and a traceback exits 1, which is FAIL's code (T23, 2026-09-17).
-    if args.contract_hash:
+    # AN EMPTY STRING IS AN ARGUMENT THE CALLER GAVE, not an argument they
+    # omitted. Both of these were truthiness tests, so `--contract-hash ""`
+    # fell through to a normal run and exited 2 — INCOMPLETE, which reads as
+    # "you forgot --run-gates" (T26).
+    if args.contract_hash is not None:
         p = Path(args.contract_hash)
         try:
-            if not p.is_file():
+            st = os.stat(args.contract_hash)
+            if not stat_mod.S_ISREG(st.st_mode):
                 print(f"validate-plan: {p} is not a file", file=sys.stderr)
                 return 3
+            if st.st_size > ARG_FILE_MAX_BYTES:
+                raise ValueError(f"larger than {ARG_FILE_MAX_BYTES} bytes")
             print(f"sha256:{contract_hash(p)[:12]}")
-        except (OSError, ValueError, RuntimeError) as e:
+        except (OSError, ValueError, RuntimeError, RecursionError, MemoryError) as e:
             print(f"validate-plan: cannot read {p}: {e}", file=sys.stderr)
             return 3
         return 0
@@ -2836,7 +2903,7 @@ def main():
         return 3
 
     cfg = dict(FLOORS)
-    if args.config:
+    if args.config is not None:
         # A regular file, and a small one, checked before it is opened: a FIFO
         # would block the read forever and /dev/zero would never end.
         try:

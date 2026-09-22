@@ -206,6 +206,91 @@ chk("a redirection is never taken for the script",
 chk("the guard code is gone from the gate",
     any(hasattr(VP, n) for n in ("_sh_segments", "_guarded_path", "_drop_redirections")), False)
 
+print("\n=== `-` is stdin to an interpreter and END OF OPTIONS to a shell (T26) ===")
+# `sh - run.sh` RUNS run.sh — POSIX makes a bare `-` the end-of-options marker
+# for a shell, not a request to read the program from stdin. Treating every
+# interpreter alike let a missing script through under all four shells.
+for sh in ("sh", "bash", "dash", "zsh"):
+    # At the function, not end to end: `zsh` is not installed here and `bash -`
+    # would come back FAIL for the wrong reason ("command not found"), so the
+    # end-to-end form is insensitive for two of the four.
+    chk(f"`{sh} - <missing script>` names the script",
+        "run.py" in (VP._missing_prereq(f"{sh} - {X}", LAB) or ""), True)
+for sh in ("sh", "dash"):
+    v, _ = verdict(f"{sh} - {X}")
+    chk(f"...and `{sh} - <missing script>` is a clean FAIL end to end", v, "FAIL")
+for lang in ("python3", "node", "perl", "ruby"):
+    chk(f"`{lang} - <path>` still reads its program from stdin",
+        VP._missing_prereq(f"{lang} - {X}", LAB), None)
+
+print("\n=== a word in front of the interpreter no longer hides it (T26) ===")
+wrapped = {
+    f"exec python3 {X}": "exec",
+    f"timeout 5 python3 {X}": "timeout with a bare number",
+    f"timeout 5s python3 {X}": "timeout with a duration",
+    f"env FOO=1 python3 {X}": "env with an assignment",
+    f"nohup python3 {X}": "nohup",
+    f"stdbuf -o0 python3 {X}": "stdbuf with its own option",
+    f"command python3 {X}": "command",
+    f"nice -n 5 python3 {X}": "nice with a value-taking flag",
+    f"setsid python3 {X}": "setsid",
+    f"time python3 {X}": "time",
+    f"exec env nohup python3 {X}": "three wrappers at once",
+}
+for cmd, why in wrapped.items():
+    v, _ = verdict(cmd)
+    chk(f"a missing script behind {why} FAILS", v, "FAIL")
+
+print("\n=== CONTROL · stripping a wrapper must not invent a missing script ===")
+# Non-vacuous: the script IS there, so every one of these must come back None.
+(LAB / "tasks" / "T1").mkdir(parents=True, exist_ok=True)
+(LAB / X).write_text("print(1)" + NL)
+for cmd, why in ((f"exec python3 {X}", "exec"),
+                 (f"timeout 5 python3 {X}", "timeout"),
+                 (f"env FOO=1 python3 {X}", "env"),
+                 (f"nice -n 5 python3 {X}", "nice")):
+    chk(f"{why} around a script that exists is clean", VP._missing_prereq(cmd, LAB), None)
+chk("...and the wrapper's own name is never taken for the script",
+    VP._missing_prereq("timeout 5 python3 tasks/T1/gone.py", LAB), 
+    VP._missing_prereq("python3 tasks/T1/gone.py", LAB))
+chk("a wrapper with nothing after it is not a script run",
+    VP._missing_prereq("exec", LAB), None)
+(LAB / X).unlink()
+
+print("\n=== a shell's bundled options are options, not a script (T26) ===")
+# `sh -ec '<code>'` used to report the whole code string as a missing script,
+# and `bash -euo pipefail -c '<code>'` reported one called 'pipefail'. Both
+# statements were false about the plan's own files.
+for cmd, why in (
+    ("sh -ec 'python3 build.py'", "`-ec` bundles inline code"),
+    ("bash -ec 'python3 build.py'", "so does bash's"),
+    ("bash -euo pipefail -c 'python3 build.py'", "`-euo` ends in -o, which takes a value"),
+    ("sh -eu -c 'python3 build.py'", "an unbundled group before -c"),
+):
+    chk(f"{why}: no script to find", VP._missing_prereq(cmd, LAB), None)
+chk("CONTROL · a shell option group with no `c` does not hide the script",
+    "run.sh" in (VP._missing_prereq("sh -eu tasks/T1/run.sh", LAB) or ""), True)
+
+print("\n=== a file named on the command line has a ceiling (T26) ===")
+# `--config` was stat'd before it was opened; `--contract-hash` was not, and a
+# 2 GiB TASK.md gave a MemoryError traceback and exit 1 — FAIL's code.
+big = LAB / "huge-task.md"
+with open(big, "wb") as fh:
+    fh.truncate((1 << 20) + 1)
+chk("a --contract-hash file over 1 MiB exits 3, without reading it",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--contract-hash", str(big)), 3)
+big.unlink()
+fifo = LAB / "task-fifo.md"
+os.mkfifo(fifo)
+chk("a --contract-hash that is a FIFO exits 3 and does not hang",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--contract-hash", str(fifo)), 3)
+fifo.unlink()
+chk("--contract-hash /dev/zero exits 3, without reading it",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--contract-hash", "/dev/zero"), 3)
+for flag in ("--contract-hash", "--config"):
+    chk(f"an empty-string {flag} is a caller mistake, not INCOMPLETE",
+        gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), flag, ""), 3)
+
 print("\n=== the rest of the caller mistakes exit 3 (T20) ===")
 for n, body in enumerate(("42", "[1]")):
     cfg = LAB / f"cfg-{n}.json"

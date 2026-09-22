@@ -1,13 +1,52 @@
 # Changelog
 
 
+## Unreleased — `-` is not stdin to a shell; a wrapper no longer hides a script · 2026-09-22
+
+The adversarial review of `7a4e381` (T26 in the suite-timing plan) upheld 21 of 28 claims. Its five
+refutations of the gate are answered here, four by building and one by withdrawing a sentence.
+
+**`sh - tasks/T1/run.sh` runs `run.sh`.** The `-` rule added in `7a4e381` assumed a bare `-` means
+"read the program from stdin". That is true of `python3`, `node`, `perl` and `ruby`, and **false of
+`sh`, `bash`, `zsh` and `dash`**, where POSIX makes it the end-of-options marker — so the next word
+is the script. A missing script went from flagged to accepted under all four shells. This was a
+regression, and the mutation that should have caught it probed `python3 - build.py` only: it proved
+the rule fired and never asked whether it was true of every interpreter it applied to.
+
+**A word in front of the interpreter used to hide it.** The rule reads the head of each segment, so
+`exec python3 run.py`, `timeout 5 python3 run.py`, `env FOO=1 python3 run.py`, `nohup`, `stdbuf`,
+`command`, `nice`, `ionice`, `setsid` and `time` all ran a missing script unseen. A closed list of
+wrappers, with their own options, assignments and durations, is stripped first. This is lexical, not
+grammar, and it can only make the check look deeper — the direction it is allowed to err in.
+
+**A shell's bundled options are options.** `sh -ec '<code>'` reported the whole code string as a
+missing script and `bash -euo pipefail -c '<code>'` reported one called `pipefail`. Both statements
+were false about the plan's own files. For a shell, a bundled short-option group containing `c`
+means inline code, and one ending in `-o` takes the next word.
+
+**A file named on the command line has a ceiling.** `--config` was `os.stat`-ed before it was
+opened; `--contract-hash` was not, and a 2 GiB TASK.md gave a `MemoryError` traceback and exit **1**
+— FAIL's code, which is the exact thing the exit-code work set out to stop. Both now share
+`ARG_FILE_MAX_BYTES` (1 MiB) and the regular-file check. An **empty-string** `--config` or
+`--contract-hash` exits 3 as well; both were truthiness tests, so `''` fell through to a normal run
+and exited 2, reading as "you forgot `--run-gates`".
+
+**And one sentence is withdrawn.** "A missing script is flagged, guarded or not" was stated without
+qualification and is not true: `( … )`, `{ …; }`, a one-line `if`, `xargs`, and a script path
+relative to a directory an earlier `cd` moved to all still hide one. Those are `sh` grammar,
+pre-existing at `8d3caad`, and closing them means re-entering the arms race this check withdrew
+from. The code comment now says what the rule reads and what it does not. A rule stated without
+qualification that is not true is worse than a rule with a documented edge.
+
+`test-gate-fails-first.py`: 129 checks (was 93). All 15 harnesses and all 26 CI steps pass.
+
 ## Unreleased — the guard rule is withdrawn; every caller mistake exits 3 · 2026-09-22
 
 The third adversarial review in a row (T23 in the suite-timing plan) broke the guard rule again, so
 the owner withdrew it (suite-timing D12). Predicting `sh` from a command's text was an arms race
 this check cannot win, and the rule it replaced was never the thing that hurt.
 
-**`test -f X && python3 X` is flagged again, guarded or not.** `_sh_segments`, `_guarded_path` and
+**`test -f X && python3 X` is flagged again, and no guard excuses it.** `_sh_segments`, `_guarded_path` and
 `_drop_redirections` are gone; `_missing_prereq` is back to its `8d3caad` form. Write the gate so
 it does not name a script the task itself produces — that, not a guard, is the honest shape.
 
