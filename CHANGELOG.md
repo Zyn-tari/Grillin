@@ -1,6 +1,40 @@
 # Changelog
 
 
+## Unreleased — the guard rule is withdrawn; every caller mistake exits 3 · 2026-09-22
+
+The third adversarial review in a row (T23 in the suite-timing plan) broke the guard rule again, so
+the owner withdrew it (suite-timing D12). Predicting `sh` from a command's text was an arms race
+this check cannot win, and the rule it replaced was never the thing that hurt.
+
+**`test -f X && python3 X` is flagged again, guarded or not.** `_sh_segments`, `_guarded_path` and
+`_drop_redirections` are gone; `_missing_prereq` is back to its `8d3caad` form. Write the gate so
+it does not name a script the task itself produces — that, not a guard, is the honest shape.
+
+**Newlines are split points.** The `8d3caad` form split on `&&`, `||`, `;` and `|` only, so a
+missing script on a later line of a multi-line gate hid inside the first command — `cat <<EOF … ‹body› …
+python3 X` was read as one `cat` and never examined. A quoted or heredoc line that merely looks like
+a script run is now flagged too. The check is allowed to err toward flagging; it is not allowed to
+miss.
+
+**`-` means the program comes from stdin.** With newlines honoured, `python3 - <<'EOF'` read `<<EOF`
+as a script and hid the known-bad example's real T3 finding. `_interpreter_script` now skips any
+redirection token and stops at a bare `-`, so a path after it (`python3 - build.py`) is an argv
+word, not a script that must exist.
+
+**The remaining caller mistakes exit 3, never a traceback.** Examining a path can itself raise — a
+name too long, a symlink loop, a `--contract-hash` file inside a directory the caller cannot enter —
+and an uncaught traceback exits 1, which is FAIL's code. A `--config` is now stat'd before it is
+opened: a FIFO would block forever and `/dev/zero` would never end, so it must be a regular file of
+at most 1 MiB, and JSON nested past the recursion limit is a caller mistake too. `--help` states all
+four codes.
+
+`test-gate-fails-first.py`: 93 checks. The eleven dangerous gates from T20 and T23 all FAIL, the
+guard helpers are asserted absent, and the stdin/redirection rules have their own probes. Four
+mutations, each caught: dropping the newline split misses 3 checks, dropping the `-` rule 1, a wrong
+exception clause on the plan path 2, dropping the config regular-file check 2. All 15 harnesses and
+all 26 CI steps pass.
+
 ## Unreleased — the guard is read the way sh reads it · 2026-09-17
 
 The adversarial review of `0c039cd` (T20 in the suite-timing plan) found three gates the new guard

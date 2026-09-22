@@ -174,75 +174,37 @@ chk("control · a sound plan without --run-gates still exits 2 (INCOMPLETE)",
 chk("control · the known-bad example still exits 1",
     gate_rc(str(ROOT / "examples" / "a-real-first-plan"), "--run-gates"), 1)
 
-print("\n=== a guarded script is a clean fail; an unguarded one is not ===")
-# `test -f X && python3 X` cannot reach X while it is missing. It used to be
-# flagged like the bare form, and a real plan reshaped its check around that
-# (suite-timing T10). The guard counts only for the SAME path, and only while
-# every operator between it and the script is `&&`.
-v, _ = verdict("test -f tasks/T1/run.py && python3 tasks/T1/run.py")
-chk("`test -f X && python3 X` is a CLEAN FAIL", v, "PASS")
-v, _ = verdict("[ -f tasks/T1/run.py ] && python3 tasks/T1/run.py")
-chk("`[ -f X ] && python3 X` is a CLEAN FAIL", v, "PASS")
-v, _ = verdict("test -s tasks/T1/run.sh && bash tasks/T1/run.sh")
-chk("`test -s X && bash X` is a CLEAN FAIL", v, "PASS")
-v, _ = verdict("test -f tasks/T1/other.py && python3 tasks/T1/run.py")
-chk("a guard on a DIFFERENT path still FAILS", v, "FAIL")
-v, _ = verdict("test -f tasks/T1/run.py || python3 tasks/T1/run.py")
-chk("a guard joined by || still FAILS", v, "FAIL")
-v, _ = verdict("test -f tasks/T1/run.py; python3 tasks/T1/run.py")
-chk("a guard joined by ; still FAILS", v, "FAIL")
-v, _ = verdict("test -f tasks/T1/a.py && python3 tasks/T1/a.py && python3 tasks/T1/b.py")
-chk("a second, unguarded script after a guarded one still FAILS", v, "FAIL")
-# `[[` is bash, and gates run under /bin/sh, so it is checked at the parser only.
-chk("`[[ -f X ]] && python3 X` is recognised as guarded",
-    VP._missing_prereq("[[ -f tasks/T1/run.py ]] && python3 tasks/T1/run.py", LAB), None)
-chk("...and a pipe breaks the guard",
-    VP._missing_prereq("test -f tasks/T1/run.py | python3 tasks/T1/run.py", LAB) is None, False)
-
-print("\n=== the guard is read the way sh reads it (T20) ===")
-# The first version split on a regex. T20 found three gates it accepted that
-# run the missing script: a guard behind `||`, a guard inside quotes, and a
-# script on the next line. Each is now a FAIL, end to end, under /bin/sh.
-v, _ = verdict("true || test -f tasks/T1/run.py && python3 tasks/T1/run.py")
-chk("`true || test -f X && python3 X` FAILS — sh skips the guard", v, "FAIL")
-v, _ = verdict('echo "x && test -f tasks/T1/run.py && y" && python3 tasks/T1/run.py')
-chk("a guard inside quotes FAILS — it is not a command", v, "FAIL")
-v, _ = verdict("test -f tasks/T1/run.py && echo ok" + chr(10) + "python3 tasks/T1/run.py")
-chk("a script on the next line FAILS — a newline ends the guarded list", v, "FAIL")
-flagged = {
-    "test -f X && cd sub && python3 X": "a cd between guard and script",
-    "! test -f X && python3 X": "a negated guard",
-    "[ ! -f X ] && python3 X": "a negated [ ] guard",
-    "test -d X && python3 X": "a -d test",
-}
-for cmd, why in flagged.items():
-    c = cmd.replace("X", "tasks/T1/run.py")
-    chk(f"{why} is still flagged", VP._missing_prereq(c, LAB) is None, False)
-accepted = {
-    "test -f ./X && python3 X": "a ./ prefix on the guard",
-    "A || B && test -f X && python3 X": "a guard after `A || B &&` — sh reads ((A||B) && G) && S",
-    "test -f X && echo hi >&2 && python3 X": "a redirection between guard and script",
-    "test -f X && \\" + chr(10) + "  python3 X": "a backslash-newline continuation",
-    "true; test -f X && python3 X": "a guard that starts a new list",
-}
-for cmd, why in accepted.items():
-    c = cmd.replace("X", "tasks/T1/run.py")
-    chk(f"{why} is accepted", VP._missing_prereq(c, LAB), None)
-
-# Heredoc bodies are data and redirections are not arguments. Splitting on
-# newlines without knowing that read `<<'EOF'` as a script and hid the known-bad
-# example's real T3 finding; the control above ("more serious defect") catches it.
+print("\n=== the strict rule: a missing script is flagged, guarded or not (D12) ===")
+# A guard rule was tried on 2026-09-17 and reverted the same day, after three
+# adversarial reviews broke it. Every gate below names a script that does not
+# exist; each must FAIL — the guarded honest forms because the rule is strict,
+# and the rest because sh really does run the missing script.
 NL = chr(10)
-chk("`python3 - <<'EOF'` with a body is not a missing script",
-    VP._missing_prereq("python3 - <<'EOF'" + NL + "import os" + NL + "EOF", LAB), None)
-chk("...nor is a command written inside the heredoc body",
-    VP._missing_prereq("python3 - <<EOF" + NL + "python3 tasks/T1/run.py" + NL + "EOF", LAB), None)
-chk("...but a script on the line after the heredoc is still flagged",
-    VP._missing_prereq("cat <<EOF" + NL + "x" + NL + "EOF" + NL + "python3 tasks/T1/run.py", LAB) is None, False)
-chk("a redirection does not hide an unguarded script",
-    VP._missing_prereq("python3 tasks/T1/run.py 2>/dev/null", LAB) is None, False)
-chk("a guard with a redirection still counts",
-    VP._missing_prereq("test -f tasks/T1/run.py 2>/dev/null && python3 tasks/T1/run.py", LAB), None)
+X = "tasks/T1/run.py"
+strict = {
+    f"test -f {X} && python3 {X}": "a test -f guard",
+    f"[ -f {X} ] && python3 {X}": "a [ -f ] guard",
+    f"true || test -f {X} && python3 {X}": "a guard behind ||  (T20)",
+    f'echo "x && test -f {X} && y" && python3 {X}': "a guard inside quotes (T20)",
+    f"test -f {X} && echo ok{NL}python3 {X}": "a script on the next line (T20)",
+    f"echo $(true{NL}test -f {X} && :) && python3 {X}": "a guard inside $( ) (T23)",
+    f"echo $((1<<3)){NL}true; python3 {X}": "a shift that looks like a heredoc (T23)",
+    f"cat <<END-OF{NL}x{NL}END-OF{NL}python3 {X}": "a heredoc delimiter with a dash (T23)",
+    f"cat <<E.O{NL}x{NL}E.O{NL}python3 {X}": "a heredoc delimiter with a dot (T23)",
+    f"test -f {X} &>/dev/null && python3 {X}": "&> under dash (T23)",
+    f"test -f {X} &&{NL}python3 {X}": "a guard continued on the next line",
+}
+for cmd, why in strict.items():
+    v, _ = verdict(cmd)
+    chk(f"{why} FAILS", v, "FAIL")
+chk("`python3 - <<'EOF'` reads its program from stdin: no script to find",
+    VP._missing_prereq("python3 - <<'EOF'" + NL + "print(1)" + NL + "EOF", LAB), None)
+chk("...and a path after `-` is an argv word, not the script it runs",
+    VP._missing_prereq("python3 - tasks/T1/nosuch.py", LAB), None)
+chk("a redirection is never taken for the script",
+    VP._missing_prereq("python3 <in.txt -u >out.txt", LAB), None)
+chk("the guard code is gone from the gate",
+    any(hasattr(VP, n) for n in ("_sh_segments", "_guarded_path", "_drop_redirections")), False)
 
 print("\n=== the rest of the caller mistakes exit 3 (T20) ===")
 for n, body in enumerate(("42", "[1]")):
@@ -260,6 +222,41 @@ shut.mkdir(exist_ok=True)
 shut.chmod(0)
 chk("an unreadable plan directory exits 3", gate_rc(str(shut)), 3)
 shut.chmod(0o755)
+
+cage = LAB / "cage"
+cage.mkdir(exist_ok=True)
+(cage / "task.md").write_text("# x\n")
+cage.chmod(0)
+chk("a --contract-hash file inside a directory the caller cannot enter exits 3",
+    gate_rc(str(LAB), "--contract-hash", str(cage / "task.md")), 3)
+cage.chmod(0o755)
+long = "a" * 5000
+chk("an over-long plan path exits 3", gate_rc(long), 3)
+chk("an over-long --contract-hash path exits 3", gate_rc(str(LAB), "--contract-hash", long), 3)
+loop = LAB / "loop"
+if not loop.is_symlink():
+    os.symlink(loop, loop)
+chk("a plan path that is a symlink loop exits 3", gate_rc(str(loop)), 3)
+deep = LAB / "deep.json"
+deep.write_text("[" * 100000)
+chk("a --config nested too deeply exits 3",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--config", str(deep)), 3)
+chk("--config /dev/zero exits 3, without reading it",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--config", "/dev/zero"), 3)
+fifo = LAB / "cfg.fifo"
+if not fifo.exists():
+    os.mkfifo(fifo)
+try:
+    rc = gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--config", str(fifo))
+except subprocess.TimeoutExpired:
+    rc = "hung"
+chk("a --config that is a FIFO exits 3 and does not hang", rc, 3)
+big = LAB / "big.json"
+big.write_text("{" + '"k": 1,' * 200000 + '"z": 1}')
+chk("a --config over 1 MiB exits 3",
+    gate_rc(str(ROOT / "examples" / "minimal-passing-plan"), "--config", str(big)), 3)
+r = subprocess.run([sys.executable, str(GATE), "--help"], capture_output=True, text=True)
+chk("--help states exit 3", "3 = the command itself was wrong" in r.stdout, True)
 
 print("\n=== 5 · the shipped fixtures ===")
 print("\n=== 5 · a command's own PREREQUISITES are not deliverables ===")
